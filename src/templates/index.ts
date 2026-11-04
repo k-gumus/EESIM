@@ -1,0 +1,628 @@
+// Hazır deney paketleri (EE212 laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
+import type { CircuitDoc, CompType, ParamValue } from '../circuit/types';
+import type { Mood } from '../tepecan/mascot';
+
+export type StepCheck =
+  | { kind: 'run' }
+  | { kind: 'manual'; label?: string }
+  | { kind: 'switch'; comp: string; closed: boolean }
+  | { kind: 'param'; comp: string; param: string; op: '>=' | '<=' | '==' | '!='; value: number | string }
+  | { kind: 'pin'; comp: string; pin: string; net: string }
+  | { kind: 'measure'; net: string; stat: 'max' | 'min' | 'avg' | 'rms' | 'pp'; op: '>=' | '<='; value: number }
+  | { kind: 'quiz'; question: string; options: string[]; answer: number; explain: string };
+
+export interface LabStep {
+  id: string;
+  title: string;
+  text: string;
+  check: StepCheck;
+  xp?: number;
+  hint?: string;
+  success?: string;
+}
+
+export interface Template {
+  id: string;
+  title: string;
+  subtitle: string;
+  level: 'Isınma' | 'Temel' | 'Orta';
+  mood: Mood;
+  xp: number;
+  doc: CircuitDoc;
+  steps: LabStep[];
+  theory: string;
+}
+
+type C = [type: CompType, name: string, x: number, y: number, rot?: number, params?: Record<string, ParamValue>];
+const doc = (title: string, comps: C[], wires: [string, string][]): CircuitDoc => ({
+  version: 1,
+  title,
+  components: comps.map(([type, name, x, y, rot, params]) => ({ id: `${name}`, type, name, x, y, rot: rot ?? 0, params })),
+  wires: wires.map(([from, to], i) => ({ id: `w${i}`, from, to })),
+});
+
+const D4001 = { model: '1N4001', Is: 14.11e-9, N: 1.984 };
+const D4148 = { model: '1N4148', Is: 2.52e-9, N: 1.752 };
+
+// ───────────────────────────── 0. Isınma: LED ve Ohm Yasası ─────────────────────────────
+const ledOhm: Template = {
+  id: 'led-ohm',
+  title: 'LED ve Ohm Yasası',
+  subtitle: 'İlk devren: anahtar, akım sınırlama direnci ve ampermetre',
+  level: 'Isınma',
+  mood: 'hello',
+  xp: 60,
+  doc: doc(
+    'LED ve Ohm Yasası',
+    [
+      ['vdc', 'V1', 100, 160, 0, { V: 9 }],
+      ['switch', 'S1', 160, 60, 0, { closed: false }],
+      ['resistor', 'R1', 280, 60, 0, { R: 470 }],
+      ['multimeter', 'DMM1', 400, -20, 0, { mode: 'DCA' }],
+      ['led', 'LED1', 500, 120, 90, { color: 'red' }],
+      ['ground', 'GND1', 100, 280],
+      ['ground', 'GND2', 500, 240],
+    ],
+    [
+      ['V1.p', 'S1.a'],
+      ['S1.b', 'R1.a'],
+      ['R1.b', 'DMM1.pos'],
+      ['DMM1.com', 'LED1.a'],
+      ['LED1.k', 'GND2.g'],
+      ['V1.n', 'GND1.g'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Simülasyonu başlat', text: 'Üstteki **▶ Başlat** düğmesine bas. Şu an S1 anahtarı açık; devreden akım akmıyor.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Anahtarı kapat',
+      text: '**S1** anahtarına çift tıkla (ya da seçip **Space**). Kablolardaki noktalar akımın yönünü ve büyüklüğünü gösterir; LED yanmalı!',
+      check: { kind: 'switch', comp: 'S1', closed: true },
+      success: 'Işık var! 💡 Akım (+) uçtan çıkıp LED üzerinden toprağa dönüyor.',
+    },
+    {
+      id: 's3',
+      title: 'Ampermetreyi oku',
+      text: 'DMM1 akım kademesinde (**A ⎓**) ve devreye **seri** bağlı. Ekranda yaklaşık 15 mA görmelisin.',
+      check: {
+        kind: 'quiz',
+        question: 'Akım ≈ 15,2 mA. LED üzerindeki gerilim yaklaşık kaçtır? (V₁ = 9 V, R₁ = 470 Ω)',
+        options: ['≈ 1,85 V', '≈ 7,1 V', '≈ 9 V', '≈ 0,7 V'],
+        answer: 0,
+        explain: 'KVL: V_LED = 9 V − I·R = 9 − 0,0152·470 ≈ 1,85 V. Kırmızı LED’lerin iletim gerilimi tipik olarak 1,8–2 V’tur.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's4',
+      title: 'Direnci küçült',
+      text: '**R1**’i seç ve değerini **220 Ω** yap. LED daha parlak yanacak… ama dikkat!',
+      check: { kind: 'param', comp: 'R1', param: 'R', op: '<=', value: 220 },
+      success: 'Akım ~32 mA’e çıktı. LED’in maksimum akımı 30 mA — gerçek hayatta bu LED ömrünü kısaltır ya da yanar!',
+    },
+    {
+      id: 's5',
+      title: 'LED’i kurtar',
+      text: 'LED akımını ~10 mA’e indirecek direnci hesapla ve R1’e yaz. (İpucu: R = (9 − 1,85) / 0,01)',
+      check: { kind: 'param', comp: 'R1', param: 'R', op: '>=', value: 560 },
+      hint: 'R ≈ 715 Ω → standart değer 680 Ω ya da 750 Ω',
+      success: 'Harika mühendislik! Standart E12 serisinden en yakın değeri seçmek gerçek tasarımda da böyle yapılır.',
+    },
+  ],
+  theory:
+    'LED bir diyottur: iletim yönünde (anot → katot) yaklaşık sabit bir gerilim düşümü (kırmızı ≈ 1,8 V) gösterir. Akımı sınırlayan şey seri dirençtir: I = (Vkaynak − V_LED) / R. Ampermetre devreye seri bağlanır ve iç direnci ≈ 0 Ω’dur; voltmetre paralel bağlanır ve iç direnci ≈ ∞’dur.',
+};
+
+// ───────────────────────────── 1. Yarım Dalga Doğrultucu ─────────────────────────────
+const halfWave: Template = {
+  id: 'half-wave',
+  title: 'Yarım Dalga Doğrultucu',
+  subtitle: 'Tek diyot, yük direnci ve filtre kondansatörü',
+  level: 'Temel',
+  mood: 'info',
+  xp: 90,
+  doc: doc(
+    'Yarım Dalga Doğrultucu',
+    [
+      ['vac', 'VG1', 100, 140, 0, { amp: 10, freq: 1000 }],
+      ['label', 'VIN', 180, -20, 0, { text: 'VIN' }],
+      ['diode', 'D1', 180, 60, 0, D4001],
+      ['label', 'VOUT', 300, -20, 0, { text: 'VOUT' }],
+      ['resistor', 'RL', 340, 120, 90, { R: 1000 }],
+      ['switch', 'S1', 440, 120, 90, { closed: false }],
+      ['capacitor', 'C1', 440, 220, 90, { C: 10e-6 }],
+      ['ground', 'GND1', 100, 260],
+      ['ground', 'GND2', 340, 240],
+      ['ground', 'GND3', 440, 320],
+      ['scope', 'OSC1', 580, 20, 0, { timeDiv: 0.2e-3, ch1Div: 5, ch2Div: 5, ch1Pos: 1.6, ch2Pos: -3, trig: 0 }],
+      ['label', 'VIN_P', 540, 160, 0, { text: 'VIN' }],
+      ['label', 'VOUT_P', 640, 200, 0, { text: 'VOUT' }],
+    ],
+    [
+      ['VG1.p', 'D1.a'],
+      ['VIN.p', 'D1.a'],
+      ['D1.k', 'RL.a'],
+      ['VOUT.p', 'D1.k'],
+      ['RL.a', 'S1.a'],
+      ['S1.b', 'C1.a'],
+      ['VG1.n', 'GND1.g'],
+      ['RL.b', 'GND2.g'],
+      ['C1.b', 'GND3.g'],
+      ['OSC1.ch1', 'VIN_P.p'],
+      ['OSC1.ch2', 'VOUT_P.p'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Başlat', text: '**▶ Başlat**’a bas ve alttaki osiloskobu izle. CH1 (sarı) girişi, CH2 (mavi) çıkışı gösteriyor.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Dalga şeklini yorumla',
+      text: 'Çıkış sadece pozitif alternanslarda oluşuyor; negatif alternansta diyot ters kutuplanır ve akım akmaz.',
+      check: {
+        kind: 'quiz',
+        question: 'Çıkışın tepe değeri (~9,2 V) neden girişin tepe değerinden (10 V) küçük?',
+        options: ['Diyotun iletim yönündeki gerilim düşümü (≈0,7 V)', 'RL ile kaynak arasında gerilim bölünmesi', 'Osiloskop probunun devreyi yüklemesi', 'Kaynağın frekansı çok yüksek'],
+        answer: 0,
+        explain: 'İletimdeki silisyum diyot üzerinde yaklaşık 0,6–0,8 V düşer: V_out,tepe ≈ V_tepe − V_D.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's3',
+      title: 'Ortalama (DC) değer',
+      text: 'Osiloskop panelindeki CH2 **Ort** ölçümüne bak.',
+      check: {
+        kind: 'quiz',
+        question: 'Filtresiz yarım dalga doğrultucunun DC (ortalama) çıkışı yaklaşık nedir?',
+        options: ['V_tepe / π ≈ 2,9 V', 'V_tepe / √2 ≈ 6,5 V', 'V_tepe ≈ 9,2 V', '0 V'],
+        answer: 0,
+        explain: 'Yarım sinüsün ortalaması V_p/π’dir. 9,2 V / π ≈ 2,9 V.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's4',
+      title: 'Filtreyi devreye al',
+      text: '**S1**’i kapatarak 10 µF kondansatörü çıkışa bağla. Çıkış “dalgalı DC”ye dönüşecek.',
+      check: { kind: 'switch', comp: 'S1', closed: true },
+      success: 'Kondansatör tepe değerde dolup diyot kesimdeyken yükü besliyor — işte filtre!',
+    },
+    {
+      id: 's5',
+      title: 'Dalgalanmayı (ripple) hesapla',
+      text: 'CH2’nin **Vpp** değeri dalgalanma gerilimidir.',
+      check: {
+        kind: 'quiz',
+        question: 'V_r ≈ V_p / (f·R·C) formülüne göre (V_p = 9,2 V, f = 1 kHz, R = 1 kΩ, C = 10 µF) dalgalanma yaklaşık kaçtır?',
+        options: ['≈ 0,9 V', '≈ 9,2 V', '≈ 0,09 V', '≈ 2,9 V'],
+        answer: 0,
+        explain: 'V_r ≈ 9,2 / (1000 · 1000 · 10·10⁻⁶) = 0,92 V. Simülasyonda ölçtüğün değer biraz daha az olabilir; formül kondansatörün tüm periyot boyunca boşaldığını varsayar.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's6',
+      title: 'Yükü hafiflet',
+      text: '**RL**’yi **10 kΩ** yap. Zaman sabiti τ = R·C büyüdükçe dalgalanma ne oluyor?',
+      check: { kind: 'param', comp: 'RL', param: 'R', op: '>=', value: 10000 },
+      success: 'τ = 100 ms ≫ T = 1 ms → kondansatör neredeyse hiç boşalmıyor, dalgalanma ~10 kat azaldı.',
+    },
+  ],
+  theory:
+    'Yarım dalga doğrultucuda diyot yalnızca anot geriliminin katottan ~0,7 V yüksek olduğu pozitif alternanslarda iletir. Çıkış V_p,out = V_p − V_D, filtresiz DC değeri V_p/π’dir. Çıkışa paralel C bağlanınca kondansatör tepe değere dolar ve diyot kesimdeyken RL üzerinden boşalır; dalgalanma V_r ≈ V_p/(f·R·C).',
+};
+
+// ───────────────────────────── 2. Tam Dalga Köprü Doğrultucu ─────────────────────────────
+const fullWave: Template = {
+  id: 'full-wave',
+  title: 'Tam Dalga Köprü Doğrultucu',
+  subtitle: 'Şebeke (220 V / 50 Hz) → 10:1 trafo → 4 diyotlu köprü',
+  level: 'Temel',
+  mood: 'success',
+  xp: 90,
+  doc: doc(
+    'Tam Dalga Köprü Doğrultucu',
+    [
+      ['vac', 'VG1', 20, 120, 0, { amp: 311, freq: 50 }],
+      ['label', 'VIN', 0, 20, 0, { text: 'VIN' }],
+      ['xfmr', 'T1', 120, 120, 0, { n: 10 }],
+      ['diode', 'D1', 280, 40, 0, D4001],
+      ['diode', 'D2', 280, 260, 0, D4001],
+      ['diode', 'D3', 280, 120, 180, D4001],
+      ['diode', 'D4', 280, 340, 180, D4001],
+      ['label', 'VOUT', 440, -20, 0, { text: 'VOUT' }],
+      ['resistor', 'RL', 460, 120, 90, { R: 1000 }],
+      ['switch', 'S1', 560, 120, 90, { closed: false }],
+      ['capacitor', 'C1', 560, 220, 90, { C: 220e-6 }],
+      ['ground', 'GND1', 20, 260],
+      ['ground', 'GND2', 460, 240],
+      ['ground', 'GND3', 560, 320],
+      ['ground', 'GND4', 400, 400],
+      ['scope', 'OSC1', 680, 20, 0, { timeDiv: 5e-3, ch1Div: 200, ch2Div: 10, ch1Pos: 2, ch2Pos: -3.4, trig: 0 }],
+      ['label', 'VIN_P', 640, 160, 0, { text: 'VIN' }],
+      ['label', 'VOUT_P', 740, 200, 0, { text: 'VOUT' }],
+    ],
+    [
+      ['VG1.p', 'T1.p1'],
+      ['VIN.p', 'VG1.p'],
+      ['VG1.n', 'GND1.g'],
+      ['T1.p2', 'GND1.g'],
+      ['T1.s1', 'D1.a'],
+      ['T1.s1', 'D3.k'],
+      ['T1.s2', 'D2.a'],
+      ['T1.s2', 'D4.k'],
+      ['D1.k', 'RL.a'],
+      ['D2.k', 'RL.a'],
+      ['VOUT.p', 'D1.k'],
+      ['D3.a', 'GND4.g'],
+      ['D4.a', 'GND4.g'],
+      ['RL.a', 'S1.a'],
+      ['S1.b', 'C1.a'],
+      ['RL.b', 'GND2.g'],
+      ['C1.b', 'GND3.g'],
+      ['OSC1.ch1', 'VIN_P.p'],
+      ['OSC1.ch2', 'VOUT_P.p'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Başlat', text: '**▶ Başlat**. CH1 şebekeyi (200 V/böl.), CH2 çıkışı (10 V/böl.) gösteriyor.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Kaç diyot iletimde?',
+      text: 'Kablolardaki akım noktalarını izle: pozitif alternansta akım hangi yoldan geçiyor?',
+      check: {
+        kind: 'quiz',
+        question: 'Köprü doğrultucuda herhangi bir alternansta kaç diyot aynı anda iletimdedir?',
+        options: ['2', '1', '4', '3'],
+        answer: 0,
+        explain: 'Pozitif alternansta D1 ve D4, negatif alternansta D2 ve D3 iletir. Akım her iki yarıda da RL’den aynı yönde geçer.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's3',
+      title: 'Tepe çıkış gerilimi',
+      text: 'Sekonder tepe gerilimi 311 V / 10 = 31,1 V.',
+      check: {
+        kind: 'quiz',
+        question: 'Çıkışın tepe değeri yaklaşık kaçtır?',
+        options: ['≈ 29,6 V (31,1 − 2·V_D)', '≈ 30,4 V (31,1 − V_D)', '≈ 31,1 V', '≈ 22 V'],
+        answer: 0,
+        explain: 'Akım yolunda iki diyot seri olduğundan iki diyot düşümü kaybedilir: 31,1 − 2·0,75 ≈ 29,6 V.',
+      },
+      xp: 15,
+    },
+    { id: 's4', title: 'Filtre', text: '**S1**’i kapatıp 220 µF filtreyi bağla.', check: { kind: 'switch', comp: 'S1', closed: true } },
+    {
+      id: 's5',
+      title: 'Dalgalanma frekansı',
+      text: 'CH2’deki dalgalanmanın frekansını ölç (f ölçümü).',
+      check: {
+        kind: 'quiz',
+        question: 'Tam dalga doğrultucuda dalgalanma frekansı nedir?',
+        options: ['100 Hz', '50 Hz', '25 Hz', '200 Hz'],
+        answer: 0,
+        explain: 'Her iki alternans da doğrultulduğu için çıkış periyodu T/2 olur: f_r = 2·50 = 100 Hz. Bu yüzden aynı C için dalgalanma yarım dalganın yarısıdır.',
+      },
+      xp: 15,
+    },
+  ],
+  theory:
+    'Köprü doğrultucu dört diyotla her iki alternansı da yük üzerinde aynı yönde akıma çevirir. Akım yolunda iki diyot bulunduğundan V_p,out = V_p,sek − 2V_D. Çıkış frekansı giriş frekansının iki katıdır (100 Hz) ve filtreli dalgalanma V_r ≈ V_p/(2·f·R·C). Trafo sekonderi galvanik olarak yalıtıldığı için yük tarafı ayrıca topraklanabilir.',
+};
+
+// ───────────────────────────── 3. Kırpıcı ─────────────────────────────
+const clipper: Template = {
+  id: 'clipper',
+  title: 'Çift Taraflı Kırpıcı (Clipper)',
+  subtitle: 'Öngerilimli iki diyotla sinyali +3,7 V / −2,7 V’ta kırp',
+  level: 'Orta',
+  mood: 'surprised',
+  xp: 80,
+  doc: doc(
+    'Çift Taraflı Kırpıcı',
+    [
+      ['vac', 'VG1', 60, 140, 0, { amp: 8, freq: 1000 }],
+      ['label', 'VIN', 100, -20, 0, { text: 'VIN' }],
+      ['resistor', 'R1', 140, 60, 0, { R: 1000 }],
+      ['label', 'VOUT', 260, -20, 0, { text: 'VOUT' }],
+      ['diode', 'D1', 280, 100, 90, D4001],
+      ['vdc', 'VB1', 280, 200, 0, { V: 3 }],
+      ['switch', 'S1', 380, 60, 0, { closed: true }],
+      ['diode', 'D2', 480, 100, 270, D4001],
+      ['vdc', 'VB2', 480, 200, 180, { V: 2 }],
+      ['ground', 'GND1', 60, 260],
+      ['ground', 'GND2', 280, 320],
+      ['ground', 'GND3', 480, 320],
+      ['scope', 'OSC1', 600, 20, 0, { timeDiv: 0.2e-3, ch1Div: 5, ch2Div: 5, ch1Pos: 2, ch2Pos: -2, trig: 0 }],
+      ['label', 'VIN_P', 560, 160, 0, { text: 'VIN' }],
+      ['label', 'VOUT_P', 660, 200, 0, { text: 'VOUT' }],
+    ],
+    [
+      ['VG1.p', 'R1.a'],
+      ['VIN.p', 'R1.a'],
+      ['R1.b', 'D1.a'],
+      ['VOUT.p', 'R1.b'],
+      ['D1.k', 'VB1.p'],
+      ['VB1.n', 'GND2.g'],
+      ['R1.b', 'S1.a'],
+      ['S1.b', 'D2.k'],
+      ['D2.a', 'VB2.n'],
+      ['VB2.p', 'GND3.g'],
+      ['VG1.n', 'GND1.g'],
+      ['OSC1.ch1', 'VIN_P.p'],
+      ['OSC1.ch2', 'VOUT_P.p'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Başlat', text: '**▶ Başlat** ve iki kanalı karşılaştır.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Pozitif kırpma seviyesi',
+      text: 'D1, VOUT ≥ V_B1 + V_D olduğunda iletime geçer ve çıkışı sabitler.',
+      check: {
+        kind: 'quiz',
+        question: 'Pozitif tarafta çıkış yaklaşık hangi değerde kırpılır? (V_B1 = 3 V)',
+        options: ['≈ 3,7 V', '≈ 3 V', '≈ 2,3 V', '≈ 8 V'],
+        answer: 0,
+        explain: 'D1 iletime geçince VOUT = V_B1 + V_D ≈ 3 + 0,7 = 3,7 V.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's3',
+      title: 'Negatif kırpıcıyı kapat',
+      text: '**S1**’i açarak D2 kolunu devreden çıkar. Negatif alternansa ne oldu?',
+      check: { kind: 'switch', comp: 'S1', closed: false },
+      success: 'Artık sadece pozitif taraf kırpılıyor; negatif alternans −8 V’a kadar iniyor.',
+    },
+    {
+      id: 's4',
+      title: 'Kırpma seviyesini değiştir',
+      text: '**VB1**’i **1 V** yap ve kırpma seviyesinin ~1,7 V’a indiğini gözle.',
+      check: { kind: 'param', comp: 'VB1', param: 'V', op: '<=', value: 1 },
+    },
+    {
+      id: 's5',
+      title: 'Seri direncin görevi',
+      text: 'R1 olmasaydı ne olurdu?',
+      check: {
+        kind: 'quiz',
+        question: 'Kırpıcıda seri R1 direncinin asıl görevi nedir?',
+        options: ['Diyot iletimdeyken fazla gerilimi üzerine alıp akımı sınırlamak', 'Çıkış frekansını düşürmek', 'Diyotu ters kutuplamak', 'DC ofset eklemek'],
+        answer: 0,
+        explain: 'Diyot iletimdeyken çıkış sabitlenir; V_in − V_out farkı R1 üzerine düşer. R1 olmasaydı kaynak doğrudan diyot+öngerilim üzerinden kısa devre olurdu.',
+      },
+      xp: 15,
+    },
+  ],
+  theory:
+    'Kırpıcı devreler sinyalin belirli bir seviyenin üstünü/altını keser. Paralel kırpıcıda diyot, öngerilim kaynağıyla seri bağlanır; VOUT > V_B + V_D olduğunda diyot iletir ve çıkışı bu seviyeye kilitler. Ters yönde bağlı ikinci bir diyot + kaynak negatif tarafı da kırpar. Seri direnç fazla gerilimi üzerine alır.',
+};
+
+// ───────────────────────────── 4. Kenetleyici ─────────────────────────────
+const clamper: Template = {
+  id: 'clamper',
+  title: 'Kenetleyici (Clamper)',
+  subtitle: 'Kondansatör + diyot ile sinyale DC seviye ekle',
+  level: 'Orta',
+  mood: 'point',
+  xp: 80,
+  doc: doc(
+    'Pozitif Kenetleyici',
+    [
+      ['vac', 'VG1', 60, 140, 0, { amp: 5, freq: 1000 }],
+      ['label', 'VIN', 100, -20, 0, { text: 'VIN' }],
+      ['capacitor', 'C1', 140, 60, 0, { C: 1e-6 }],
+      ['label', 'VOUT', 260, -20, 0, { text: 'VOUT' }],
+      ['diode', 'D1', 280, 100, 270, D4148],
+      ['resistor', 'RL', 380, 100, 90, { R: 100e3 }],
+      ['ground', 'GND1', 60, 260],
+      ['ground', 'GND2', 280, 220],
+      ['ground', 'GND3', 380, 220],
+      ['scope', 'OSC1', 520, 20, 0, { timeDiv: 0.2e-3, ch1Div: 5, ch2Div: 5, ch1Pos: 2, ch2Pos: -3, trig: 0 }],
+      ['label', 'VIN_P', 480, 160, 0, { text: 'VIN' }],
+      ['label', 'VOUT_P', 580, 200, 0, { text: 'VOUT' }],
+    ],
+    [
+      ['VG1.p', 'C1.a'],
+      ['VIN.p', 'C1.a'],
+      ['C1.b', 'D1.k'],
+      ['VOUT.p', 'C1.b'],
+      ['D1.a', 'GND2.g'],
+      ['C1.b', 'RL.a'],
+      ['RL.b', 'GND3.g'],
+      ['VG1.n', 'GND1.g'],
+      ['OSC1.ch1', 'VIN_P.p'],
+      ['OSC1.ch2', 'VOUT_P.p'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Başlat', text: '**▶ Başlat**. İlk birkaç periyotta kondansatörün dolduğunu izle.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Çıkış nereye kenetlendi?',
+      text: 'CH2’nin **Min** ve **Maks** ölçümlerine bak.',
+      check: {
+        kind: 'quiz',
+        question: 'Bu pozitif kenetleyicide çıkışın minimum ve maksimum değeri yaklaşık nedir? (V_p = 5 V)',
+        options: ['−0,6 V … +9,4 V', '−5 V … +5 V', '0 V … +5 V', '+5 V … +10 V'],
+        answer: 0,
+        explain: 'Negatif tepede diyot iletir ve C, V_p − V_D ≈ 4,4 V’a dolar. Sonra VOUT = VIN + 4,4 V: min ≈ −0,6 V, maks ≈ +9,4 V. Tepeden tepeye değer değişmez (10 V).',
+      },
+      xp: 15,
+    },
+    {
+      id: 's3',
+      title: 'Negatif kenetleyiciye çevir',
+      text: '**D1**’i seç ve **⇄ Ters çevir** (ya da **F**). Diyotun anodu artık VOUT’a bağlı olmalı.',
+      check: { kind: 'pin', comp: 'D1', pin: 'a', net: 'VOUT' },
+      success: 'Şimdi çıkış aşağı kenetlendi: maks ≈ +0,6 V, min ≈ −9,4 V.',
+    },
+    {
+      id: 's4',
+      title: 'RC zaman sabiti',
+      text: '**RL**’yi **1 kΩ** yap. Kenetleme bozuluyor mu?',
+      check: { kind: 'param', comp: 'RL', param: 'R', op: '<=', value: 1000 },
+      success: 'τ = RC = 1 ms artık periyotla (1 ms) aynı mertebede → kondansatör periyot içinde boşalıyor, kenetleme bozuluyor. Kural: τ ≥ 5T.',
+    },
+  ],
+  theory:
+    'Kenetleyici, sinyalin şeklini ve tepeden tepeye değerini koruyarak DC seviyesini kaydırır. Diyot bir tepede iletip kondansatörü V_p − V_D’ye doldurur; diğer anlarda C bir DC kaynak gibi davranır: V_out = V_in ± V_C. İyi kenetleme için R_L·C ≫ T (genelde ≥ 5T) olmalıdır.',
+};
+
+// ───────────────────────────── 5. Zener regülatör ─────────────────────────────
+const zener: Template = {
+  id: 'zener',
+  title: 'Zener Gerilim Regülatörü',
+  subtitle: 'Giriş ve yük değişse de çıkış ≈ 5,1 V',
+  level: 'Temel',
+  mood: 'info',
+  xp: 70,
+  doc: doc(
+    'Zener Regülatör',
+    [
+      ['vdc', 'V1', 80, 120, 0, { V: 12 }],
+      ['resistor', 'RS', 160, 40, 0, { R: 470 }],
+      ['label', 'VOUT', 280, -40, 0, { text: 'VOUT' }],
+      ['zener', 'Z1', 280, 100, 270, { Vz: 5.1 }],
+      ['resistor', 'RL', 400, 100, 90, { R: 1000 }],
+      ['multimeter', 'DMM1', 500, 60, 0, { mode: 'DCV' }],
+      ['ground', 'GND1', 80, 240],
+      ['ground', 'GND2', 280, 220],
+      ['ground', 'GND3', 400, 220],
+      ['ground', 'GND4', 560, 220],
+    ],
+    [
+      ['V1.p', 'RS.a'],
+      ['RS.b', 'Z1.k'],
+      ['VOUT.p', 'RS.b'],
+      ['Z1.a', 'GND2.g'],
+      ['RS.b', 'RL.a'],
+      ['RL.b', 'GND3.g'],
+      ['V1.n', 'GND1.g'],
+      ['DMM1.pos', 'RL.a'],
+      ['DMM1.com', 'GND4.g'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Başlat', text: '**▶ Başlat**. DMM1 çıkış gerilimini gösteriyor.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Giriş değişimi',
+      text: '**V1**’i **15 V** yap. Çıkış ne kadar değişti?',
+      check: { kind: 'param', comp: 'V1', param: 'V', op: '>=', value: 15 },
+      success: 'Giriş %25 arttı ama çıkış sadece birkaç mV değişti — hat regülasyonu!',
+    },
+    {
+      id: 's3',
+      title: 'Zener akımı',
+      text: 'Z1’i seçip canlı değerlere bak.',
+      check: {
+        kind: 'quiz',
+        question: 'V1 = 15 V, RS = 470 Ω, RL = 1 kΩ iken zener akımı yaklaşık kaçtır?',
+        options: ['≈ 16 mA', '≈ 21 mA', '≈ 5 mA', '≈ 0 mA'],
+        answer: 0,
+        explain: 'I_RS = (15 − 5,15)/470 ≈ 21 mA, I_RL = 5,15/1000 ≈ 5,2 mA → I_Z = 21 − 5,2 ≈ 16 mA.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's4',
+      title: 'Regülasyonu kır',
+      text: '**RL**’yi **220 Ω** yap. Çıkışa ne oldu?',
+      check: { kind: 'param', comp: 'RL', param: 'R', op: '<=', value: 220 },
+      success: 'Yük çok fazla akım çekti; zener kırılmadan çıktı ve devre basit bir gerilim bölücüye döndü (≈ 4 V). R_L,min = R_S·V_Z/(V_in − V_Z).',
+    },
+  ],
+  theory:
+    'Zener diyot ters yönde V_Z gerilimine ulaşınca kırılma bölgesine girer ve akımdan bağımsız olarak yaklaşık sabit gerilim tutar. Seri direnç R_S fazla gerilimi alır: I_RS = (V_in − V_Z)/R_S = I_Z + I_L. Regülasyon için I_Z > 0 kalmalıdır; aksi halde devre gerilim bölücüye dönüşür.',
+};
+
+// ───────────────────────────── 6. BJT polarma ─────────────────────────────
+const bjt: Template = {
+  id: 'bjt-bias',
+  title: 'BJT Gerilim Bölücü Polarma',
+  subtitle: 'Ortak emetör NPN’in Q noktası (I_C, V_CE)',
+  level: 'Orta',
+  mood: 'point',
+  xp: 90,
+  doc: doc(
+    'BJT Gerilim Bölücü Polarma',
+    [
+      ['vdc', 'VCC', 40, 140, 0, { V: 12 }],
+      ['multimeter', 'DMM2', 120, -120, 0, { mode: 'DCA' }],
+      ['resistor', 'R1', 180, 60, 90, { R: 47e3 }],
+      ['resistor', 'R2', 180, 220, 90, { R: 10e3 }],
+      ['resistor', 'RC', 300, 20, 90, { R: 2200 }],
+      ['npn', 'Q1', 280, 140, 0, { beta: 100 }],
+      ['resistor', 'RE', 300, 260, 90, { R: 1000 }],
+      ['multimeter', 'DMM1', 440, 140, 0, { mode: 'DCV' }],
+      ['label', 'VC', 380, 60, 0, { text: 'VC' }],
+      ['label', 'VB', 220, 120, 0, { text: 'VB' }],
+      ['label', 'VE', 360, 220, 0, { text: 'VE' }],
+      ['ground', 'GND1', 40, 260],
+      ['ground', 'GND2', 180, 340],
+      ['ground', 'GND3', 300, 380],
+    ],
+    [
+      ['VCC.p', 'DMM2.pos'],
+      ['DMM2.com', 'R1.a'],
+      ['DMM2.com', 'RC.a'],
+      ['R1.b', 'Q1.b'],
+      ['R1.b', 'R2.a'],
+      ['R2.b', 'GND2.g'],
+      ['RC.b', 'Q1.c'],
+      ['Q1.e', 'RE.a'],
+      ['RE.b', 'GND3.g'],
+      ['VCC.n', 'GND1.g'],
+      ['VC.p', 'Q1.c'],
+      ['VB.p', 'Q1.b'],
+      ['VE.p', 'Q1.e'],
+      ['DMM1.pos', 'Q1.c'],
+      ['DMM1.com', 'Q1.e'],
+    ],
+  ),
+  steps: [
+    { id: 's1', title: 'Başlat', text: '**▶ Başlat**. DMM1 V_CE’yi, DMM2 kaynaktan çekilen akımı ölçüyor.', check: { kind: 'run' } },
+    {
+      id: 's2',
+      title: 'Thevenin ile V_B',
+      text: 'Baz ucunu Thevenin eşdeğeriyle çöz: V_TH = 12·10k/57k, R_TH = 47k‖10k.',
+      check: {
+        kind: 'quiz',
+        question: 'β = 100 için I_C yaklaşık kaçtır?',
+        options: ['≈ 1,3 mA', '≈ 2,1 mA', '≈ 5,5 mA', '≈ 0,13 mA'],
+        answer: 0,
+        explain: 'V_TH ≈ 2,1 V, R_TH ≈ 8,2 kΩ. I_B = (2,1 − 0,65)/(8,2k + 101·1k) ≈ 13 µA → I_C ≈ 1,3 mA.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's3',
+      title: 'Çalışma bölgesi',
+      text: 'Q1’i seç: canlı değerlerde V_BE, V_CE ve bölgeyi gör.',
+      check: {
+        kind: 'quiz',
+        question: 'V_CE ≈ 7,7 V iken transistör hangi bölgede çalışıyor?',
+        options: ['Aktif (ileri) bölge', 'Doyum', 'Kesim', 'Ters aktif'],
+        answer: 0,
+        explain: 'B-E iletimde, B-C ters kutuplu (V_CE > V_CE,sat) → aktif bölge. Yükselteç olarak kullanılabilir.',
+      },
+      xp: 15,
+    },
+    {
+      id: 's4',
+      title: 'β kararlılığı',
+      text: '**Q1**’in **β** değerini **200** yap. I_C ne kadar değişti?',
+      check: { kind: 'param', comp: 'Q1', param: 'beta', op: '>=', value: 200 },
+      success: 'β iki katına çıktı ama I_C yalnızca ~%4 arttı. RE’nin negatif geri beslemesi ve (β+1)·RE ≫ R_TH koşulu sayesinde Q noktası β’dan neredeyse bağımsız!',
+    },
+  ],
+  theory:
+    'Gerilim bölücü polarmada baz, R1–R2 bölücüsünün Thevenin eşdeğeriyle beslenir: V_TH = V_CC·R2/(R1+R2), R_TH = R1‖R2. KVL: I_B = (V_TH − V_BE)/(R_TH + (β+1)R_E). (β+1)R_E ≫ R_TH ise I_C ≈ (V_TH − V_BE)/R_E olur ve β’dan bağımsızlaşır. V_CE = V_CC − I_C·R_C − I_E·R_E.',
+};
+
+export const TEMPLATES: Template[] = [ledOhm, halfWave, fullWave, clipper, clamper, zener, bjt];
+export const templateById = (id: string | null) => TEMPLATES.find((t) => t.id === id);
