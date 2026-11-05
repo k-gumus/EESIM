@@ -14,9 +14,11 @@ Web tabanlı, 3D destekli ve yapay zekâ destekli elektronik devre simülatörü
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm test             # 23 motor + şablon testi
-npm run build        # dist/  → GitHub Pages / Vercel
-npm run build:single # dist-single/index.html → tek dosyalık sürüm
+npm test             # 65 test: motor, 49 deneyin quiz cevapları, bilgi kartları, eşitleme
+npm run build        # dist/  → Cloudflare Pages / GitHub Pages / Vercel
+npm run build:single # dist-single/index.html → tek dosyalık sürüm (giriş/bulut yok, misafir modu)
+npm run dev:api      # build + Cloudflare Pages Functions yerelde (giriş, ilerleme, datasheet, Tepecan’a Sor)
+npm run deploy       # Cloudflare Pages’e yayınla — kurulum: docs/CLOUDFLARE.md
 ```
 
 > Proje OneDrive klasöründe olduğu için `node_modules` (≈300 MB) senkronizasyonu yavaşlatabilir. Geliştirmeyi OneDrive dışındaki bir klasörde (ör. `C:\dev\IEEESIM`) yapman önerilir.
@@ -25,14 +27,17 @@ npm run build:single # dist-single/index.html → tek dosyalık sürüm
 
 | Bölüm | Ne yapıyor |
 |---|---|
-| **Palet** | 20 eleman: R, C, L, anahtar, trafo (normal/orta uçlu), diyot (1N4001/1N4148), zener, LED, NPN/PNP, N/P-MOSFET, DC/AC kaynak, akım kaynağı, GND, düğüm etiketi, multimetre, osiloskop |
+| **Palet** | 45 eleman: R, C, L, potansiyometre, anahtar, buton, trafo, diyot (1N4001/1N4148/1N5819), zener, LED, lamba, LDR, NTC, NPN/PNP/N-P MOSFET (2N3904, BC547, 2N2222, 2N7000, IRF540… hazır modeller), op-amp (LM741/TL081/LM358), 555, 7805, AND/OR/NOT/NAND/NOR/XOR, D flip-flop, lojik giriş/gösterge, DC/AC/saat/akım kaynağı, pil, bağımlı kaynaklar (E/G/F/H), multimetre, osiloskop |
+| **Bilgi kartları** | Her eleman için: ne işe yarar, nasıl çalışır, formül, tipik değerler, dikkat edilecekler, kılıf/sınır değerler, datasheet bağlantıları; kendi PDF’ini yükle (misafirde tarayıcıda, girişte bulutta) |
 | **Canvas** | React Flow; sürükle-bırak, 20 px ızgara, `R` döndür, `F` ters çevir, `Space`/çift tık anahtar, `Ctrl+Z/Y` |
 | **Canlı akım** | Kablo rengi = düğüm gerilimi (yeşil +, kırmızı −), hareketli noktalar = akım yönü ve büyüklüğü (KCL ile kablo ağacından hesaplanır) |
-| **Osiloskop** | 2 kanal, tetikleme, 1-2-5 V/böl. ve zaman/böl., Maks/Min/Vpp/Ort/RMS/frekans ölçümleri |
+| **Osiloskop** | 2 kanal, tetikleme, 1-2-5 V/böl. ve zaman/böl., Maks/Min/Vpp/Ort/RMS/frekans ölçümleri, XY modu |
 | **Multimetre** | V⎓, V∿ (true-RMS), A⎓, A∿ — ampermetre gerçekten 0 Ω seri eleman olarak çözülür |
 | **3D Montaj** | Netlist’ten otomatik breadboard yerleşimi; renk kodlu dirençler, yanan LED, tıklanabilir anahtar, canlı ekranlı cihazlar |
-| **Deneyler** | 7 EE212 föyü, adım adım görevler, otomatik kontrol, quiz, XP / seviye / günlük seri |
-| **Tepecan AI** | Netlist + simülasyon sonuçlarını okur; teorik mentor, lab asistanı, hata ayıklayıcı. Önerdiği düzeltmeyi tek tıkla uygular |
+| **Deney kataloğu** | 12 konu başlığı (DC, geçici rejim, AC, filtreler, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme); 49 etkileşimli föy + 66 “yakında” deney; adım adım görevler, otomatik kontrol, quiz, XP / seviye / günlük seri |
+| **Hesap** | Google ya da e-posta ile giriş, misafir modu; XP ve ilerleme her cihazda (Cloudflare D1) |
+| **Tanıtım turu** | İlk girişte Tepecan’lı spot ışıklı tur; sonraki girişlerde “kaldığın yer” kartı ve yenilikler |
+| **Tepecan’a Sor** | Netlist + simülasyon sonuçlarını okur; teorik mentor, lab asistanı, hata ayıklayıcı. Önerdiği düzeltmeyi tek tıkla uygular. Varsayılan: Tepecan Bulut (Workers AI, günlük kota); Ollama ve WebLLM de seçilebilir |
 
 ## Mimari
 
@@ -84,7 +89,7 @@ Model arayüzü görmez; her soruda şu bağlam gönderilir: SPICE netlist, dü�
 
 ## Yeni deney paketi eklemek
 
-`src/templates/index.ts` içinde bir `Template` nesnesi ekle:
+Konusuna uygun `src/templates/t_*.ts` dosyasına bir `Template` ekle (hızlı kurucu `B` sınıfı için `lib.ts`’e bak) ya da `doc()` ile:
 
 ```ts
 doc: doc('Başlık', [
@@ -98,7 +103,7 @@ steps: [
 ]
 ```
 
-Kontrol türleri: `run`, `switch`, `param`, `pin` (bir pinin hangi etiketli düğüme bağlı olduğu), `measure` (düğüm istatistiği), `quiz`, `manual`. Konumlar 20 px ızgarasına oturmalı. Quiz cevaplarını `src/templates/templates.test.ts`’e bir testle bağlamak iyi pratiktir.
+Kontrol türleri: `run`, `switch`, `param`, `pin` (bir pinin hangi etiketli düğüme bağlı olduğu), `measure` (düğüm istatistiği), `quiz`, `manual`. Konumlar 20 px ızgarasına oturmalı. Quiz cevaplarını `src/templates/catalog.test.ts`’e bir testle bağla; yeni deney “yakında” listesindeyse `planned.ts`’ten kaldırmana gerek yok (aynı kimlik otomatik olarak etkileşimli sürümle değişir).
 
 ## Tepecan görselleri
 
@@ -117,10 +122,11 @@ Kontrol türleri: `run`, `switch`, `param`, `pin` (bir pinin hangi etiketli dü�
 
 ## Yayınlama
 
+- **Cloudflare (önerilen, giriş + bulut özellikleri):** adım adım rehber → [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md)
 - **GitHub Pages:** `docs/github-pages-deploy.yml` dosyasını `.github/workflows/deploy.yml` olarak taşı, depoya gönder → Settings → Pages → Source: GitHub Actions. Her `main` gönderiminde testler çalışır ve site yayınlanır.
 - **Vercel:** Framework “Vite”, build `npm run build`, çıktı `dist`.
 
-Sunucu maliyeti yok: tüm hesaplama tarayıcıda.
+Simülasyonun tamamı tarayıcıda çalışır. GitHub Pages/Vercel/tek dosya sürümünde giriş ve bulut özellikleri kapalıdır; uygulama misafir modunda tam çalışır.
 
 ## Klasör yapısı
 
@@ -132,9 +138,15 @@ src/
   store/       devre durumu, geri al/yinele, düzeltme yamaları
   ui/          palet, canvas düğümleri/kabloları, osiloskop, özellikler, deney ve AI panelleri
   three/       breadboard yerleşimi ve 3D sahne
-  templates/   EE212 deney paketleri + doğrulama testleri
-  ai/          Ollama/WebLLM sağlayıcıları, sistem istemi, sohbet durumu
+  templates/   deney kataloğu: konu başlıkları, 49 föy (t_*.ts), planlı deneyler, doğrulama testleri
+  ai/          Tepecan Bulut / Ollama / WebLLM sağlayıcıları, sistem istemi, sohbet durumu
+  auth/        giriş ekranı, oturum, ilerleme eşitleme
+  datasheets/  PDF depolama (IndexedDB / bulut)
+  tour/        tanıtım turu, “kaldığın yer” kartı, yenilikler
   debug/       kural tabanlı hata ayıklayıcı
   gamify/      XP, seviye, günlük seri
   tepecan/     maskot görselleri ve konuşma balonu olay yolu
+functions/     Cloudflare Pages Functions: /api/auth, /api/progress, /api/datasheets, /api/ask
+schema.sql     D1 veritabanı şeması
+wrangler.toml  Cloudflare yapılandırması (D1, R2, Workers AI, Google OAuth)
 ```

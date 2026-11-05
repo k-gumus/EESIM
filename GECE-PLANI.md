@@ -42,6 +42,17 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
   Premium bayrağı şimdilik elle: `wrangler d1 execute ieeesim --remote --command "UPDATE users SET premium=1 WHERE email='…'"`.
 - Saat kaynağı (clock) olan devrelerde zaman adımı periyodun 1/100'ü ile sınırlanır (buck/boost doğru çalışsın diye).
 
+## Sabah Kerem’in yapması gerekenler
+Ayrıntılı, adım adım rehber: `docs/CLOUDFLARE.md`
+1. Cloudflare hesabı aç, alan adını Cloudflare Registrar’dan al (ya da var olanı Cloudflare’e ekle).
+2. `npm install` → `npx wrangler login`
+3. `npx wrangler d1 create ieeesim` → çıkan `database_id`’yi `wrangler.toml`’a yaz → `npm run db:remote`
+4. R2’yi etkinleştir → `npx wrangler r2 bucket create ieeesim-files`
+5. Google Cloud Console’da OAuth istemcisi (Web) oluştur; yönlendirme adresi `https://ALAN-ADIN/api/auth/google/callback`.
+   Client ID → `wrangler.toml` `GOOGLE_CLIENT_ID`; secret → `npx wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name ieeesim`
+6. `npm run deploy` → Pages’te Custom domains’ten alan adını bağla → `https://ALAN-ADIN/api/health` kontrol et.
+Bunlar yapılmadan da her şey çalışır: `IEEESIM.html` (tek dosya) ve `npm run dev` misafir modunda tam işlevli.
+
 ## Görevler
 - [x] 0. Ortam: proje klasörü + node_modules kontrolü, eksikse Kerem'in klasöründen geri yükle; git init; testler yeşil
 - [x] 1. Üst bar yeniden tasarımı: Logo | Dosya (Yeni/Aç/Kaydet/Netlist-JSON dışa aktar) | Deney bul (arama, Ctrl+K) | açık deney adı | Simülasyon araçları (3D / Osiloskop / Değer okuma) + Başlat
@@ -52,7 +63,7 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - [x] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
 - [x] 7. İlk giriş eğitimi (Tepecan'lı adım adım tur) + sonraki girişler için “yenilikler / kaldığın yer” turu, “turu tekrar göster”
 - [x] 8. Tepecan'a Sor backend: /api/ask (Workers AI), kota, premium bayrağı
-- [ ] 9. Test (birim + tarayıcı), build, Kerem'in klasörüne teslim, Cloudflare kurulum rehberi (alan adı, Pages, D1, R2, Google OAuth anahtarları)
+- [x] 9. Test (birim + tarayıcı), build, Kerem'in klasörüne teslim, Cloudflare kurulum rehberi (alan adı, Pages, D1, R2, Google OAuth anahtarları)
 
 ## İLERLEME
 - 2026-11-04 23:50 — Plan yazıldı, 03:30 başlangıcı planlandı.
@@ -63,3 +74,4 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - 2026-11-05 08:25 — Görev 6 tamam: giriş ekranı (Google, e-posta/şifre, kayıt, misafir, çevrimdışı modu), Pages Functions API (auth, progress, datasheets → R2), D1 şeması, wrangler.toml; wrangler ile yerelde uçtan uca test edildi (kayıt, giriş, hatalı şifre, çıkış, ilerleme, PDF yükle/indir/sil, köken denetimi, Google yönlendirmesi). 63 test yeşil.
 - 2026-11-05 08:40 — Görev 7 tamam: Tepecan’lı tanıtım turu (palet, canvas, Başlat, araçlar, Deney bul, Dosya, sağ panel, profil), tekrar hoş geldin kartı (kaldığın yer, öneri, yenilikler). Tarayıcıda uçtan uca denendi. 63 test yeşil.
 - 2026-11-05 08:55 — Görev 8 tamam: /api/ask (Workers AI akışı, günlük kota, premium modeli), istemcide “Tepecan Bulut” sağlayıcısı ve kalan hak göstergesi; yerelde sahte akışla uçtan uca denendi (5. sorudan sonra 429). 65 test yeşil.
+- 2026-11-05 09:10 — Görev 9 tamam: 65 birim testi + tarayıcı testleri (tek dosya file://, Vite, wrangler yerel), dist ve tek dosya IEEESIM.html derlendi, docs/CLOUDFLARE.md ve README güncellendi, sürüm 0.2.0. Gece görevi bitti.
