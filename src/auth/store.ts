@@ -14,18 +14,33 @@ interface AuthState {
   guest: boolean;
   /** sunucu API'si erişilebilir mi (Cloudflare Pages üzerinde mi çalışıyoruz) */
   online: boolean | null;
+  /** sunucuda Google OAuth yapılandırılmış mı */
+  google: boolean;
+  /** sunucuda Workers AI bağlı mı */
+  cloudAi: boolean;
   ready: boolean;
   loginOpen: boolean;
   setUser: (u: User | null) => void;
   continueAsGuest: () => void;
 }
 
+export const GUEST_KEY = 'ieeesim.guest';
+
 export const useAuth = create<AuthState>((set) => ({
   user: null,
   guest: false,
   online: null,
+  google: false,
+  cloudAi: false,
   ready: false,
   loginOpen: false,
   setUser: (user) => set({ user, guest: false, loginOpen: false }),
-  continueAsGuest: () => set({ guest: true, loginOpen: false }),
+  continueAsGuest: () => {
+    try {
+      localStorage.setItem(GUEST_KEY, '1');
+    } catch {
+      /* depolama yok */
+    }
+    set({ guest: true, loginOpen: false });
+  },
 }));

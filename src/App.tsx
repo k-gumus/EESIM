@@ -11,6 +11,9 @@ import { CopilotPanel } from './ui/CopilotPanel';
 import { TemplatesModal } from './ui/TemplatesModal';
 import { NetlistModal } from './ui/NetlistModal';
 import { InfoCard } from './ui/InfoCard';
+import { LoginScreen } from './auth/LoginScreen';
+import { initAuth } from './auth/api';
+import { useAuth } from './auth/store';
 import { TepecanToast } from './ui/TepecanToast';
 import { useCircuit } from './store/circuitStore';
 import { TEMPLATES } from './templates';
@@ -28,10 +31,20 @@ export default function App() {
   const [split, setSplit] = useState(0.5);
   const dragRef = useRef(false);
 
-  // İlk açılış: Tepecan karşılama + ilk deneyi arka planda yükle
+  // Açılış: oturumu denetle (giriş ekranı gerekirse açılır)
+  const authReady = useAuth((s) => s.ready);
+  const loginOpen = useAuth((s) => s.loginOpen);
   useEffect(() => {
+    initAuth();
     const st = useCircuit.getState();
-    if (!st.nodes.length) st.loadDoc(TEMPLATES[1].doc, TEMPLATES[1].id);
+    if (!st.nodes.length) st.loadDoc(TEMPLATES[0].doc, TEMPLATES[0].id);
+  }, []);
+
+  // Giriş/misafir seçimi yapılınca: ilk kez gelene karşılama
+  const welcomed = useRef(false);
+  useEffect(() => {
+    if (!authReady || loginOpen || welcomed.current) return;
+    welcomed.current = true;
     let seen = true;
     try {
       seen = localStorage.getItem('ieeesim.welcomed') === '1';
@@ -40,8 +53,7 @@ export default function App() {
       /* yok say */
     }
     if (!seen) useUI.getState().openCatalog('first');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authReady, loginOpen]);
 
   // Eleman seçilince Özellikler sekmesine geç
   const lastSel = useRef<string | null>(null);
@@ -121,6 +133,7 @@ export default function App() {
         {catalog && <TemplatesModal first={catalog === 'first'} onClose={() => useUI.getState().closeCatalog()} />}
         {netOpen && <NetlistModal onClose={() => useUI.getState().setNetlist(false)} />}
         <InfoCard />
+        <LoginScreen />
       </div>
     </ReactFlowProvider>
   );

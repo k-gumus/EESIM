@@ -1,0 +1,25 @@
+# IEEESIM — Cloudflare Pages yapılandırması
+# Ayrıntılı kurulum: docs/CLOUDFLARE.md
+name = "ieeesim"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "dist"
+
+[vars]
+# Google Cloud Console → API'ler ve Hizmetler → Kimlik bilgileri → OAuth istemci kimliği (Web uygulaması)
+GOOGLE_CLIENT_ID = ""
+AI_DAILY_FREE = "20"
+AI_DAILY_PREMIUM = "200"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+# GOOGLE_CLIENT_SECRET gizlidir: `npx wrangler pages secret put GOOGLE_CLIENT_SECRET` ile ekle (bu dosyaya yazma!)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ieeesim"
+database_id = "BURAYA-D1-KIMLIGI"   # `npx wrangler d1 create ieeesim` çıktısındaki database_id
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "ieeesim-files"
+
+[ai]
+binding = "AI"

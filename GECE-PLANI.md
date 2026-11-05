@@ -26,6 +26,13 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - Bilgi kartı paletteki her elemanın üstündeki “i” düğmesinden ve Özellikler panelindeki “ⓘ Bilgi kartı” bağlantısından açılır.
   Datasheet bağlantıları: TI parçaları için doğrudan TI PDF’i, diğerleri için Octopart araması (kırık bağlantı riski olmasın diye).
   Kullanıcı PDF’i: misafirde IndexedDB, girişte /api/datasheets → R2 (sunucu tarafı Görev 6’da). “Bu elemanla yapılan deneyler” katalogdan otomatik çıkarılır.
+- Giriş: açılışta /api/health ile sunucu aranır. Sunucu yoksa (tek dosya/GitHub Pages) giriş ekranı “çevrimdışı sürüm” notuyla yalnızca misafir seçeneği sunar.
+  Misafir seçimi tarayıcıda hatırlanır; sağ üstteki menüden her zaman “Giriş yap” denebilir.
+- Oturum: 30 günlük HttpOnly + SameSite=Lax çerez; veritabanında belirtecin yalnızca SHA-256 özeti tutulur. Şifre: PBKDF2-SHA256, 100 000 yineleme (Workers üst sınırı), 16 bayt tuz.
+  Durum değiştiren /api istekleri yalnızca aynı kökenden kabul edilir (CSRF önlemi).
+- Google ile giriş: OAuth 2.0 yetkilendirme kodu akışı + state çerezi; aynı e-postalı şifreli hesap varsa Google ona bağlanır (Google e-postayı doğruladığı için).
+- İlerleme eşitleme: XP en büyüğü, adım/deney kümeleri birleşimi; değişiklikler 1,5 sn gecikmeyle sunucuya yazılır.
+- Kayıtlı devrelerin buluta yazılması bu gece yapılmadı (şema dışı bırakıldı) — sonraki adım.
 - Saat kaynağı (clock) olan devrelerde zaman adımı periyodun 1/100'ü ile sınırlanır (buck/boost doğru çalışsın diye).
 
 ## Görevler
@@ -35,7 +42,7 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - [x] 3. Motor genişletme: kontrollü kaynaklar (E/G/F/H), op-amp makro modeli (doyumlu), potansiyometre, buton (pull-up/pull-down örnekleri), pil, lamba, Schottky, LDR/termistör, lojik kapılar + saat kaynağı, 555 (davranışsal), BJT/MOSFET hazır modelleri (2N2222, BC547, 2N7000, IRF540)
 - [x] 4. Eleman bilgi kartları: Ne işe yarar / Nasıl çalışır / Tipik değerler / Dikkat (ör. pull-down neden gerekir) / malzeme-kılıf-sınır değerleri / datasheet bağlantısı + PDF yükleme (misafirde IndexedDB, girişli kullanıcıda R2)
 - [x] 5. Deney kataloğu: elektrik-elektronik mühendisliği eğitimi ve kariyerinde karşılaşılan deneylerin konu başlıklarına göre tam listesi; platformda simüle edilebilenler adım adım şablon olarak, kategori sayfası + arama
-- [ ] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
+- [x] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
 - [ ] 7. İlk giriş eğitimi (Tepecan'lı adım adım tur) + sonraki girişler için “yenilikler / kaldığın yer” turu, “turu tekrar göster”
 - [ ] 8. Tepecan'a Sor backend: /api/ask (Workers AI), kota, premium bayrağı
 - [ ] 9. Test (birim + tarayıcı), build, Kerem'in klasörüne teslim, Cloudflare kurulum rehberi (alan adı, Pages, D1, R2, Google OAuth anahtarları)
@@ -46,3 +53,4 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - 2026-11-05 07:40 — Görev 3 tamam: op-amp, E/G/F/H, potansiyometre, buton, pil, lamba, LDR, NTC, 7805, 6 lojik kapı, D-FF, saat, lojik giriş/gösterge, 555, BJT/MOSFET/Schottky hazır modelleri; semboller, SPICE çıktısı, 3D (DIP/TO-220/trimpot), osiloskop XY. 40 test yeşil.
 - 2026-11-05 07:50 — Görev 5 tamam: konu başlıklı katalog penceresi (kenar çubuğu, arama, seviye filtresi, yakında olanlar), 42 yeni föy (DC, geçici, AC, filtre, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme), 66 planlı deney; motor sağlamlaştırma. 60 test yeşil.
 - 2026-11-05 08:05 — Görev 4 tamam: 45 elemanın bilgi kartı (ne işe yarar, nasıl çalışır, formül, tipik değerler, dikkat, kılıf/sınır değerler, datasheet), PDF yükleme (IndexedDB; girişte buluta), elemanı kullanan deneylere kısayol. 61 test yeşil.
+- 2026-11-05 08:25 — Görev 6 tamam: giriş ekranı (Google, e-posta/şifre, kayıt, misafir, çevrimdışı modu), Pages Functions API (auth, progress, datasheets → R2), D1 şeması, wrangler.toml; wrangler ile yerelde uçtan uca test edildi (kayıt, giriş, hatalı şifre, çıkış, ilerleme, PDF yükle/indir/sil, köken denetimi, Google yönlendirmesi). 63 test yeşil.
