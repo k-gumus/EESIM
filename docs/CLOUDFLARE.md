@@ -19,17 +19,17 @@ giriş, ilerleme kaydı, datasheet depolama ve “Tepecan’a Sor”. Hepsi Clou
 ## 1. İlk yayın (telefondan yapılabilir)
 
 1. **GitHub bağlantısı:** Cloudflare panelinde **Workers & Pages → Create → Import a repository** ile `EESIM` deposunu bağla.
-   Bu zaten yapıldıysa (Worker adı `eeesim`) bu adımı atla. Worker’ın adı `wrangler.toml`’daki `name` ile **aynı** olmalı.
-2. **Build ayarları** (Worker → Settings → Build): build komutu boş kalabilir (`wrangler deploy` siteyi kendisi derler), deploy komutu `npx wrangler deploy`.
+   Bu zaten yapıldıysa (Worker adı `eesim`) bu adımı atla. Worker’ın adı `wrangler.toml`’daki `name` ile **aynı** olmalı.
+2. **Build ayarları** (Worker → Settings → Build): **Build command** boş bırak ya da tam olarak `npm run build` yaz (sonuna başka kelime ekleme). **Deploy command:** `npx wrangler deploy`. `wrangler deploy` siteyi zaten kendisi derler.
 3. **İlk yayını başlat:** `main` dalına bir değişiklik merge et (ya da panelden **Retry build**). Bu yayın Worker’ı, D1 veritabanını ve tabloları kendiliğinden oluşturur.
-4. **Kontrol:** `https://eeesim.<hesap-adın>.workers.dev/api/health` şunu göstermeli: `{"ok":true,"google":false,"ai":true,"db":true,"files":false}`
+4. **Kontrol:** `https://eesim.<hesap-adın>.workers.dev/api/health` şunu göstermeli: `{"ok":true,"google":false,"ai":true,"db":true,"files":false}`
 5. **Dene:** siteyi aç, e-posta ile kayıt ol, bir deney adımı tamamla, Tepecan’a bir soru sor.
 
 ## 2. Alan adı
 
 1. **Domain Registration → Register Domains** → alan adını ara ve satın al (Cloudflare Registrar maliyet fiyatına satar).
    Başka bir yerden aldıysan: **Add a site** → Free plan → verilen iki nameserver’ı alan adını aldığın yerde gir.
-2. **Workers & Pages → eeesim → Settings → Domains & Routes → Add → Custom domain** → `ALAN-ADIN` (ya da `sim.ALAN-ADIN`).
+2. **Workers & Pages → eesim → Settings → Domains & Routes → Add → Custom domain** → `ALAN-ADIN` (ya da `sim.ALAN-ADIN`).
    DNS kaydı ve HTTPS sertifikası otomatik oluşur (birkaç dakika sürebilir).
 
 ## 3. Google ile giriş (isteğe bağlı)
@@ -40,10 +40,10 @@ giriş, ilerleme kaydı, datasheet depolama ve “Tepecan’a Sor”. Hepsi Clou
    - Kapsamlar: `openid`, `email`, `profile` (hassas değildir, Google incelemesi gerekmez)
    - Test aşamasında en fazla 100 test kullanıcısı girebilir; herkese açmak için **Publish app** de.
 3. **Credentials → Create credentials → OAuth client ID → Web application**
-   - **Authorized JavaScript origins:** `https://ALAN-ADIN` (ve `https://eeesim.<hesap-adın>.workers.dev`)
+   - **Authorized JavaScript origins:** `https://ALAN-ADIN` (ve `https://eesim.<hesap-adın>.workers.dev`)
    - **Authorized redirect URIs:** `https://ALAN-ADIN/api/auth/google/callback` (ve workers.dev adresiyle aynısı)
 4. **Client ID**’yi GitHub’da `wrangler.toml` → `GOOGLE_CLIENT_ID` satırına yaz.
-5. **Client secret**’ı dosyaya yazma: panelde **eeesim → Settings → Variables and Secrets → Add → Type: Secret**, adı `GOOGLE_CLIENT_SECRET`.
+5. **Client secret**’ı dosyaya yazma: panelde **eesim → Settings → Variables and Secrets → Add → Type: Secret**, adı `GOOGLE_CLIENT_SECRET`.
 
 ## 4. Datasheet deposu — R2 (isteğe bağlı)
 
