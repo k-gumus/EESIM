@@ -1,5 +1,7 @@
 # IEEESIM · Tepecan Devre Laboratuvarı
 
+> Elektrik öğrencileri için simülasyon aracı — depo: [k-gumus/EESIM](https://github.com/k-gumus/EESIM) · Lisans: MIT
+
 Web tabanlı, 3D destekli ve yapay zekâ destekli elektronik devre simülatörü — IEEE Yeditepe için, EE212 laboratuvarı odaklı, tamamen Türkçe.
 
 ![Şematik + Tepecan AI](docs/ekran-2d.png)
@@ -150,3 +152,7 @@ functions/     Cloudflare Pages Functions: /api/auth, /api/progress, /api/datash
 schema.sql     D1 veritabanı şeması
 wrangler.toml  Cloudflare yapılandırması (D1, R2, Workers AI, Google OAuth)
 ```
+
+## Lisans
+
+MIT — bkz. [`LICENSE`](LICENSE).
