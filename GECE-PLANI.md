@@ -75,3 +75,4 @@ Bunlar yapılmadan da her şey çalışır: `IEEESIM.html` (tek dosya) ve `npm r
 - 2026-11-05 08:40 — Görev 7 tamam: Tepecan’lı tanıtım turu (palet, canvas, Başlat, araçlar, Deney bul, Dosya, sağ panel, profil), tekrar hoş geldin kartı (kaldığın yer, öneri, yenilikler). Tarayıcıda uçtan uca denendi. 63 test yeşil.
 - 2026-11-05 08:55 — Görev 8 tamam: /api/ask (Workers AI akışı, günlük kota, premium modeli), istemcide “Tepecan Bulut” sağlayıcısı ve kalan hak göstergesi; yerelde sahte akışla uçtan uca denendi (5. sorudan sonra 429). 65 test yeşil.
 - 2026-11-05 09:10 — Görev 9 tamam: 65 birim testi + tarayıcı testleri (tek dosya file://, Vite, wrangler yerel), dist ve tek dosya IEEESIM.html derlendi, docs/CLOUDFLARE.md ve README güncellendi, sürüm 0.2.0. Gece görevi bitti.
+- 2026-11-05 09:15 — Kerem'e özet mesajı gönderildi. Tüm görevler bitti; devam kontrolleri bir şey yapmamalı.
