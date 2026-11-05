@@ -4,6 +4,7 @@ import { docToGraph } from '../circuit/doc';
 import { compileCircuit } from '../circuit/compile';
 import { Simulator } from '../engine/simulator';
 import type { CompiledCircuit } from '../circuit/types';
+import { formatCurrent, formatMeter } from '../circuit/format';
 
 function runTemplate(id: string, mutate?: (doc: (typeof TEMPLATES)[number]['doc']) => void, periods = 6) {
   const t = TEMPLATES.find((x) => x.id === id)!;
@@ -57,6 +58,16 @@ describe('Şablonlar', () => {
       set(d, 'R1', { R: 220 });
     });
     expect(b.sim.branchCurrent('DMM1')).toBeGreaterThan(0.03);
+  });
+
+  it('LED: anahtar açıkken ölçü aleti ve etiketler 0 gösterir (föy: "devreden akım akmıyor")', () => {
+    const a = runTemplate('led-ohm');
+    const i = a.sim.branchCurrent('DMM1');
+    expect(Math.abs(i)).toBeLessThan(1e-10);
+    expect(formatMeter(i, 'A')).toBe('0,000 A');
+    expect(formatCurrent(i)).toBe('0 A');
+    // gerçek küçük akımlar yine görünür
+    expect(formatCurrent(2.5e-9)).toBe('2,5 nA');
   });
 
   it('yarım dalga: tepe ≈ 9,2 V, ort ≈ V_p/π, filtreli ripple < 0,95 V', () => {

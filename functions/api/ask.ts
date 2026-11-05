@@ -1,13 +1,33 @@
-// POST /api/ask  { messages: [{role, content}] }  → Workers AI yanıtı (SSE akışı: data: {"response":"…"})
+// POST /api/ask  { messages: [{role, content}] }  → Workers AI yanıtı (SSE akışı)
+//   Eski modeller `data: {"response":"…"}`, yeniler OpenAI biçiminde `data: {"choices":[{"delta":{"content":"…"}}]}` akıtır;
+//   istemci (src/ai/providers.ts → parseSSE) ikisini de okur.
 // Kota: misafir (IP başına) 5, ücretsiz hesap AI_DAILY_FREE (20), premium AI_DAILY_PREMIUM (200) soru/gün.
-// Premium kullanıcılar AI_MODEL_PREMIUM tanımlıysa daha büyük modeli kullanır.
+// Premium kullanıcılar AI_MODEL_PREMIUM tanımlıysa onu kullanır.
+// Cloudflare bir modeli emekliye ayırırsa (ör. llama-3.1-8b, 30.05.2026) sıradaki yedek modele geçilir; Tepecan susmaz.
 import { currentUser, err, sha256, type Ctx } from '../_lib';
 
 const GUEST_DAILY = 5;
 const MAX_CHARS = 24_000;
-const DEFAULT_MODEL = '@cf/meta/llama-3.1-8b-instruct';
+/** Ayarlanan model çalışmazsa sırayla denenecek modeller (Workers AI kataloğunda etkin olanlar) */
+export const FALLBACK_MODELS = ['@cf/google/gemma-4-26b-a4b-it', '@cf/zai-org/glm-4.7-flash', '@cf/meta/llama-3.3-70b-instruct-fp8-fast'];
+const MAX_ATTEMPTS = 5;
 
-interface Msg {
+/** "Düşünen" (reasoning) yeni nesil modeller: düşünme kapatılır ki öğrenci beklemesin ve cevap hemen akmaya başlasın */
+const isReasoningModel = (m: string) => /gemma-4|glm-|qwen3|kimi-|nemotron|deepseek-v|gpt-oss/.test(m);
+
+/** Denenecek (model, girdi) çiftleri: önce ayarlanan model, sonra yedekler. Düşünme ayarı reddedilirse aynı model ayarsız denenir. */
+export function aiAttempts(primary: string | undefined, messages: Msg[]): { model: string; inputs: Record<string, unknown> }[] {
+  const models = [...new Set([primary, ...FALLBACK_MODELS].filter((m): m is string => !!m && m.trim().length > 0).map((m) => m.trim()))];
+  const out: { model: string; inputs: Record<string, unknown> }[] = [];
+  for (const model of models) {
+    const base = { messages, stream: true, max_tokens: 1024, temperature: 0.3 };
+    if (isReasoningModel(model)) out.push({ model, inputs: { ...base, chat_template_kwargs: { enable_thinking: false } } });
+    out.push({ model, inputs: base });
+  }
+  return out;
+}
+
+export interface Msg {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
@@ -82,15 +102,33 @@ export const onRequestPost = async (ctx: Ctx) => {
     return new Response(stream, { headers });
   }
 
-  const model = (premium && env.AI_MODEL_PREMIUM) || env.AI_MODEL || DEFAULT_MODEL;
-  try {
-    const stream = (await env.AI!.run(model as Parameters<Ai['run']>[0], { messages, stream: true, max_tokens: 1024, temperature: 0.3 } as never)) as unknown as ReadableStream;
-    return new Response(stream, { headers });
-  } catch (e) {
-    // Hata durumunda hakkı geri ver
-    await env.DB.prepare('UPDATE ai_usage SET count = count - 1 WHERE user_id = ? AND day = ?').bind(who, day).run();
-    return err('Yapay zekâ yanıt veremedi: ' + (e instanceof Error ? e.message : String(e)), 502);
+  const primary = (premium && env.AI_MODEL_PREMIUM) || env.AI_MODEL;
+  const failed = new Set<string>();
+  let lastError = '';
+  let tries = 0;
+  for (const { model, inputs } of aiAttempts(primary, messages)) {
+    if (failed.has(model) || tries >= MAX_ATTEMPTS) continue;
+    tries++;
+    try {
+      const stream = (await env.AI!.run(model as Parameters<Ai['run']>[0], inputs as never)) as unknown as ReadableStream;
+      if (model !== primary) console.warn(`Tepecan: "${primary}" çalışmadı, "${model}" kullanıldı. ${lastError}`);
+      return new Response(stream, { headers: { ...headers, 'x-ai-model': model } });
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      console.error(`Tepecan: ${model} → ${lastError}`);
+      // Model emekliye ayrıldıysa / bulunamadıysa: hemen sıradakine geç (deneme hakkından sayılmaz)
+      if (/deprecated|no such model|not found|5007|5028/i.test(lastError)) {
+        failed.add(model);
+        tries--;
+      }
+    }
   }
+  // Hiçbiri olmadı: hakkı geri ver
+  await env.DB.prepare('UPDATE ai_usage SET count = count - 1 WHERE user_id = ? AND day = ?').bind(who, day).run();
+  return new Response(
+    JSON.stringify({ error: 'Tepecan Bulut şu an cevap veremiyor (yapay zekâ servisi yanıt vermedi). Birazdan tekrar dene; bu soru hakkından düşülmedi.', detail: lastError }),
+    { status: 502, headers: { 'content-type': 'application/json; charset=utf-8', 'x-quota-limit': String(limit), 'x-quota-remaining': String(Math.max(0, limit - used + 1)) } },
+  );
 };
 
 /** GET /api/ask → bugünkü kota durumu */

@@ -2,7 +2,7 @@ import { useUI } from '../store/uiStore';
 import { useEffect, useState } from 'react';
 import { useCircuit } from '../store/circuitStore';
 import { LIBRARY, type ParamDef } from '../circuit/library';
-import { formatSI, parseSI } from '../circuit/format';
+import { formatCurrent, formatSI, parseSI } from '../circuit/format';
 import { useSim } from '../sim/runner';
 import type { ParamValue } from '../circuit/types';
 
@@ -176,7 +176,7 @@ export function Inspector() {
                 </span>
                 <b>{formatSI(netV[net] ?? 0, 'V')}</b>
                 {node.data.type !== 'scope' && node.data.type !== 'ground' && node.data.type !== 'label' && (
-                  <small className="muted">I→ {formatSI(live.I[i] ?? 0, 'A')}</small>
+                  <small className="muted">I→ {formatCurrent(live.I[i] ?? 0)}</small>
                 )}
               </div>
             );

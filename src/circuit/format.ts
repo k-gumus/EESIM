@@ -34,9 +34,18 @@ function trimNum(v: number, digits: number): string {
   return s.replace('.', ',');
 }
 
+/** Canlı akım etiketi: açık anahtarın ~pA'lik sızıntısı gibi 1 nA altı akımlar "0 A" gösterilir (öğrenci "akım akmıyor" görsün) */
+export function formatCurrent(value: number): string {
+  return Math.abs(value) < 1e-9 ? '0 A' : formatSI(value, 'A');
+}
+
+/** Ölçü aletinin çözünürlüğünün altı: gerçek multimetre bunları 0 gösterir */
+const METER_FLOOR: Record<string, number> = { A: 1e-9, V: 1e-6 };
+
 /** Sabit ondalıklı ölçüm gösterimi (multimetre LCD'si gibi) */
 export function formatMeter(value: number, unit: string): string {
   if (!isFinite(value)) return 'OL';
+  if (Math.abs(value) < (METER_FLOOR[unit] ?? 0)) value = 0;
   const abs = Math.abs(value);
   let scale = 1;
   let prefix = '';
