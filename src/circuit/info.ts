@@ -1,0 +1,337 @@
+// Eleman bilgi kartları: ne işe yarar, nasıl çalışır, tipik değerler, dikkat edilecekler,
+// fiziksel özellikler ve datasheet bağlantıları.
+import type { CompType } from './types';
+
+export interface DatasheetLink {
+  label: string;
+  url: string;
+}
+
+export interface CompInfo {
+  what: string;
+  how: string;
+  formula?: string;
+  typical: string[];
+  caution?: string[];
+  specs?: [string, string][];
+  datasheets?: DatasheetLink[];
+}
+
+const ti = (part: string, label = part.toUpperCase()): DatasheetLink => ({ label: `${label} (Texas Instruments)`, url: `https://www.ti.com/lit/ds/symlink/${part}.pdf` });
+/** Üretici bağımsız datasheet araması (Octopart) */
+const find = (part: string): DatasheetLink => ({ label: `${part} — datasheet ara`, url: `https://octopart.com/search?q=${encodeURIComponent(part)}` });
+
+export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
+  resistor: {
+    what: 'Akımı sınırlar, gerilimi böler, bir akımı gerilime (ya da tersi) çevirir. Devrelerin en çok kullanılan elemanıdır.',
+    how: 'Malzemenin elektronlara gösterdiği zorluk; gerilim ile akım doğru orantılıdır. Harcanan güç ısıya dönüşür.',
+    formula: 'V = I·R   ·   P = I²R = V²/R',
+    typical: ['LED akım sınırlama: 220 Ω – 1 kΩ', 'Pull-up / pull-down: 4,7 kΩ – 47 kΩ', 'Transistör taban direnci: 1 kΩ – 47 kΩ', 'E12 serisi: 10, 12, 15, 18, 22, 27, 33, 39, 47, 56, 68, 82'],
+    caution: ['Güç sınırını aşma: standart 1/4 W direnç 5 V’ta en az 100 Ω olmalı (P = 25/100 = 0,25 W).', 'Renk kodu: kahverengi-siyah-kırmızı = 1 kΩ (1-0-×100). Tolerans bandı altın %5, kahverengi %1.'],
+    specs: [['Gövde', 'Karbon film (%5) / metal film (%1)'], ['Güç', '1/8 W, 1/4 W, 1/2 W, 1 W…'], ['Sıcaklık katsayısı', '±50…±200 ppm/°C (metal film ±50)']],
+  },
+  capacitor: {
+    what: 'Elektrik yükü ve enerji depolar. DC’yi bloklar, AC’yi geçirir; filtrelerde, zamanlayıcılarda, kuplajda ve besleme dekuplajında kullanılır.',
+    how: 'İki iletken levha arasında yalıtkan (dielektrik) vardır. Akım, gerilimin değişim hızıyla orantılıdır; gerilim aniden değişemez.',
+    formula: 'Q = C·V   ·   i = C·dv/dt   ·   X_C = 1/(2πfC)',
+    typical: ['Dekuplaj: her entegrenin yanına 100 nF seramik', 'Doğrultucu filtre: 100 µF – 4700 µF elektrolitik', 'Zamanlama (555, RC): 1 nF – 100 µF', 'Kuplaj (ses): 1 µF – 10 µF'],
+    caution: ['Elektrolitik kondansatörün kutbu vardır; ters bağlanırsa ısınır, şişer, patlayabilir.', 'Anma gerilimini aş(ma): pratikte çalışma geriliminin en az 1,5 katını seç.', 'Büyük kondansatörler devre kapatıldıktan sonra da yüklü kalabilir.'],
+    specs: [['Tipler', 'Seramik (pF–µF), film, elektrolitik (µF–mF), tantal'], ['Seramik kodu', '104 = 10·10⁴ pF = 100 nF'], ['ESR', 'Elektrolitikte 0,01–2 Ω; dalgalanma akımını sınırlar']],
+  },
+  inductor: {
+    what: 'Manyetik alanda enerji depolar; akımın ani değişimine direnir. Filtrelerde, anahtarlamalı güç kaynaklarında ve rezonans devrelerinde kullanılır.',
+    how: 'Tel sargısından geçen akım manyetik akı oluşturur; akı değişince sargıda değişime karşı koyan bir gerilim indüklenir (Lenz).',
+    formula: 'v = L·di/dt   ·   X_L = 2πfL   ·   E = ½LI²',
+    typical: ['Buck/boost dönüştürücü: 10 µH – 470 µH', 'Ses filtreleri: 1 mH – 100 mH', 'RF devreleri: nH – µH'],
+    caution: ['Akım aniden kesilirse (röle, motor) çok yüksek gerilim darbesi oluşur: serbest geçiş (flyback) diyodu kullan.', 'Doyum akımını aşarsan endüktans hızla düşer.'],
+    specs: [['Önemli parametreler', 'Endüktans, doyum akımı (I_sat), DC direnç (DCR)'], ['Çekirdek', 'Hava, ferrit, demir tozu']],
+  },
+  switch: {
+    what: 'Devreyi elle açar veya kapatır. Simülasyonda ideal anahtardır: kapalıyken ~0 Ω, açıkken ~sonsuz.',
+    how: 'Mekanik kontaklar birbirine değince akım yolu oluşur.',
+    typical: ['SPST: tek kutup tek yol (bu eleman)', 'SPDT: iki konum arası seçim'],
+    caution: ['Gerçek mekanik anahtarlar kapanırken birkaç ms “zıplar” (bounce); dijital girişlerde RC + Schmitt ile temizle.', 'Kontak akım ve gerilim sınırına dikkat (ör. 3 A / 250 V AC).'],
+  },
+  button: {
+    what: 'Yalnızca basılıyken bağlantı kuran (NO) ya da kesen (NC) anlık anahtar. Mikrodenetleyici girişlerinin klasik elemanı.',
+    how: 'Yay geri iter; basılı tutulduğu sürece kontak kapalıdır. Canvas’ta butonun üstüne basılı tutarak dene.',
+    typical: ['Dijital girişe bağlarken 10 kΩ pull-down (VCC’den butona) ya da pull-up (butondan GND’ye)', 'Taktil buton: 6×6 mm, 12 V / 50 mA'],
+    caution: ['Buton bırakıldığında giriş boşta (floating) kalmamalı: pull-up veya pull-down direnci şart. “Buton, Pull-Down ve Pull-Up Direnci” deneyine bak.', 'Kontak zıplaması (bounce) yazılımda ya da RC filtreyle giderilir.'],
+  },
+  xfmr: {
+    what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
+    how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',
+    formula: 'Vp/Vs = Np/Ns = n   ·   Ip/Is = 1/n',
+    typical: ['220 V → 12 V / 1 A: n ≈ 18', '220 V → 24 V orta uçlu: tam dalga doğrultucu için'],
+    caution: ['Şebeke tarafı (220 V) hayati tehlike taşır; laboratuvarda yalnızca yalıtılmış hazır trafolarla çalış.', 'Etikette yazan sekonder gerilimi RMS’tir: tepe değeri √2 katıdır (12 V → 17 V tepe).'],
+  },
+  xfmr_ct: {
+    what: 'Sekonderinin ortasından uç çıkarılmış trafo: iki eşit, ters fazlı gerilim verir. İki diyotlu tam dalga doğrultucu ve simetrik (±) besleme için kullanılır.',
+    how: 'Orta uç toprak alınınca üst ve alt yarı sargılar birbirine göre 180° fazlıdır.',
+    formula: 'Her yarı: Vs/2',
+    typical: ['12-0-12 V: ±15 V simetrik op-amp beslemesi için', '9-0-9 V'],
+    caution: ['Orta uçlu doğrultucuda her diyot 2·V_tepe ters gerilim görür (PIV).'],
+  },
+  diode: {
+    what: 'Akımı tek yönde geçirir. Doğrultma, ters polarite koruması, kırpma, serbest geçiş (flyback) ve sinyal yönlendirmede kullanılır.',
+    how: 'P-N eklemi: anottan katoda doğru gerilim ~0,6–0,7 V’u (silisyum) aşınca akım üstel olarak artar; ters yönde yalnızca nA–µA sızıntı akar.',
+    formula: 'I = I_S·(e^(V/(n·V_T)) − 1),  V_T ≈ 26 mV',
+    typical: ['1N4001–1N4007: doğrultucu, 1 A, 50–1000 V', '1N4148: hızlı sinyal diyodu, 200 mA', '1N5819: Schottky, ~0,3–0,4 V düşüm, anahtarlamalı kaynaklar'],
+    caution: ['Katot gövdedeki çizgiyle işaretlidir.', 'Ters gerilim sınırını (V_RRM) ve ortalama akım sınırını aşma.', 'Bobin, röle, motor gibi endüktif yüklerin uçlarına ters paralel diyot koy.'],
+    specs: [['1N4007', '1 A, 1000 V, DO-41'], ['1N4148', '200 mA, 100 V, 4 ns, DO-35'], ['1N5819', '1 A, 40 V, Schottky']],
+    datasheets: [find('1N4007'), find('1N4148'), find('1N5819')],
+  },
+  zener: {
+    what: 'Ters yönde belirli bir gerilimde (V_Z) iletime geçip gerilimi sabit tutar. Basit regülatör, referans ve aşırı gerilim koruması.',
+    how: 'Yoğun katkılı P-N ekleminde ters gerilim V_Z’ye ulaşınca çığ/Zener kırılması olur; akım geniş aralıkta değişirken gerilim neredeyse sabit kalır.',
+    formula: 'R_s = (V_in − V_Z)/(I_Z + I_yük)',
+    typical: ['3,3 V, 5,1 V, 6,2 V, 12 V; 0,5 W veya 1 W', 'I_Z: 5–20 mA (datasheet’teki I_ZT civarı)'],
+    caution: ['Seri direnç olmadan bağlanırsa aşırı akımla yanar.', 'Güç: P = V_Z·I_Z; yük kalkınca tüm akım zenere biner.'],
+    datasheets: [find('1N4733A'), find('BZX55C5V1')],
+  },
+  led: {
+    what: 'Işık yayan diyot: gösterge, aydınlatma, optokuplör. Akımla sürülür.',
+    how: 'Elektron-boşluk birleşmesi foton üretir; rengi yarı iletkenin bant aralığı belirler. İletim gerilimi renge bağlıdır.',
+    formula: 'R = (V_kaynak − V_F)/I_F',
+    typical: ['Kırmızı ~1,8–2,0 V, yeşil ~2,1 V, mavi/beyaz ~3,0–3,3 V', 'Gösterge LED’i: 5–20 mA (çoğu için 10 mA yeterli)'],
+    caution: ['Seri direnç olmadan doğrudan kaynağa bağlama: akım sınırsız artar, LED yanar.', 'Uzun bacak anot (+), kısa bacak ve düz kenar katottur (−).', 'Ters gerilim sınırı yalnızca ~5 V’tur.', 'Paralel LED’lerin her birine ayrı direnç koy.'],
+  },
+  npn: {
+    what: 'Küçük taban akımıyla büyük kolektör akımını kontrol eden akım kuvvetlendiricisi. Anahtar (LED, röle, motor sürme) ve yükselteç olarak kullanılır.',
+    how: 'B-E eklemi ~0,7 V’ta iletime geçince emetörden tabana enjekte edilen elektronların çoğu kolektöre ulaşır: I_C ≈ β·I_B. Kolektör akımı taban akımından bağımsız olarak sınırlanırsa transistör doyuma girer (V_CE ≈ 0,2 V).',
+    formula: 'I_C = β·I_B   ·   I_E = I_B + I_C   ·   g_m = I_C/V_T',
+    typical: ['2N3904 / BC547: küçük sinyal, 100–200 mA, β ≈ 100–300', '2N2222: 600 mA anahtar', 'Anahtar tasarımı: I_B ≥ I_C/10 (zorla doyum)'],
+    caution: ['Taban direnci olmadan tabanı doğrudan 5 V’a bağlama.', 'Bacak sırası modele göre değişir (2N3904: E-B-C, BC547: C-B-E) — datasheet’e bak.', 'β sıcaklık ve örnekle çok değişir; tasarımı β’ya bağımlı yapma (emetör direnci kullan).'],
+    specs: [['2N3904', 'TO-92, 200 mA, 40 V, 625 mW'], ['BC547', 'TO-92, 100 mA, 45 V'], ['2N2222A', 'TO-92/TO-18, 600 mA, 40 V']],
+    datasheets: [find('2N3904'), find('BC547'), find('2N2222A')],
+  },
+  pnp: {
+    what: 'NPN’in tümleyeni: yüksek taraf (high-side) anahtarlama ve push-pull çıkış katlarında kullanılır.',
+    how: 'Emetör en pozitif uçtur; taban emetörden ~0,7 V aşağı çekilince iletir. Akımlar ve gerilimler NPN’in tersi yöndedir.',
+    formula: 'I_C = β·I_B  (akımlar emetörden içeri)',
+    typical: ['2N3906 / BC557: 2N3904 / BC547’nin tümleyeni', 'Yükün artı tarafını anahtarlamak için'],
+    caution: ['Kapatmak için tabanı emetör gerilimine çekmek gerekir; emetör 12 V ise 5 V’luk lojik sinyal PNP’yi tam kapatamaz.'],
+    datasheets: [find('2N3906'), find('BC557')],
+  },
+  nmos: {
+    what: 'Gerilim kontrollü anahtar/kuvvetlendirici: kapı akım çekmez. Güç anahtarlama (PWM, motor, LED şeridi) ve CMOS mantığın temelidir.',
+    how: 'V_GS eşik gerilimini (V_th) aşınca kapı altında iletken kanal oluşur. Doymada I_D ≈ K(V_GS − V_th)²; tam açıkken kanal küçük bir direnç (R_DS(on)) gibi davranır.',
+    formula: 'I_D = K·(V_GS − V_th)²  (doyum)   ·   P = I_D²·R_DS(on)',
+    typical: ['2N7000: 200 mA, sinyal seviyesi', 'IRF540N: 33 A, 100 V, R_DS(on) ≈ 44 mΩ (V_GS = 10 V)', 'Lojik seviyeli (IRLZ44N gibi): 5 V kapı ile tam açılır'],
+    caution: ['Kapı boşta kalmamalı: 10–100 kΩ pull-down ekle.', 'IRF540 gibi standart MOSFET’ler 5 V kapı geriliminde tam açılmaz; lojik seviyeli model seç.', 'Kapı oksidi statik elektriğe duyarlıdır (V_GS max ≈ ±20 V).', 'Gövde diyodu nedeniyle ters yönde de akım geçer.'],
+    specs: [['2N7000', 'TO-92, 60 V, 200 mA'], ['IRF540N', 'TO-220, 100 V, 33 A']],
+    datasheets: [find('2N7000'), find('IRF540N'), find('IRLZ44N')],
+  },
+  pmos: {
+    what: 'Yüksek taraf anahtarı ve CMOS evirici/kapıların üst transistörü. Ters polarite korumasında da kullanılır.',
+    how: 'Kaynak en pozitif uçtur; kapı kaynaktan |V_th| kadar aşağı çekilince kanal oluşur.',
+    formula: 'I_D = K·(V_SG − |V_th|)²',
+    typical: ['IRF9540N: −100 V, −23 A', 'BS250: küçük sinyal'],
+    caution: ['Kapatmak için kapıyı kaynak gerilimine çek; kapı-kaynak gerilimi ±20 V’u aşmamalı.'],
+    datasheets: [find('IRF9540N'), find('BS250')],
+  },
+  vdc: {
+    what: 'İdeal sabit gerilim kaynağı: laboratuvar güç kaynağı veya devrenin beslemesi.',
+    how: 'Çektiğin akım ne olursa olsun uçları arasındaki gerilim sabittir (ideal).',
+    typical: ['Dijital: 3,3 V / 5 V', 'Op-amp: ±12 V veya ±15 V', 'Lab kaynağı: 0–30 V, akım sınırı ayarlanabilir'],
+    caution: ['Uçlarını kısa devre etme; gerçek kaynakta akım sınırını düşük tut.', 'İki ideal gerilim kaynağını paralel bağlama (çözümsüz devre).'],
+  },
+  vac: {
+    what: 'Sinyal (fonksiyon) üreteci: sinüs, kare veya üçgen dalga verir. Şebekeyi modellemek için 311 V tepe, 50 Hz kullan.',
+    how: 'v(t) = ofset + genlik·sin(2πft + φ). Genlik tepe değeridir (RMS = tepe/√2).',
+    formula: 'V_rms = V_tepe/√2   ·   V_tepe-tepe = 2·V_tepe',
+    typical: ['Ses: 20 Hz – 20 kHz', 'Şebeke: 220 V RMS = 311 V tepe, 50 Hz', 'Lab üreteçleri genelde 50 Ω çıkış direncine sahiptir'],
+    caution: ['Üretecin ekranında “Vpp” mi “Vp” mi ayarladığına dikkat: aynı sayı iki kat farklı genlik demektir.'],
+  },
+  idc: {
+    what: 'İdeal sabit akım kaynağı: uçları arasındaki gerilim ne olursa olsun aynı akımı sürer. Teori ve akım aynası, LED sürücü modellemesi için.',
+    how: 'Gerçekte transistörlü devrelerle (akım aynası, LM317 akım regülatörü) yaklaşık elde edilir.',
+    typical: ['LED sürücüleri: 20 mA – 1 A', 'Transistör polarma: µA – mA'],
+    caution: ['Akım kaynağının uçları açık bırakılmamalı (ideal kaynakta gerilim sonsuza gider).'],
+  },
+  battery: {
+    what: 'Kimyasal enerjiyle DC gerilim veren gerçek kaynak. İç direnci nedeniyle yük arttıkça gerilimi düşer.',
+    how: 'Elektrokimyasal hücre; uç gerilimi V = EMK − I·R_iç.',
+    formula: 'V_uç = E − I·R_iç',
+    typical: ['AA alkalin: 1,5 V, ~0,15 Ω', '9 V pil: ~1,5–2 Ω', 'Li-ion hücre: 3,7 V (4,2 V dolu, 3,0 V boş)'],
+    caution: ['Kısa devre ısınma ve yangına yol açar (özellikle Li-ion).', 'Kapasite mAh ile verilir: 2000 mAh ≈ 100 mA’de 20 saat.'],
+  },
+  clock: {
+    what: 'Kare dalga / saat kaynağı: dijital devreleri (flip-flop, sayıcı) ve PWM anahtarlarını sürer.',
+    how: 'Periyodun “doluluk oranı” kadarında yüksek seviye (V), kalanında 0 V verir.',
+    formula: 'V_ort = D·V   ·   T = 1/f',
+    typical: ['PWM: 1 kHz – 100 kHz', 'Mikrodenetleyici saati: MHz', 'Göz izlenebilir sayıcı: 1–2 Hz'],
+  },
+  vcvs: {
+    what: 'Gerilim kontrollü gerilim kaynağı (E): çıkış gerilimi = μ × kontrol gerilimi. Kuvvetlendiricilerin teorik modelidir.',
+    how: 'cp–cn arasındaki gerilimi ölçer ve μ katını op–on arasına uygular; kontrol tarafı akım çekmez.',
+    formula: 'V_çıkış = μ·(V_cp − V_cn)',
+    typical: ['İdeal op-amp: μ → ∞', 'Yükselteç modeli: R_in + E + R_out'],
+    caution: ['Fiziksel bir parça değildir; breadboard’a yerleştirilemez.'],
+  },
+  vccs: {
+    what: 'Gerilim kontrollü akım kaynağı (G): transistörün küçük sinyal modeli (g_m·v_be).',
+    how: 'Çıkış akımı kontrol gerilimiyle orantılıdır.',
+    formula: 'I_çıkış = g_m·V_kontrol',
+    typical: ['BJT: g_m = I_C/V_T ≈ 40·I_C', 'OTA (geçiş iletkenliği kuvvetlendiricisi)'],
+    caution: ['Teorik eleman.'],
+  },
+  cccs: {
+    what: 'Akım kontrollü akım kaynağı (F): BJT’nin β·i_b modeli.',
+    how: 'Kontrol ucundan geçen akımın β katını çıkışa sürer; kontrol uçları ampermetre gibi 0 V düşümlüdür.',
+    formula: 'I_çıkış = β·I_kontrol',
+    typical: ['BJT hibrit-π modeli: β ≈ 100'],
+    caution: ['Teorik eleman.'],
+  },
+  ccvs: {
+    what: 'Akım kontrollü gerilim kaynağı (H): transempedans modeli (akımı gerilime çevirme).',
+    how: 'Kontrol akımının r katı kadar çıkış gerilimi üretir.',
+    formula: 'V_çıkış = r·I_kontrol',
+    typical: ['Fotodiyot kuvvetlendiricisi modeli'],
+    caution: ['Teorik eleman.'],
+  },
+  pot: {
+    what: 'Ayarlanabilir gerilim bölücü: ses ayarı, eşik ayarı, kalibrasyon. Orta uç (silecek) direnç üzerinde kayar.',
+    how: '1–3 arası toplam direnç sabittir; orta uç konumuna göre ikiye bölünür.',
+    formula: 'V_w = V_13 · konum',
+    typical: ['Panel tipi: 10 kΩ lineer (B), 50 kΩ logaritmik (A, ses)', 'Trimpot: devre kartında kalibrasyon için'],
+    caution: ['Reosta (iki uçlu) olarak kullanırken uca giden akım küçük kalmalı; silecek ucu yüksek akıma dayanıklı değildir.'],
+  },
+  lamp: {
+    what: 'Akkor flamanlı lamba: ısınarak ışık verir. PWM ve güç hesaplarını görmek için iyi bir yüktür.',
+    how: 'Flaman direnci sıcaklıkla artar; soğukken direnç anma değerinin ~1/10’u olduğundan açılış anında yüksek akım çeker.',
+    formula: 'R_sıcak = V²/P',
+    typical: ['6 V / 0,3 W gösterge lambası', '12 V / 5 W araba lambası'],
+    caution: ['Anma geriliminin üstünde ömrü hızla kısalır.'],
+  },
+  ldr: {
+    what: 'Işığa duyarlı direnç: aydınlıkta direnci düşer. Gece lambası, alacakaranlık anahtarı, ışık ölçümü.',
+    how: 'Kadmiyum sülfür (CdS) foto-iletkendir; ışık yük taşıyıcı üretir. R ≈ R10·(lux/10)^(−γ).',
+    typical: ['Karanlık: 1 MΩ üstü, oda ışığı (~100 lx): birkaç kΩ, güneş: ~100 Ω', 'Bölücüde 10 kΩ ile kullan'],
+    caution: ['Yavaştır (onlarca ms); hızlı ışık ölçümü için fotodiyot/fototransistör kullan.', 'CdS içerdiği için bazı ülkelerde (RoHS) kısıtlıdır.'],
+  },
+  ntc: {
+    what: 'Negatif sıcaklık katsayılı termistör: ısındıkça direnci düşer. Sıcaklık ölçümü, ani akım (inrush) sınırlama.',
+    how: 'Yarı iletken seramik; R(T) = R25·e^(B·(1/T − 1/298,15)).',
+    formula: 'R(T) = R25·exp(B·(1/T − 1/T25))',
+    typical: ['10 kΩ @ 25 °C, B = 3950 K (en yaygın)', 'Bölücü veya Wheatstone köprüsüyle okunur'],
+    caution: ['Doğrusal değildir; geniş aralıkta tablo veya Steinhart–Hart denklemi gerekir.', 'Ölçüm akımı küçük olmalı (kendi kendini ısıtma).'],
+  },
+  opamp: {
+    what: 'Çok yüksek kazançlı fark kuvvetlendiricisi. Geri beslemeyle kuvvetlendirici, filtre, toplayıcı, integral alıcı, karşılaştırıcı, osilatör olur.',
+    how: 'Çıkış = A·(V+ − V−), A ≈ 10⁵. Negatif geri beslemede çıkış, V+ ≈ V− olacak şekilde kendini ayarlar (sanal kısa devre). Çıkış besleme raylarını aşamaz.',
+    formula: 'Eviren: −R2/R1   ·   Evirmeyen: 1 + R2/R1   ·   f_kazanç·A = GBW',
+    typical: ['LM741: klasik, ±15 V, 1 MHz, 0,5 V/µs', 'TL081: JFET girişli, düşük giriş akımı, 13 V/µs', 'LM358: tek beslemeli (0…32 V), çift op-amp'],
+    caution: ['Besleme pinlerini bağlamayı unutma (gerçek devrede); simülasyonda ±V_cc parametre olarak verilir.', 'Çıkış ±V_cc’nin ~1,5 V içinde doyar (rail-to-rail olmayan modellerde).', 'Slew rate büyük ve hızlı sinyalleri bozar: maksimum frekans ≈ SR/(2π·V_tepe).', 'Kullanılmayan op-amp girişlerini boşta bırakma.'],
+    specs: [['LM741', 'DIP-8, GBW 1 MHz, SR 0,5 V/µs, ±22 V maks.'], ['TL081', 'DIP-8, GBW 3 MHz, SR 13 V/µs'], ['LM358', 'DIP-8 (2 op-amp), 3–32 V tek besleme']],
+    datasheets: [ti('lm741', 'LM741'), ti('tl081', 'TL081'), ti('lm358', 'LM358')],
+  },
+  timer555: {
+    what: 'Efsanevi zamanlayıcı entegre: astable (osilatör, flaşör, PWM), monostable (tek atım, gecikme) ve Schmitt tetikleyici.',
+    how: 'İçinde 3×5 kΩ bölücü (Vcc/3 ve 2Vcc/3 eşikleri), iki karşılaştırıcı, SR mandal, deşarj transistörü ve güçlü bir çıkış katı vardır.',
+    formula: 'Astable: f = 1,44/((R1 + 2R2)·C)   ·   Monostable: T = 1,1·R·C',
+    typical: ['Besleme 4,5–16 V (NE555), CMOS sürümü TLC555/7555: 2–15 V', 'Çıkış 200 mA’e kadar sürebilir', 'CTRL (5) ucuna 10 nF kondansatör'],
+    caution: ['RESET (4) ucunu kullanmıyorsan Vcc’ye bağla; boşta bırakma.', 'Astable’da R1 çok küçük olursa deşarj transistörü aşırı akım çeker (R1 ≥ 1 kΩ).'],
+    specs: [['Kılıf', 'DIP-8: 1 GND, 2 TRIG, 3 OUT, 4 RESET, 5 CTRL, 6 THR, 7 DIS, 8 VCC']],
+    datasheets: [ti('ne555', 'NE555'), ti('tlc555', 'TLC555 (CMOS)')],
+  },
+  reg78: {
+    what: 'Sabit çıkışlı doğrusal gerilim regülatörü (7805 = 5 V, 7812 = 12 V). Dalgalı DC’yi temiz sabit gerilime çevirir.',
+    how: 'İçerideki hata kuvvetlendiricisi bir referansla çıkışı karşılaştırıp seri geçiş transistörünü sürer; fazla gerilim ısı olarak harcanır.',
+    formula: 'P_kayıp = (V_in − V_out)·I   ·   V_in ≥ V_out + ~2 V',
+    typical: ['Giriş: 0,33 µF, çıkış: 0,1 µF kondansatör', 'TO-220: 1 A (soğutucuyla)'],
+    caution: ['Isınma: 12 V → 5 V, 0,5 A’de 3,5 W harcar; soğutucu gerekir.', 'Bacak sırası (öne bakarken): GİRİŞ – GND – ÇIKIŞ (79xx negatif regülatörlerde farklıdır!).', 'Düşük kayıplı (LDO) ihtiyacı varsa LM1117 / AMS1117 gibi LDO seç.'],
+    specs: [['Kılıf', 'TO-220 (1 A), TO-92 (78L05, 100 mA)'], ['Maks. giriş', '35 V (7805)']],
+    datasheets: [ti('ua78', 'µA78xx'), ti('lm340', 'LM340 (LM78xx)')],
+  },
+  and: {
+    what: 'VE kapısı: tüm girişler 1 ise çıkış 1. Koşulların hepsinin sağlandığını kontrol eder.',
+    how: 'CMOS’ta NAND + NOT olarak yapılır. Simülasyonda 5 V mantık, eşik 2,5 V.',
+    formula: 'Y = A·B',
+    typical: ['74HC08 (4 kapı, 2–6 V)', 'CD4081 (4000 serisi, 3–15 V)'],
+    caution: ['Kullanılmayan CMOS girişlerini boşta bırakma; VCC veya GND’ye bağla.'],
+    datasheets: [ti('sn74hc08', '74HC08'), ti('cd4081b', 'CD4081B')],
+  },
+  or: {
+    what: 'VEYA kapısı: girişlerden en az biri 1 ise çıkış 1.',
+    how: 'CMOS’ta NOR + NOT olarak yapılır.',
+    formula: 'Y = A + B',
+    typical: ['74HC32', 'CD4071'],
+    caution: ['Boşta CMOS girişi rastgele seviyeye süzülür.'],
+    datasheets: [ti('sn74hc32', '74HC32'), ti('cd4071b', 'CD4071B')],
+  },
+  not: {
+    what: 'DEĞİL (evirici): girişin tersini verir. Ayrıca sinyal tamponlama ve osilatör yapımında kullanılır.',
+    how: 'CMOS evirici: üstte PMOS, altta NMOS. Giriş düşükken PMOS, yüksekken NMOS iletir.',
+    formula: 'Y = Ā',
+    typical: ['74HC04 (6 evirici)', '74HC14: Schmitt tetiklemeli evirici (buton/gürültülü sinyaller için)'],
+    caution: ['Yavaş değişen girişler için Schmitt tetiklemeli (74HC14) kullan; aksi halde çıkış titrer.'],
+    datasheets: [ti('sn74hc04', '74HC04'), ti('sn74hc14', '74HC14')],
+  },
+  nand: {
+    what: 'VE-DEĞİL: VE’nin tersi. Evrensel kapıdır: tüm mantık fonksiyonları yalnızca NAND ile kurulabilir.',
+    how: 'CMOS’ta paralel iki PMOS + seri iki NMOS: en temel yapı taşı.',
+    formula: 'Y = ¬(A·B)',
+    typical: ['74HC00', 'CD4011'],
+    caution: ['Boşta CMOS girişi bırakma.'],
+    datasheets: [ti('sn74hc00', '74HC00'), ti('cd4011b', 'CD4011B')],
+  },
+  nor: {
+    what: 'VEYA-DEĞİL: VEYA’nın tersi. Evrensel kapıdır; iki NOR çapraz bağlanınca SR mandal (1 bit bellek) olur.',
+    how: 'CMOS’ta seri iki PMOS + paralel iki NMOS.',
+    formula: 'Y = ¬(A + B)',
+    typical: ['74HC02', 'CD4001'],
+    caution: ['Boşta CMOS girişi bırakma.'],
+    datasheets: [ti('sn74hc02', '74HC02'), ti('cd4001b', 'CD4001B')],
+  },
+  xor: {
+    what: 'ÖZEL VEYA: girişler farklıysa 1. Toplayıcılar, eşlik (parity) kontrolü, kontrollü evirme.',
+    how: 'A⊕B = A·B̄ + Ā·B: biri 1 diğeri 0 iken 1 verir. Bir girişi 1 yaparsan diğerini evirir.',
+    formula: 'Y = A ⊕ B',
+    typical: ['74HC86', 'CD4070'],
+    datasheets: [ti('sn74hc86', '74HC86'), ti('cd4070b', 'CD4070B')],
+  },
+  dff: {
+    what: 'D flip-flop: saatin yükselen kenarında D girişini yakalayıp Q’da saklar. Yazmaçlar, sayıcılar, senkronizasyon.',
+    how: 'Kenar tetiklemeli iki mandal (master–slave). Kenar dışında D değişse de Q değişmez.',
+    typical: ['74HC74 (2 adet, preset/clear girişli)', 'CD4013', 'Q̄ → D bağlanırsa ÷2 frekans bölücü'],
+    caution: ['Kurulum (setup) ve tutma (hold) sürelerine uy: D, saat kenarından hemen önce/sonra değişmemeli.', 'Mekanik buton doğrudan saat girişine bağlanırsa zıplama birden çok tetikleme yapar.'],
+    datasheets: [ti('sn74hc74', '74HC74'), ti('cd4013b', 'CD4013B')],
+  },
+  logicin: {
+    what: 'Lojik anahtar: 0 V (0) veya 5 V (1) verir. Dijital devreleri elle denemek için. Canvas’ta çift tıklayarak değiştir.',
+    how: 'İdeal kaynaktır; gerçekte bir anahtar ve pull-up/pull-down direnciyle yapılır.',
+    typical: ['5 V TTL/CMOS, 3,3 V mikrodenetleyici mantığı'],
+  },
+  logicprobe: {
+    what: 'Lojik gösterge (prob): bağlandığı noktanın 1 (yeşil), 0 (gri) ya da belirsiz (?) olduğunu gösterir.',
+    how: '> 3,5 V → 1, < 1,5 V → 0, arası belirsiz (CMOS 5 V eşikleri).',
+    typical: ['Gerçek lojik problar sesli/ışıklı uyarı verir ve darbe yakalayabilir'],
+    caution: ['“?” görüyorsan giriş boşta kalmış ya da iki çıkış birbirine bağlanmış olabilir.'],
+  },
+  multimeter: {
+    what: 'Gerilim (V), akım (A) ve direnç ölçer. Laboratuvarın en temel ölçü aleti.',
+    how: 'Voltmetre kademesinde çok yüksek iç dirençle (10 MΩ) paralel bağlanır; ampermetre kademesinde çok düşük dirençle seri bağlanır.',
+    typical: ['DC/AC gerilim, DC/AC akım (mA ve 10 A girişleri), direnç, süreklilik (bip)', 'AC kademesi RMS değeri gösterir (True-RMS olmayan modeller yalnızca sinüste doğrudur)'],
+    caution: ['Ampermetre kademesinde ölçü aletini asla bir kaynağa paralel bağlama: sigortayı (ya da aleti) yakar.', 'Direnç ölçerken devrenin enerjisi kesik olmalı.', 'Ölçüm bitince probu gerilim girişine geri tak.'],
+  },
+  scope: {
+    what: 'Osiloskop: gerilimin zamana göre değişimini çizer. Dalga şekli, frekans, faz, gürültü ve geçici olayları görmenin tek yolu.',
+    how: 'Yatay eksen zaman (zaman/bölme), dikey eksen gerilim (V/bölme). Tetik, ekrandaki görüntüyü sabitler. XY modunda CH1 yatay, CH2 dikey eksendir.',
+    typical: ['Prob ×10 kademesi: 10 MΩ giriş, yüksek frekansta daha az yükleme', 'Ölçümler: Vpp, RMS, frekans, faz farkı (Δt/T·360°)'],
+    caution: ['Osiloskop probunun toprak (timsah) ucu şebeke toprağına bağlıdır: iki farklı noktaya toprak klipsi bağlamak kısa devre yapar.', 'Şebeke (220 V) ölçümü için diferansiyel prob kullan.'],
+  },
+  ground: {
+    what: 'Referans düğümü (0 V). Tüm gerilimler buna göre ölçülür. Her devrede en az bir toprak olmalı.',
+    how: 'Simülatör toprağı 0 V kabul eder; aynı sembole bağlanan tüm noktalar aynı düğümdür.',
+    typical: ['Dijital ve analog toprakların tek noktada birleştirilmesi (yıldız topraklama)'],
+    caution: ['Topraksız devrede gerilimler tanımsızdır: simülatör “toprak yok” hatası verir.'],
+  },
+  label: {
+    what: 'Düğüm etiketi: aynı adı taşıyan noktalar kablo çizmeden birbirine bağlıdır. Osiloskop ve multimetre bağlantılarını sadeleştirir.',
+    how: 'Etiket adı düğümün adı olur; netlist’te ve Tepecan’ın okumasında bu ad kullanılır.',
+    typical: ['VIN, VOUT, VCC, CLK gibi anlamlı adlar'],
+  },
+};
+
+export const infoOf = (t: CompType): CompInfo | undefined => COMP_INFO[t];

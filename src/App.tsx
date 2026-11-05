@@ -10,6 +10,7 @@ import { LabPanel } from './ui/LabPanel';
 import { CopilotPanel } from './ui/CopilotPanel';
 import { TemplatesModal } from './ui/TemplatesModal';
 import { NetlistModal } from './ui/NetlistModal';
+import { InfoCard } from './ui/InfoCard';
 import { TepecanToast } from './ui/TepecanToast';
 import { useCircuit } from './store/circuitStore';
 import { TEMPLATES } from './templates';
@@ -119,6 +120,7 @@ export default function App() {
         <TepecanToast />
         {catalog && <TemplatesModal first={catalog === 'first'} onClose={() => useUI.getState().closeCatalog()} />}
         {netOpen && <NetlistModal onClose={() => useUI.getState().setNetlist(false)} />}
+        <InfoCard />
       </div>
     </ReactFlowProvider>
   );

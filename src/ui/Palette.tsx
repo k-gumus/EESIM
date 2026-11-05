@@ -3,6 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import { CATEGORIES, LIB_LIST, type CompDef } from '../circuit/library';
 import { Symbol } from './symbols';
 import { useCircuit } from '../store/circuitStore';
+import { useUI } from '../store/uiStore';
 
 function Icon({ def }: { def: CompDef }) {
   if (def.type === 'multimeter')
@@ -86,10 +87,21 @@ export function Palette() {
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
                       onClick={() => addCenter(d)}
-                      title={`${d.label} — ${d.description}\n(Sürükle ya da tıkla)`}
+                      title={`${d.label} — ${d.description}\n(Sürükle ya da tıkla · ⓘ bilgi kartı)`}
                     >
                       <Icon def={d} />
                       <span>{d.label}</span>
+                      <span
+                        className="pal-info"
+                        role="button"
+                        title="Bilgi kartı: nasıl çalışır, tipik değerler, datasheet"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          useUI.getState().showInfo(d.type);
+                        }}
+                      >
+                        i
+                      </span>
                     </button>
                   ))}
                 </div>

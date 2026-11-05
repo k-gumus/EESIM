@@ -1,3 +1,4 @@
+import { useUI } from '../store/uiStore';
 import { useEffect, useState } from 'react';
 import { useCircuit } from '../store/circuitStore';
 import { LIBRARY, type ParamDef } from '../circuit/library';
@@ -98,7 +99,12 @@ export function Inspector() {
         <input className="insp-name" value={name} onChange={(e) => setName(e.target.value)} onBlur={() => rename(node.id, name)} onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
         <span className="insp-type">{def.label}</span>
       </div>
-      <p className="insp-desc">{def.description}</p>
+      <p className="insp-desc">
+        {def.description}{' '}
+        <button className="linkbtn" onClick={() => useUI.getState().showInfo(def.type)} title="Ne işe yarar, nasıl çalışır, tipik değerler, dikkat edilecekler, datasheet">
+          ⓘ Bilgi kartı
+        </button>
+      </p>
 
       {params.length > 0 && (
         <div className="insp-params">
