@@ -1,51 +1,11 @@
 // Hazır deney paketleri (EE212 laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
-import type { CircuitDoc, CompType, ParamValue } from '../circuit/types';
-import type { Mood } from '../tepecan/mascot';
-import type { TopicId } from './topics';
 
-export type StepCheck =
-  | { kind: 'run' }
-  | { kind: 'manual'; label?: string }
-  | { kind: 'switch'; comp: string; closed: boolean }
-  | { kind: 'param'; comp: string; param: string; op: '>=' | '<=' | '==' | '!='; value: number | string }
-  | { kind: 'pin'; comp: string; pin: string; net: string }
-  | { kind: 'measure'; net: string; stat: 'max' | 'min' | 'avg' | 'rms' | 'pp'; op: '>=' | '<='; value: number }
-  | { kind: 'quiz'; question: string; options: string[]; answer: number; explain: string };
-
-export interface LabStep {
-  id: string;
-  title: string;
-  text: string;
-  check: StepCheck;
-  xp?: number;
-  hint?: string;
-  success?: string;
-}
-
-export interface Template {
-  id: string;
-  title: string;
-  subtitle: string;
-  level: 'Isınma' | 'Temel' | 'Orta' | 'İleri';
-  topic: TopicId;
-  keywords?: string[];
-  mood: Mood;
-  xp: number;
-  doc: CircuitDoc;
-  steps: LabStep[];
-  theory: string;
-}
-
-type C = [type: CompType, name: string, x: number, y: number, rot?: number, params?: Record<string, ParamValue>];
-const doc = (title: string, comps: C[], wires: [string, string][]): CircuitDoc => ({
-  version: 1,
-  title,
-  components: comps.map(([type, name, x, y, rot, params]) => ({ id: `${name}`, type, name, x, y, rot: rot ?? 0, params })),
-  wires: wires.map(([from, to], i) => ({ id: `w${i}`, from, to })),
-});
-
-const D4001 = { model: '1N4001', Is: 14.11e-9, N: 1.984 };
-const D4148 = { model: '1N4148', Is: 2.52e-9, N: 1.752 };
+import { doc, D4001, D4148, type Template } from './lib';
+export type { StepCheck, LabStep, Template } from './lib';
+import { DC_TEMPLATES } from './t_dc';
+import { TRANSIENT_TEMPLATES, AC_TEMPLATES, FILTER_TEMPLATES } from './t_transient_ac';
+import { DIODE_TEMPLATES, BJT_TEMPLATES, MOSFET_TEMPLATES } from './t_semis';
+import { OPAMP_TEMPLATES, OSC_TEMPLATES, POWER_TEMPLATES, DIGITAL_TEMPLATES, MEASURE_TEMPLATES } from './t_more';
 
 // ───────────────────────────── 0. Isınma: LED ve Ohm Yasası ─────────────────────────────
 const ledOhm: Template = {
@@ -634,5 +594,11 @@ const bjt: Template = {
     'Gerilim bölücü polarmada baz, R1–R2 bölücüsünün Thevenin eşdeğeriyle beslenir: V_TH = V_CC·R2/(R1+R2), R_TH = R1‖R2. KVL: I_B = (V_TH − V_BE)/(R_TH + (β+1)R_E). (β+1)R_E ≫ R_TH ise I_C ≈ (V_TH − V_BE)/R_E olur ve β’dan bağımsızlaşır. V_CE = V_CC − I_C·R_C − I_E·R_E.',
 };
 
-export const TEMPLATES: Template[] = [ledOhm, halfWave, fullWave, clipper, clamper, zener, bjt];
+export const TEMPLATES: Template[] = [
+  ledOhm, ...DC_TEMPLATES,
+  ...TRANSIENT_TEMPLATES, ...AC_TEMPLATES, ...FILTER_TEMPLATES,
+  halfWave, fullWave, clipper, clamper, zener, ...DIODE_TEMPLATES,
+  bjt, ...BJT_TEMPLATES, ...MOSFET_TEMPLATES,
+  ...OPAMP_TEMPLATES, ...OSC_TEMPLATES, ...POWER_TEMPLATES, ...DIGITAL_TEMPLATES, ...MEASURE_TEMPLATES,
+];
 export const templateById = (id: string | null) => TEMPLATES.find((t) => t.id === id);

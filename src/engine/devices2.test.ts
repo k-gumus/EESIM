@@ -39,7 +39,8 @@ describe('Op-amp', () => {
       ),
     );
     sim.dcOperatingPoint();
-    expect(sim.netV(net('OUT'))).toBeCloseTo(-5, 2);
+    // 1 mV giriş ofseti × (1 + R2/R1) = 11 mV hata gerçekçidir
+    expect(sim.netV(net('OUT'))).toBeCloseTo(-5, 1);
   });
 
   it('doyum: kazanç × giriş > besleme → ~±13,5 V', () => {

@@ -232,6 +232,7 @@ class SimRunner {
   private lastPublish = 0;
   private nextRecord = 0;
   private maxFreq = 0;
+  private clockFreq = 0;
   private burntWarned = new Set<string>();
   private powerWarned = new Set<string>();
   /** osiloskop görüntüsü dondurulduğunda */
@@ -264,8 +265,11 @@ class SimRunner {
       if (n !== undefined) this.edgeNet.set(e.id, n);
     }
     this.maxFreq = 0;
+    this.clockFreq = 0;
     for (const el of this.compiled.elements) {
       if (el.type === 'vac') this.maxFreq = Math.max(this.maxFreq, Number(el.params.freq) || 0);
+      // kare dalga kenarlarını ve doluluk oranını çözebilmek için periyot başına ≥100 adım
+      if (el.type === 'clock') this.clockFreq = Math.max(this.clockFreq, Number(el.params.freq) || 0);
     }
     this.updateTimeDiv();
     useSim.setState({ compiled: this.compiled });
@@ -276,6 +280,7 @@ class SimRunner {
     let td: number;
     if (scope) td = Number(scope.data.params.timeDiv) || 1e-3;
     else if (this.maxFreq > 0) td = 2 / this.maxFreq / 10;
+    else if (this.clockFreq > 0) td = 2 / this.clockFreq / 10;
     else td = 1e-3;
     if (td !== useSim.getState().timeDiv) useSim.setState({ timeDiv: td });
   }
@@ -434,6 +439,7 @@ class SimRunner {
       const win = this.window;
       let dt = win / 1000;
       if (this.maxFreq > 0) dt = Math.min(dt, 1 / (this.maxFreq * 200));
+      if (this.clockFreq > 0) dt = Math.min(dt, 1 / (this.clockFreq * 100));
       const simRate = (win / 2) * st.speed; // ekran başına ~2 sn
       const target = this.sim.t + simRate * frameDt;
       const recInt = win / 1000;

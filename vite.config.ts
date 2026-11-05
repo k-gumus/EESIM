@@ -20,6 +20,6 @@ export default defineConfig(({ mode }) => {
       assetsInlineLimit: single ? 100_000_000 : 4096,
       chunkSizeWarningLimit: 4000,
     },
-    test: { environment: 'node' },
+    test: { environment: 'node', include: ['src/**/*.test.ts'] },
   };
 });

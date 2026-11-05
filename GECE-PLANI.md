@@ -17,6 +17,13 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - Lojik: 5 V CMOS benzeri davranışsal kapılar; boşta giriş ~2,5 V'a süzülür (belirsiz) → pull-up/pull-down dersi gerçekçi. D-FF ve 555 durumları her kabul edilen adımda güncellenir.
 - Bağımlı kaynaklar (E/G/F/H) teorik eleman: 3D montajda gösterilmez.
 - Osiloskoba XY modu eklendi (karakteristik eğriler, Lissajous).
+- Görev 5, 4'ten önce yapıldı: bilgi kartları katalogdaki deneylere bağlantı vereceği için önce katalog kuruldu.
+- Katalog: 12 konu başlığı; 49 etkileşimli föy + 66 “yakında” deney (toplam 115). Etkileşimli olmayanlar silik kartla listelenir, aranabilir.
+  “★ Başlangıç yolu”: LED/Ohm → bölücü → RC → yarım dalga → pull-down → kapılar → eviren op-amp → 555.
+- Her föyün test sorularının doğru şıkkı birim testlerinde simülasyonla doğrulanır (catalog.test.ts).
+- Motor: Newton yakınsamazsa adım 8'e, sonra 64'e bölünür; yine olmazsa sözde-geçici gevşetme ile sıçrama çözülür (multivibratör, mandal).
+  DC çalışma noktası için de aynı gevşetme son çare olarak eklendi (SR mandal artık açılışta hata vermiyor, belirsiz durumda başlıyor).
+- Saat kaynağı (clock) olan devrelerde zaman adımı periyodun 1/100'ü ile sınırlanır (buck/boost doğru çalışsın diye).
 
 ## Görevler
 - [x] 0. Ortam: proje klasörü + node_modules kontrolü, eksikse Kerem'in klasöründen geri yükle; git init; testler yeşil
@@ -24,7 +31,7 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - [x] 2. Sağ panel: “Tepecan AI” → “Tepecan'a Sor”
 - [x] 3. Motor genişletme: kontrollü kaynaklar (E/G/F/H), op-amp makro modeli (doyumlu), potansiyometre, buton (pull-up/pull-down örnekleri), pil, lamba, Schottky, LDR/termistör, lojik kapılar + saat kaynağı, 555 (davranışsal), BJT/MOSFET hazır modelleri (2N2222, BC547, 2N7000, IRF540)
 - [ ] 4. Eleman bilgi kartları: Ne işe yarar / Nasıl çalışır / Tipik değerler / Dikkat (ör. pull-down neden gerekir) / malzeme-kılıf-sınır değerleri / datasheet bağlantısı + PDF yükleme (misafirde IndexedDB, girişli kullanıcıda R2)
-- [ ] 5. Deney kataloğu: elektrik-elektronik mühendisliği eğitimi ve kariyerinde karşılaşılan deneylerin konu başlıklarına göre tam listesi; platformda simüle edilebilenler adım adım şablon olarak, kategori sayfası + arama
+- [x] 5. Deney kataloğu: elektrik-elektronik mühendisliği eğitimi ve kariyerinde karşılaşılan deneylerin konu başlıklarına göre tam listesi; platformda simüle edilebilenler adım adım şablon olarak, kategori sayfası + arama
 - [ ] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
 - [ ] 7. İlk giriş eğitimi (Tepecan'lı adım adım tur) + sonraki girişler için “yenilikler / kaldığın yer” turu, “turu tekrar göster”
 - [ ] 8. Tepecan'a Sor backend: /api/ask (Workers AI), kota, premium bayrağı
@@ -34,3 +41,4 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - 2026-11-04 23:50 — Plan yazıldı, 03:30 başlangıcı planlandı.
 - 2026-11-05 07:10 — Görev 0–2 tamam: ortam sağlam (23 test yeşil), yeni üst bar + Dosya menüsü + Deney bul + kullanıcı menüsü, “Tepecan'a Sor”.
 - 2026-11-05 07:40 — Görev 3 tamam: op-amp, E/G/F/H, potansiyometre, buton, pil, lamba, LDR, NTC, 7805, 6 lojik kapı, D-FF, saat, lojik giriş/gösterge, 555, BJT/MOSFET/Schottky hazır modelleri; semboller, SPICE çıktısı, 3D (DIP/TO-220/trimpot), osiloskop XY. 40 test yeşil.
+- 2026-11-05 07:50 — Görev 5 tamam: konu başlıklı katalog penceresi (kenar çubuğu, arama, seviye filtresi, yakında olanlar), 42 yeni föy (DC, geçici, AC, filtre, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme), 66 planlı deney; motor sağlamlaştırma. 60 test yeşil.

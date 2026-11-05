@@ -6,9 +6,10 @@ import App from './App';
 import { useCircuit } from './store/circuitStore';
 import { runner } from './sim/runner';
 import { useUI } from './store/uiStore';
+import { TEMPLATES } from './templates';
 
 // Geliştirme modunda test/otomasyon için erişim noktası
-if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__ieeesim = { circuit: useCircuit, runner, ui: useUI };
+if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__ieeesim = { circuit: useCircuit, runner, ui: useUI, templates: TEMPLATES };
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

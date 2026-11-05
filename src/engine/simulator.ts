@@ -179,7 +179,7 @@ class Capacitor extends Device {
     this.v1 = v;
   }
   initHistory(x: Float64Array) {
-    const v = V(x, this.el.nets[0]) - V(x, this.el.nets[1]);
+    const v = this.el.params.useIc ? num(this.el.params.ic, 0) : V(x, this.el.nets[0]) - V(x, this.el.nets[1]);
     this.v1 = this.v2 = v;
   }
 }
@@ -786,11 +786,11 @@ function softClip(u: number): [number, number] {
   return [u * Math.pow(base, -1 / 8), Math.pow(base, -1 / 8 - 1)];
 }
 
-export const OPAMP_MODELS: Record<string, { A0: number; GBW: number; SR: number; head: number; Rin: number; Rout: number; label: string }> = {
-  ideal: { A0: 1e6, GBW: 100e6, SR: 1000, head: 0, Rin: 1e12, Rout: 1, label: 'İdeal (sonsuza yakın)' },
-  LM741: { A0: 2e5, GBW: 1e6, SR: 0.5, head: 1.5, Rin: 2e6, Rout: 75, label: 'LM741 (1 MHz, 0,5 V/µs)' },
-  TL081: { A0: 2e5, GBW: 3e6, SR: 13, head: 1.5, Rin: 1e12, Rout: 75, label: 'TL081 (JFET, 3 MHz, 13 V/µs)' },
-  LM358: { A0: 1e5, GBW: 1e6, SR: 0.3, head: 1.5, Rin: 1e7, Rout: 75, label: 'LM358 (tek beslemeli)' },
+export const OPAMP_MODELS: Record<string, { A0: number; GBW: number; SR: number; head: number; Rin: number; Rout: number; vos: number; label: string }> = {
+  ideal: { A0: 1e6, GBW: 100e6, SR: 1000, head: 0, Rin: 1e12, Rout: 1, vos: 0, label: 'İdeal (sonsuza yakın)' },
+  LM741: { A0: 2e5, GBW: 1e6, SR: 0.5, head: 1.5, Rin: 2e6, Rout: 75, vos: 1e-3, label: 'LM741 (1 MHz, 0,5 V/µs)' },
+  TL081: { A0: 2e5, GBW: 3e6, SR: 13, head: 1.5, Rin: 1e12, Rout: 75, vos: 3e-3, label: 'TL081 (JFET, 3 MHz, 13 V/µs)' },
+  LM358: { A0: 1e5, GBW: 1e6, SR: 0.3, head: 1.5, Rin: 1e7, Rout: 75, vos: 2e-3, label: 'LM358 (tek beslemeli)' },
 };
 
 /**
@@ -806,6 +806,7 @@ class OpAmp extends Device {
   Gout: number;
   mid: number;
   half: number;
+  vos: number;
   v1 = 0;
   v2 = 0;
   constructor(el: CompiledElement) {
@@ -825,6 +826,7 @@ class OpAmp extends Device {
     this.C1 = 1 / (2 * Math.PI * this.R1 * fp);
     this.Imax = SR * this.C1;
     this.Gout = 1 / m.Rout;
+    this.vos = num(p.Vos, m.vos);
     this.mid = (vcc + vee) / 2;
     this.half = Math.max(0.1, (vcc - vee) / 2 - m.head);
   }
@@ -847,7 +849,7 @@ class OpAmp extends Device {
     addG(c, X, 0, geq);
     addIsrc(c, X, 0, ieq);
     // transkondüktans (eğim sınırlı): X düğümüne I1 enjekte eder
-    const vd = V(x, p) - V(x, n);
+    const vd = V(x, p) - V(x, n) + this.vos;
     const u = (this.G1 * vd) / this.Imax;
     const th = Math.tanh(u);
     const I1 = this.Imax * th;
@@ -1227,6 +1229,9 @@ export class Simulator {
   private lastDt = -1;
   private histDC = false;
   lastIterations = 0;
+  /** Sözde-geçici (pseudo-transient) DC yardımı: her düğümü önceki çözüme bağlayan iletkenlik */
+  private ptG = 0;
+  private ptX: Float64Array | null = null;
 
   constructor(public circ: CompiledCircuit) {
     this.nv = circ.netCount - 1;
@@ -1268,6 +1273,12 @@ export class Simulator {
       c.x = this.x;
       for (const d of this.devices) d.stamp(c);
       for (let i = 0; i < this.nv; i++) this.A[i * n + i] += GMIN_NODE;
+      if (this.ptG > 0 && this.ptX) {
+        for (let i = 0; i < this.nv; i++) {
+          this.A[i * n + i] += this.ptG;
+          this.b[i] += this.ptG * this.ptX[i];
+        }
+      }
       try {
         solveDense(this.A, this.b, n, this.xNew);
       } catch (e) {
@@ -1325,6 +1336,7 @@ export class Simulator {
         }
       }
     }
+    if (!ok) ok = this.pseudoTransient();
     if (!ok) throw new SimError('convergence', 'DC çalışma noktası bulunamadı (Newton-Raphson yakınsamadı).');
     const c = this.ctx('dc', 0, 1);
     for (const d of this.devices) {
@@ -1337,6 +1349,48 @@ export class Simulator {
     this.lastDt = -1;
   }
 
+  /**
+   * Sözde-geçici süreklilik: her düğüme önceki çözüme çeken bir iletkenlik eklenir ve bu
+   * iletkenlik yakınsadıkça azaltılır. Çift kararlı (mandal) ve keskin geçişli devrelerde
+   * Gmin/kaynak adımlamanın bulamadığı çalışma noktasını bulur.
+   */
+  private pseudoTransient(): boolean {
+    this.x.fill(0);
+    return this.relax(this.ctx('dc', 0, 1), 1e-2) && this.newton(this.ctx('dc', 0, 1), 200);
+  }
+
+  /**
+   * Her düğüme bir önceki iterasyon çözümüne bağlayan sahte iletkenlik (g) ekleyip g'yi
+   * azaltarak denklemleri sağlayan çözüme "sürünerek" ulaş. Geri besleme ile ani sıçrama
+   * yapan devrelerde (mandal, multivibratör) Newton'un uzaktaki dalı bulmasını sağlar.
+   */
+  private relax(c: Ctx, g0: number): boolean {
+    const xp = new Float64Array(this.n);
+    let g = g0;
+    try {
+      for (let k = 0; k < 800; k++) {
+        xp.set(this.x);
+        this.ptX = xp;
+        this.ptG = g;
+        if (!this.newton(c, 100)) {
+          this.x.set(xp);
+          g *= 8;
+          if (g > 1e5) return false;
+          continue;
+        }
+        let dmax = 0;
+        for (let i = 0; i < this.nv; i++) dmax = Math.max(dmax, Math.abs(this.x[i] - xp[i]));
+        if (dmax < 1e-3) g /= 4;
+        else if (dmax < 0.5) g /= 1.5;
+        if (g < 1e-11) return true;
+      }
+      return false;
+    } finally {
+      this.ptG = 0;
+      this.ptX = null;
+    }
+  }
+
   /** Bir geçici analiz adımı */
   step(dt: number): void {
     const order: 1 | 2 = this.histDC || this.lastDt === dt ? 2 : 1;
@@ -1346,15 +1400,33 @@ export class Simulator {
       this.acceptStep(c);
       return;
     }
-    // Yakınsamadı: adımı 8 alt adıma böl (Geri-Euler)
+    // Yakınsamadı: adımı alt adımlara böl (Geri-Euler), gerekirse yinelemeli olarak küçült
     this.x.set(this.xSave);
-    const h = dt / 8;
-    for (let s = 0; s < 8; s++) {
-      const cs = this.ctx('tran', h, 1);
-      if (!this.newton(cs, 150)) {
-        throw new SimError('convergence', `t = ${(this.t * 1e3).toFixed(3)} ms anında Newton-Raphson yakınsamadı.`);
+    this.subStep(dt, 0);
+  }
+
+  private subStep(h: number, depth: number) {
+    const k = 8;
+    const hs = h / k;
+    const save = new Float64Array(this.n);
+    for (let s = 0; s < k; s++) {
+      save.set(this.x);
+      const cs = this.ctx('tran', hs, 1);
+      if (this.newton(cs, 120)) {
+        this.acceptStep(cs);
+        continue;
       }
-      this.acceptStep(cs);
+      this.x.set(save);
+      if (depth < 1) {
+        this.subStep(hs, depth + 1);
+        continue;
+      }
+      // Son çare: sözde-geçici gevşetme ile sıçramayı çöz
+      if (this.relax(cs, 1e-1) && this.newton(cs, 200)) {
+        this.acceptStep(cs);
+        continue;
+      }
+      throw new SimError('convergence', `t = ${(this.t * 1e3).toFixed(3)} ms anında Newton-Raphson yakınsamadı.`);
     }
   }
 
