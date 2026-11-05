@@ -33,6 +33,9 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - Google ile giriş: OAuth 2.0 yetkilendirme kodu akışı + state çerezi; aynı e-postalı şifreli hesap varsa Google ona bağlanır (Google e-postayı doğruladığı için).
 - İlerleme eşitleme: XP en büyüğü, adım/deney kümeleri birleşimi; değişiklikler 1,5 sn gecikmeyle sunucuya yazılır.
 - Kayıtlı devrelerin buluta yazılması bu gece yapılmadı (şema dışı bırakıldı) — sonraki adım.
+- Tur: ilk girişte (giriş ya da misafir seçiminden hemen sonra) 10 adımlı spot ışıklı tur; sonunda katalog “★ Başlangıç yolu” ile açılır.
+  Sonraki girişlerde (her yeni tarayıcı oturumunda bir kez) “Tekrar hoş geldin” kartı: seri/XP, kaldığın deney + ilerleme, sıradaki öneri, sürüm değiştiyse “Yenilikler”.
+  Tur kullanıcı menüsünden ve bu karttan tekrar başlatılabilir. Esc/←/→/Enter klavyeyle çalışır.
 - Saat kaynağı (clock) olan devrelerde zaman adımı periyodun 1/100'ü ile sınırlanır (buck/boost doğru çalışsın diye).
 
 ## Görevler
@@ -43,7 +46,7 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - [x] 4. Eleman bilgi kartları: Ne işe yarar / Nasıl çalışır / Tipik değerler / Dikkat (ör. pull-down neden gerekir) / malzeme-kılıf-sınır değerleri / datasheet bağlantısı + PDF yükleme (misafirde IndexedDB, girişli kullanıcıda R2)
 - [x] 5. Deney kataloğu: elektrik-elektronik mühendisliği eğitimi ve kariyerinde karşılaşılan deneylerin konu başlıklarına göre tam listesi; platformda simüle edilebilenler adım adım şablon olarak, kategori sayfası + arama
 - [x] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
-- [ ] 7. İlk giriş eğitimi (Tepecan'lı adım adım tur) + sonraki girişler için “yenilikler / kaldığın yer” turu, “turu tekrar göster”
+- [x] 7. İlk giriş eğitimi (Tepecan'lı adım adım tur) + sonraki girişler için “yenilikler / kaldığın yer” turu, “turu tekrar göster”
 - [ ] 8. Tepecan'a Sor backend: /api/ask (Workers AI), kota, premium bayrağı
 - [ ] 9. Test (birim + tarayıcı), build, Kerem'in klasörüne teslim, Cloudflare kurulum rehberi (alan adı, Pages, D1, R2, Google OAuth anahtarları)
 
@@ -54,3 +57,4 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - 2026-11-05 07:50 — Görev 5 tamam: konu başlıklı katalog penceresi (kenar çubuğu, arama, seviye filtresi, yakında olanlar), 42 yeni föy (DC, geçici, AC, filtre, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme), 66 planlı deney; motor sağlamlaştırma. 60 test yeşil.
 - 2026-11-05 08:05 — Görev 4 tamam: 45 elemanın bilgi kartı (ne işe yarar, nasıl çalışır, formül, tipik değerler, dikkat, kılıf/sınır değerler, datasheet), PDF yükleme (IndexedDB; girişte buluta), elemanı kullanan deneylere kısayol. 61 test yeşil.
 - 2026-11-05 08:25 — Görev 6 tamam: giriş ekranı (Google, e-posta/şifre, kayıt, misafir, çevrimdışı modu), Pages Functions API (auth, progress, datasheets → R2), D1 şeması, wrangler.toml; wrangler ile yerelde uçtan uca test edildi (kayıt, giriş, hatalı şifre, çıkış, ilerleme, PDF yükle/indir/sil, köken denetimi, Google yönlendirmesi). 63 test yeşil.
+- 2026-11-05 08:40 — Görev 7 tamam: Tepecan’lı tanıtım turu (palet, canvas, Başlat, araçlar, Deney bul, Dosya, sağ panel, profil), tekrar hoş geldin kartı (kaldığın yer, öneri, yenilikler). Tarayıcıda uçtan uca denendi. 63 test yeşil.

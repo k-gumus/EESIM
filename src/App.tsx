@@ -14,6 +14,7 @@ import { InfoCard } from './ui/InfoCard';
 import { LoginScreen } from './auth/LoginScreen';
 import { initAuth } from './auth/api';
 import { useAuth } from './auth/store';
+import { Tour, rememberLastTemplate } from './tour/Tour';
 import { TepecanToast } from './ui/TepecanToast';
 import { useCircuit } from './store/circuitStore';
 import { TEMPLATES } from './templates';
@@ -38,21 +39,26 @@ export default function App() {
     initAuth();
     const st = useCircuit.getState();
     if (!st.nodes.length) st.loadDoc(TEMPLATES[0].doc, TEMPLATES[0].id);
+    return rememberLastTemplate();
   }, []);
 
-  // Giriş/misafir seçimi yapılınca: ilk kez gelene karşılama
+  // Giriş/misafir seçimi yapılınca: ilk kez gelene tanıtım turu, geri dönene "kaldığın yer" kartı
   const welcomed = useRef(false);
   useEffect(() => {
     if (!authReady || loginOpen || welcomed.current) return;
     welcomed.current = true;
     let seen = true;
+    let sameSession = false;
     try {
       seen = localStorage.getItem('ieeesim.welcomed') === '1';
       localStorage.setItem('ieeesim.welcomed', '1');
+      sameSession = sessionStorage.getItem('ieeesim.session') === '1';
+      sessionStorage.setItem('ieeesim.session', '1');
     } catch {
       /* yok say */
     }
-    if (!seen) useUI.getState().openCatalog('first');
+    if (!seen) useUI.getState().startTour('first');
+    else if (!sameSession) useUI.getState().startTour('return');
   }, [authReady, loginOpen]);
 
   // Eleman seçilince Özellikler sekmesine geç
@@ -133,6 +139,7 @@ export default function App() {
         {catalog && <TemplatesModal first={catalog === 'first'} onClose={() => useUI.getState().closeCatalog()} />}
         {netOpen && <NetlistModal onClose={() => useUI.getState().setNetlist(false)} />}
         <InfoCard />
+        <Tour />
         <LoginScreen />
       </div>
     </ReactFlowProvider>
