@@ -30,8 +30,11 @@ GOOGLE_CLIENT_ID = ""
 # GOOGLE_CLIENT_SECRET gizlidir: panelde Worker → Settings → Variables and Secrets → "Secret" olarak ekle (bu dosyaya yazma!)
 AI_DAILY_FREE = "20"
 AI_DAILY_PREMIUM = "200"
-AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
-# Premium kullanıcılar için daha güçlü (ve daha çok "neuron" harcayan) model:
+# Tepecan'ın modeli. Cloudflare eski modelleri zamanla emekliye ayırır (llama-3.1-8b: 30.05.2026);
+# bu model çalışmazsa functions/api/ask.ts içindeki yedek listeden sıradaki denenir.
+# Güncel liste: https://developers.cloudflare.com/workers-ai/models/
+AI_MODEL = "@cf/google/gemma-4-26b-a4b-it"
+# Premium kullanıcılar için daha büyük (ve daha çok "neuron" harcayan) model:
 AI_MODEL_PREMIUM = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
 # Veritabanı (D1). database_id yazmaya gerek yok: ilk `wrangler deploy` "eesim" adlı veritabanını

@@ -143,7 +143,8 @@ class Resistor extends Device {
 class Switch extends Resistor {
   constructor(el: CompiledElement) {
     super(el);
-    this.g = el.params.closed ? 1e3 : 1e-9;
+    // Açık anahtar: 1 TΩ (gerçek anahtarın yalıtım direnci mertebesi; sızıntı pA düzeyinde kalır)
+    this.g = el.params.closed ? 1e3 : 1e-12;
   }
 }
 
@@ -633,7 +634,7 @@ class Button extends Resistor {
   constructor(el: CompiledElement) {
     super(el);
     const closed = !!el.params.pressed !== (el.params.kind === 'NC');
-    this.g = closed ? 1e3 : 1e-9;
+    this.g = closed ? 1e3 : 1e-12;
   }
 }
 
