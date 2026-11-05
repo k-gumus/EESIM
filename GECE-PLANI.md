@@ -104,3 +104,4 @@ Kararlar:
 - 2026-11-05 22:20 — Canlıda (eesim.fyi) Tepecan’a Sor “5028: llama-3.1-8b-instruct was deprecated on 2026-05-30” veriyordu. Varsayılan model `@cf/google/gemma-4-26b-a4b-it`;
   çalışmazsa gemma-4 → glm-4.7-flash → llama-3.3-70b yedek zinciri (düşünme modu kapalı), hepsi düşerse Türkçe mesaj + hak iadesi (PR #4).
   Aynı ekran görüntüsünde S1 açıkken 7,9 nA görünüyordu: açık anahtar 1 TΩ, 1 nA altı akımlar 0 gösteriliyor. 102 test yeşil.
+- 2026-11-05 22:50 — PR #4 birleşince başlayan Cloudflare build’i (#9bd6f49d) “Initializing build environment” adımında 16+ dk takıldı (kod indirilmeden; Cloudflare tarafı). Yeni build tetiklemek için bu kayıtla küçük bir PR açıldı.
