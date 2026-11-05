@@ -27,6 +27,7 @@ export default function App() {
   const setTab = useUI((s) => s.setTab);
   const catalog = useUI((s) => s.catalog);
   const netOpen = useUI((s) => s.netlist);
+  const palOpen = useUI((s) => s.palette);
   const selectedId = useCircuit((s) => s.selectedId);
   const hasScope = useCircuit((s) => s.nodes.some((n) => n.data.type === 'scope'));
   const [split, setSplit] = useState(0.5);
@@ -88,10 +89,11 @@ export default function App() {
 
   return (
     <ReactFlowProvider>
-      <div className={`app ${views.right ? '' : 'no-right'}`}>
+      <div className={`app ${views.right ? '' : 'no-right'} ${palOpen ? 'pal-open' : ''}`}>
         <TopBar />
         <div className="main">
           <Palette />
+          {palOpen && <div className="pal-backdrop" onClick={() => useUI.getState().setPalette(false)} />}
           <div className="center">
             <div className="workspace">
               <div className="pane" style={{ flexBasis: views.three ? `${split * 100}%` : '100%' }}>
@@ -125,6 +127,9 @@ export default function App() {
                 </button>
                 <button className={tab === 'ai' ? 'on' : ''} onClick={() => setTab('ai')}>
                   🤖 Tepecan'a Sor
+                </button>
+                <button className="tabs-close" onClick={() => useUI.getState().setViews({ right: false })} title="Paneli kapat">
+                  ✕
                 </button>
               </nav>
               <div className="tab-body">

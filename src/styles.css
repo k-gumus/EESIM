@@ -268,8 +268,11 @@ kbd {
 /* ─────────── Düzen ─────────── */
 .app {
   display: grid;
-  grid-template-rows: 54px 1fr;
+  grid-template-rows: 54px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   height: 100vh;
+  /* mobil tarayıcılarda adres çubuğu açıkken görünen yükseklik */
+  height: 100dvh;
 }
 .main {
   display: grid;
@@ -1207,6 +1210,7 @@ kbd {
 }
 .cop-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 12px;
   display: flex;
@@ -1586,6 +1590,7 @@ kbd {
   border-radius: 18px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1888,20 +1893,8 @@ kbd {
   }
 }
 @media (max-width: 760px) {
-  .topbar {
-    gap: 6px;
-    overflow-x: auto;
-  }
   .brand > div,
-  .views,
-  .sim-status {
-    display: none;
-  }
-  .main,
-  .app.no-right .main {
-    grid-template-columns: 0 minmax(0, 1fr);
-  }
-  .palette {
+  .views {
     display: none;
   }
   .osc-side {
@@ -2046,6 +2039,7 @@ kbd {
   display: grid;
   gap: 2px;
   max-height: 70vh;
+  max-height: 70dvh;
   overflow-y: auto;
 }
 .exp-res {
@@ -2218,8 +2212,7 @@ kbd {
     flex-basis: 140px;
   }
   .exp-search-kbd,
-  .simtools select,
-  .simtools .btn.icon {
+  .simtools select {
     display: none;
   }
 }
@@ -2249,6 +2242,7 @@ kbd {
 .cat-modal {
   width: min(1180px, 100%);
   height: min(860px, calc(100vh - 32px));
+  height: min(860px, calc(100dvh - 32px));
 }
 .cat-hero .tpl-hero-img {
   width: 120px;
@@ -3029,4 +3023,210 @@ kbd {
   align-items: center;
   gap: 8px;
   padding: 0 20px 16px;
+}
+
+/* ───────── Dokunmatik ve küçük ekranlar (tablet / telefon) ───────── */
+.pal-toggle,
+.pal-close,
+.pal-backdrop,
+.tabs .tabs-close {
+  display: none;
+}
+.cop-chips,
+.cop-input {
+  flex: none;
+}
+.cop-list {
+  overscroll-behavior: contain;
+}
+.cop-input {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* Parmakla kullanım: bacaklara dokunmak için geniş alan, daha büyük sekmeler */
+@media (pointer: coarse) {
+  .react-flow__handle.pin::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+  }
+  .tabs button {
+    padding: 10px 4px;
+  }
+  .cop-input textarea {
+    font-size: 16px;
+  }
+  /* fareyle üzerine gelinemediği için bilgi düğmesi hep görünsün, dokunması kolay olsun */
+  .pal-info {
+    opacity: 0.85;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 18px;
+  }
+}
+
+/* Tablet (dikey) ve küçük dizüstü: üst bar sığsın */
+@media (max-width: 1100px) {
+  .topbar {
+    gap: 6px;
+    padding: 0 8px;
+  }
+  .brand-name,
+  .fm-label,
+  .exp-search-kbd {
+    display: none;
+  }
+  .exp-search {
+    flex: 1 1 160px;
+    min-width: 96px;
+  }
+  .exp-results {
+    min-width: min(340px, calc(100vw - 24px));
+  }
+}
+@media (max-width: 900px) {
+  .simtools .sim-status {
+    min-width: 0;
+  }
+  .sim-status .ss-text {
+    display: none;
+  }
+}
+
+/* Telefon: iki satırlı üst bar, çekmece palet, alttan açılan panel */
+@media (max-width: 760px) {
+  .app {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding: 6px 8px;
+    padding-top: max(6px, env(safe-area-inset-top));
+  }
+  .topbar-spacer {
+    display: none;
+  }
+  .pal-toggle {
+    display: inline-block;
+  }
+  .exp-search {
+    flex: 1 1 100px;
+    min-width: 0;
+  }
+  .exp-results {
+    position: fixed;
+    top: 50px;
+    left: 8px;
+    right: 8px;
+    min-width: 0;
+  }
+  .simtools {
+    order: 10;
+    flex: 1 1 100%;
+  }
+  .simtools .btn.run {
+    flex: 1;
+    min-width: 0;
+  }
+  .simtools .sim-status {
+    display: inline-flex;
+  }
+  .main,
+  .app.no-right .main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .palette {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(290px, 86vw);
+    z-index: 96;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.5);
+    padding-top: env(safe-area-inset-top);
+  }
+  .app.pal-open .palette {
+    transform: none;
+  }
+  .palette-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pal-close {
+    display: inline-block;
+  }
+  .pal-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 95;
+  }
+
+  .right {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: min(58dvh, calc(100dvh - 150px));
+    border-radius: 16px 16px 0 0;
+    border-top: 1px solid var(--line2);
+    box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.5);
+  }
+  .tabs .tabs-close {
+    display: block;
+    flex: none;
+    width: 38px;
+  }
+  .tabs button {
+    font-size: 12px;
+  }
+  .cop-head {
+    padding: 6px 12px;
+  }
+  .cop-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .cop-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .cop-chips .chip {
+    flex: none;
+  }
+  .scope-drawer {
+    height: 200px;
+  }
+  .tour-mascot {
+    width: 60px;
+    height: 80px;
+  }
+  .palette-tips {
+    display: none;
+  }
+  .tour-bubble {
+    padding: 12px 12px 12px 6px;
+  }
+}
+/* Telefonda klavye açıkken (görünen alan kısalır): panel tüm ekranı kaplasın, sohbete yer kalsın */
+@media (max-width: 760px) and (max-height: 560px) {
+  .right {
+    top: 0;
+    height: auto;
+    border-radius: 0;
+  }
+  .cop-head {
+    display: none;
+  }
 }

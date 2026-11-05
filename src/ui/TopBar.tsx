@@ -95,7 +95,7 @@ function FileMenu() {
   return (
     <div className="menu" ref={ref}>
       <button className={`btn ghost ${open ? 'on' : ''}`} onClick={() => setOpen(!open)} data-tour="file">
-        📁 Dosya <span className="caret">▾</span>
+        📁<span className="fm-label"> Dosya</span> <span className="caret">▾</span>
       </button>
       {open && (
         <div className="menu-pop">
@@ -240,10 +240,10 @@ function SimTools() {
           ▶ {status === 'paused' ? 'Devam' : 'Başlat'}
         </button>
       )}
-      <button className="btn icon" disabled={!active && status !== 'error'} onClick={() => runner.stop()} title="Durdur">
+      <button className="btn icon" disabled={!active && status !== 'error'} onClick={() => runner.stop()} title="Durdur" data-sim="stop">
         ■
       </button>
-      <button className="btn icon" disabled={!active} onClick={() => runner.restart()} title="Baştan başlat (t = 0)">
+      <button className="btn icon" disabled={!active} onClick={() => runner.restart()} title="Baştan başlat (t = 0)" data-sim="restart">
         ↺
       </button>
       <select value={speed} onChange={(e) => useSim.setState({ speed: Number(e.target.value) })} title="Simülasyon hızı (ağır çekim)">
@@ -255,8 +255,10 @@ function SimTools() {
       </select>
       <span className={`sim-status ${status}`} title={lagging ? 'Bilgisayar istenen hızda hesaplayamıyor; simülasyon yavaşladı' : undefined}>
         <i />
-        {status === 'running' ? `${formatSI(t, 's')}` : status === 'paused' ? 'Duraklatıldı' : status === 'error' ? 'Hata' : 'Hazır'}
-        {lagging && running && <em> · yavaş</em>}
+        <span className="ss-text">
+          {status === 'running' ? `${formatSI(t, 's')}` : status === 'paused' ? 'Duraklatıldı' : status === 'error' ? 'Hata' : 'Hazır'}
+          {lagging && running && <em> · yavaş</em>}
+        </span>
       </span>
       <span className="simtools-sep" />
       <button className={`toggle-btn ${views.three ? 'on' : ''}`} onClick={() => setViews({ three: !views.three })} data-tour="three">
@@ -278,6 +280,7 @@ export function TopBar() {
   const { level, pct } = levelOf(xp);
   const views = useUI((s) => s.views);
   const setViews = useUI((s) => s.setViews);
+  const palette = useUI((s) => s.palette);
 
   return (
     <header className="topbar">
@@ -287,6 +290,9 @@ export function TopBar() {
           EE<span>SIM</span>
         </div>
       </div>
+      <button className={`btn icon pal-toggle ${palette ? 'on' : ''}`} onClick={() => useUI.getState().setPalette(!palette)} title="Elemanlar">
+        🧩
+      </button>
       <FileMenu />
       <ExperimentSearch />
       <ExperimentChip />
@@ -303,7 +309,7 @@ export function TopBar() {
         <span className="xp-n">⚡{xp}</span>
       </div>
       <UserMenu />
-      <button className={`btn icon ${views.right ? 'on' : ''}`} onClick={() => setViews({ right: !views.right })} title="Sağ paneli aç/kapat">
+      <button className={`btn icon right-toggle ${views.right ? 'on' : ''}`} onClick={() => setViews({ right: !views.right })} title="Deney föyü / Tepecan panelini aç-kapat">
         ☰
       </button>
     </header>
