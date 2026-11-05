@@ -18,6 +18,9 @@ interface UIState {
   netlist: boolean;
   infoType: CompType | null;
   tour: 'first' | 'return' | null;
+  /** Telefonda eleman paletinin çekmece olarak açık olup olmadığı */
+  palette: boolean;
+  setPalette: (v: boolean) => void;
   setViews: (v: Partial<Views>) => void;
   setTab: (t: RightTab) => void;
   openCatalog: (mode?: 'first' | 'menu', topic?: string | null) => void;
@@ -36,6 +39,9 @@ function loadViews(): Views {
   }
 }
 
+/** Telefon düzeni (styles.css'teki 760px sınırıyla aynı) */
+export const isPhone = () => typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches;
+
 export const useUI = create<UIState>((set, get) => ({
   views: loadViews(),
   tab: 'lab',
@@ -44,6 +50,8 @@ export const useUI = create<UIState>((set, get) => ({
   netlist: false,
   infoType: null,
   tour: null,
+  palette: false,
+  setPalette: (palette) => set({ palette }),
   setViews: (v) => {
     const views = { ...get().views, ...v };
     set({ views });

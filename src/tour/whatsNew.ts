@@ -1,7 +1,8 @@
 // "Yenilikler" listesi: sürüm değişince geri dönen kullanıcıya bir kez gösterilir
-export const APP_VERSION = '0.2.1';
+export const APP_VERSION = '0.2.2';
 
 export const WHATS_NEW: string[] = [
+  '**Tablet ve telefonda rahat kullanım** (v0.2.2): Tepecan sohbeti artık ekranın altında kesilmiyor; telefonda elemanlar 🧩 çekmecesinde, deney föyü alttan açılan panelde.',
   '**Yeni adımız EESIM!** Uygulama artık bağımsız bir proje; ilerlemen ve kayıtlı ayarların aynen duruyor.',
   '**32 yeni deney** (v0.2.1): Norton, bobin geri tepmesi, güç faktörü, H-köprüsü, Darlington, diferansiyel çift, Wien osilatörü, 555 PWM, R-2R DAC… Artık 81 etkileşimli föy.',
   '**Deney kataloğu**: 12 konu başlığı; her konuda adım adım föyler ve “yakında” listesi.',

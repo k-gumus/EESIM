@@ -1,6 +1,6 @@
 // Tepecan'lı tanıtım turu (ilk giriş) ve "tekrar hoş geldin / kaldığın yer" kartı (sonraki girişler)
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { useUI } from '../store/uiStore';
+import { useUI, isPhone } from '../store/uiStore';
 import { useAuth } from '../auth/store';
 import { useCircuit } from '../store/circuitStore';
 import { useProgress, levelOf } from '../gamify/progress';
@@ -17,6 +17,8 @@ interface Step {
   mood: Mood;
   /** hedef görünmüyorsa görünür yap */
   prepare?: () => void;
+  /** telefon düzeninde farklı hedef / metin */
+  phone?: { target?: string; text?: string };
 }
 
 const STEPS: Step[] = [
@@ -30,12 +32,19 @@ const STEPS: Step[] = [
     title: 'Elemanlar',
     text: 'Direnç, diyot, transistör, op-amp, 555, mantık kapıları… Canvas’a **sürükle** ya da **tıkla**. Üzerine gelince çıkan **i** düğmesi bilgi kartını açar: nasıl çalışır, tipik değerler, datasheet.',
     mood: 'point',
+    phone: {
+      target: '.pal-toggle',
+      text: 'Direnç, diyot, transistör, op-amp, 555… **🧩** düğmesi eleman çekmecesini açar; bir elemana **dokun**, canvas’a eklensin. **i** düğmesi bilgi kartını açar.',
+    },
   },
   {
     target: '.canvas-wrap',
     title: 'Çalışma alanı',
     text: 'Bir ucu sürükleyip başka uca bırakınca **kablo** olur. **R** döndürür, **Del** siler, anahtara **çift tıklayınca** açılıp kapanır.',
     mood: 'info',
+    phone: {
+      text: 'Bir bacağı sürükleyip başka bacağa bırakınca **kablo** olur. **İki parmakla** yakınlaştır, anahtara **iki kez dokununca** açılıp kapanır.',
+    },
   },
   {
     target: '[data-tour="run"]',
@@ -87,21 +96,26 @@ const md = (s: string) =>
 function Spotlight({ onDone }: { onDone: (openCatalog: boolean) => void }) {
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const step = STEPS[i];
+  const phone = isPhone();
+  const base = STEPS[i];
+  const step = phone && base.phone ? { ...base, ...base.phone } : base;
+  const target = step.target;
   const last = i === STEPS.length - 1;
 
   const measure = useCallback(() => {
-    if (!step.target) return setRect(null);
-    const el = document.querySelector(step.target);
-    setRect(el ? el.getBoundingClientRect() : null);
-  }, [step]);
+    if (!target) return setRect(null);
+    const el = document.querySelector(target);
+    const r = el?.getBoundingClientRect();
+    // gizli ya da ekran dışındaki hedefi gösterme (balon ortada açılır)
+    setRect(r && r.width > 0 && r.right > 0 && r.left < window.innerWidth ? r : null);
+  }, [target]);
 
   useLayoutEffect(() => {
-    step.prepare?.();
-    const t = setTimeout(measure, step.prepare ? 60 : 0);
+    base.prepare?.();
+    const t = setTimeout(measure, base.prepare ? 60 : 0);
     measure();
     return () => clearTimeout(t);
-  }, [i, measure, step]);
+  }, [i, measure, base]);
 
   useEffect(() => {
     window.addEventListener('resize', measure);
@@ -120,10 +134,10 @@ function Spotlight({ onDone }: { onDone: (openCatalog: boolean) => void }) {
   const next = () => (last ? onDone(true) : setI(i + 1));
 
   // Balonu hedefin yanına yerleştir (sığmazsa altına/üstüne/ortaya)
-  const W = 440;
-  const H = 220;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const W = Math.min(440, vw - 24);
+  const H = vw < 500 ? 260 : 220;
   let style: React.CSSProperties = { left: vw / 2 - W / 2, top: vh / 2 - H / 2 };
   if (rect) {
     const pad = 14;

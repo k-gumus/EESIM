@@ -98,3 +98,6 @@ Kararlar:
 - Cloudflare’in agent-setup istemi okundu: uzak MCP sunucusu (mcp.cloudflare.com) + OAuth kuruyor. Bu oturum Cloudflare’e ağ erişimi olmayan bir sandbox’ta çalıştığı ve MCP ekleyemediği için uygulanmadı; adımlar Kerem’e iletildi.
 - 2026-11-05 13:05 — EESIM adı + Worker’a geçiş: yerelde `wrangler dev` ile boş veritabanından kayıt/giriş/ilerleme/PDF/Tepecan’a Sor uçtan uca denendi; 95 test yeşil.
 - 2026-11-05 12:55 — Kerem Worker’ı “eesim” adıyla yeniden oluşturdu: `wrangler.toml` adı “eesim” yapıldı. Paneldeki build komutu “npm run build disp” yazılmıştı (hatalı); boş bırakılması ya da `npm run build` yapılması söylendi.
+- 2026-11-05 13:50 — Tablet/telefon düzeni (v0.2.2): Kerem’in Android tabletinde Tepecan sohbet kutusu alttan kesiliyordu (sebep: `height: 100vh` adres çubuğunu hesaba katmıyor). `100dvh` + `interactive-widget=resizes-content` (klavye açılınca düzen kısalır, yazı kutusu klavyenin üstünde kalır).
+  Dar ekranlarda üst bar sığdırıldı (taşma yok); telefonda iki satırlı üst bar, 🧩 eleman çekmecesi, alttan açılan föy/Tepecan paneli (✕ ile kapanır), dokunmatikte geniş bacak alanı, tur balonu ekrana sığar.
+  1600×900, 1333×640/400, 1280×720, 1133×700, 1024×600/380, 800×1180, 390×780/420, 360×640’ta ölçüldü: yatay taşma yok, sohbet kutusu her boyutta görünür; 95 test yeşil.

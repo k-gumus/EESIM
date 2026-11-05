@@ -3,7 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import { CATEGORIES, LIB_LIST, type CompDef } from '../circuit/library';
 import { Symbol } from './symbols';
 import { useCircuit } from '../store/circuitStore';
-import { useUI } from '../store/uiStore';
+import { useUI, isPhone } from '../store/uiStore';
 
 function Icon({ def }: { def: CompDef }) {
   if (def.type === 'multimeter')
@@ -52,6 +52,8 @@ export function Palette() {
     const r = el?.getBoundingClientRect();
     const p = rf.screenToFlowPosition({ x: (r?.left ?? 0) + (r?.width ?? 800) / 2, y: (r?.top ?? 0) + (r?.height ?? 600) / 2 });
     add(def.type, { x: p.x - def.w / 2 + (Math.random() * 60 - 30), y: p.y - def.h / 2 + (Math.random() * 60 - 30) });
+    // Telefonda çekmeceyi kapat ki eklenen eleman görünsün
+    if (isPhone()) useUI.getState().setPalette(false);
   };
 
   const query = q.trim().toLocaleLowerCase('tr');
@@ -59,6 +61,9 @@ export function Palette() {
     <aside className="palette">
       <div className="palette-head">
         <span>Elemanlar</span>
+        <button className="iconbtn pal-close" onClick={() => useUI.getState().setPalette(false)} title="Kapat">
+          ✕
+        </button>
       </div>
       <input className="palette-search" placeholder="Ara: direnç, diyot…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="palette-scroll">
