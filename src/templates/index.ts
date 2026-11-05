@@ -1,6 +1,7 @@
 // Hazır deney paketleri (EE212 laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
 import type { CircuitDoc, CompType, ParamValue } from '../circuit/types';
 import type { Mood } from '../tepecan/mascot';
+import type { TopicId } from './topics';
 
 export type StepCheck =
   | { kind: 'run' }
@@ -25,7 +26,9 @@ export interface Template {
   id: string;
   title: string;
   subtitle: string;
-  level: 'Isınma' | 'Temel' | 'Orta';
+  level: 'Isınma' | 'Temel' | 'Orta' | 'İleri';
+  topic: TopicId;
+  keywords?: string[];
   mood: Mood;
   xp: number;
   doc: CircuitDoc;
@@ -47,6 +50,7 @@ const D4148 = { model: '1N4148', Is: 2.52e-9, N: 1.752 };
 // ───────────────────────────── 0. Isınma: LED ve Ohm Yasası ─────────────────────────────
 const ledOhm: Template = {
   id: 'led-ohm',
+  topic: 'dc',
   title: 'LED ve Ohm Yasası',
   subtitle: 'İlk devren: anahtar, akım sınırlama direnci ve ampermetre',
   level: 'Isınma',
@@ -117,6 +121,7 @@ const ledOhm: Template = {
 // ───────────────────────────── 1. Yarım Dalga Doğrultucu ─────────────────────────────
 const halfWave: Template = {
   id: 'half-wave',
+  topic: 'diode',
   title: 'Yarım Dalga Doğrultucu',
   subtitle: 'Tek diyot, yük direnci ve filtre kondansatörü',
   level: 'Temel',
@@ -216,6 +221,7 @@ const halfWave: Template = {
 // ───────────────────────────── 2. Tam Dalga Köprü Doğrultucu ─────────────────────────────
 const fullWave: Template = {
   id: 'full-wave',
+  topic: 'diode',
   title: 'Tam Dalga Köprü Doğrultucu',
   subtitle: 'Şebeke (220 V / 50 Hz) → 10:1 trafo → 4 diyotlu köprü',
   level: 'Temel',
@@ -315,6 +321,7 @@ const fullWave: Template = {
 // ───────────────────────────── 3. Kırpıcı ─────────────────────────────
 const clipper: Template = {
   id: 'clipper',
+  topic: 'diode',
   title: 'Çift Taraflı Kırpıcı (Clipper)',
   subtitle: 'Öngerilimli iki diyotla sinyali +3,7 V / −2,7 V’ta kırp',
   level: 'Orta',
@@ -404,6 +411,7 @@ const clipper: Template = {
 // ───────────────────────────── 4. Kenetleyici ─────────────────────────────
 const clamper: Template = {
   id: 'clamper',
+  topic: 'diode',
   title: 'Kenetleyici (Clamper)',
   subtitle: 'Kondansatör + diyot ile sinyale DC seviye ekle',
   level: 'Orta',
@@ -475,6 +483,7 @@ const clamper: Template = {
 // ───────────────────────────── 5. Zener regülatör ─────────────────────────────
 const zener: Template = {
   id: 'zener',
+  topic: 'diode',
   title: 'Zener Gerilim Regülatörü',
   subtitle: 'Giriş ve yük değişse de çıkış ≈ 5,1 V',
   level: 'Temel',
@@ -543,6 +552,7 @@ const zener: Template = {
 // ───────────────────────────── 6. BJT polarma ─────────────────────────────
 const bjt: Template = {
   id: 'bjt-bias',
+  topic: 'bjt',
   title: 'BJT Gerilim Bölücü Polarma',
   subtitle: 'Ortak emetör NPN’in Q noktası (I_C, V_CE)',
   level: 'Orta',

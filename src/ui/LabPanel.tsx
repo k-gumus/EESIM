@@ -6,6 +6,7 @@ import { useProgress } from '../gamify/progress';
 import { POSES, tepecan } from '../tepecan/mascot';
 import { Markdown } from './Markdown';
 import { useAI } from '../ai/store';
+import { topicById } from '../templates/topics';
 
 function evalCheck(c: StepCheck): boolean {
   const st = useCircuit.getState();
@@ -90,7 +91,7 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
       <div className="lab lab-empty">
         <img src={POSES.point} alt="" className="lab-hero" />
         <h3>Serbest çalışma modu</h3>
-        <p className="muted">Bir EE212 deneyi seçersen adım adım görevler, quizler ve XP seni bekliyor.</p>
+        <p className="muted">Bir deney seçersen adım adım görevler, quizler ve XP seni bekliyor.</p>
         <button className="btn primary" onClick={onOpenTemplates}>
           Deneylere göz at
         </button>
@@ -104,7 +105,9 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
       <div className="lab-head">
         <img src={POSES[tpl.mood]} alt="" className="lab-mini" />
         <div>
-          <div className="lab-level">{tpl.level} · EE212</div>
+          <div className="lab-level">
+            {tpl.level} · {topicById(tpl.topic)?.title}
+          </div>
           <div className="lab-title">{tpl.title}</div>
           <div className="progress">
             <span style={{ width: `${pct}%` }} />

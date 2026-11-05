@@ -57,7 +57,7 @@ export function NetlistModal({ onClose }: { onClose: () => void }) {
         <pre className="netlist-pre">{text}</pre>
         <div className="muted small" style={{ padding: '0 16px 14px' }}>
           {tab === 'spice'
-            ? 'Bu netlist ngspice ve LTspice ile doğrudan çalıştırılabilir. Tepecan AI de devreni bu metinden okur.'
+            ? 'Bu netlist ngspice ve LTspice ile doğrudan çalıştırılabilir. Tepecan da devreni bu metinden okur.'
             : 'JSON şablon biçimi: hazır deney paketleri bu formatta saklanır. Kaydedip daha sonra “Aç” ile yükleyebilirsin.'}
         </div>
       </div>

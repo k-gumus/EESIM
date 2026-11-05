@@ -55,7 +55,7 @@ export function CopilotPanel() {
       <div className="cop-head">
         <img src={FACES.bust} className="cop-avatar" alt="" />
         <div className="cop-title">
-          <b>Tepecan AI</b>
+          <b>Tepecan'a Sor</b>
           <span className={`cop-status ${cfg.provider !== 'off' ? 'on' : ''}`}>{providerLabel}</span>
         </div>
         <button className="iconbtn" title="Sohbeti temizle" onClick={clear}>

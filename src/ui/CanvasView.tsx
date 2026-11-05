@@ -115,7 +115,7 @@ export function CanvasView() {
       {nodes.length === 0 && (
         <div className="canvas-empty">
           <div>Soldaki paletten eleman sürükle</div>
-          <div className="muted">ya da üstten <b>Deneyler</b>'i açıp hazır bir EE212 deneyi yükle</div>
+          <div className="muted">ya da üstteki <b>Deney bul</b> kutusundan hazır bir deney yükle</div>
         </div>
       )}
     </div>

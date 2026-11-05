@@ -1,46 +1,52 @@
-import { useRef } from 'react';
+// Üst bar: Logo | Dosya | Deney bul | açık deney | Simülasyon araçları | XP | kullanıcı
+import { useEffect, useRef, useState } from 'react';
 import { runner, useSim } from '../sim/runner';
 import { useCircuit } from '../store/circuitStore';
+import { useUI } from '../store/uiStore';
 import { useProgress, levelOf } from '../gamify/progress';
 import { FACES, tepecan } from '../tepecan/mascot';
 import { formatSI } from '../circuit/format';
 import { download } from './NetlistModal';
+import { compileCircuit } from '../circuit/compile';
+import { buildSpiceNetlist } from '../circuit/spice';
 import type { CircuitDoc } from '../circuit/types';
+import { searchCatalog, type CatalogEntry } from '../templates/catalog';
+import { topicById } from '../templates/topics';
+import { templateById } from '../templates';
+import { UserMenu } from './UserMenu';
 
-export interface Views {
-  three: boolean;
-  scope: boolean;
-  right: boolean;
+const slug = (s: string) => s.toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşöçı]+/g, '-').replace(/^-|-$/g, '') || 'devre';
+
+export function openEntry(e: CatalogEntry) {
+  if (!e.template) {
+    useUI.getState().openCatalog('menu', e.topic);
+    tepecan.say({ mood: 'info', title: 'Bu deney yakında!', text: `“${e.title}” katalogda listeleniyor; etkileşimli föyü henüz hazır değil.`, ttl: 4500 });
+    return;
+  }
+  runner.stop();
+  useCircuit.getState().loadDoc(e.template.doc, e.template.id);
+  useUI.getState().setTab('lab');
 }
 
-export function TopBar({
-  views,
-  setViews,
-  onTemplates,
-  onNetlist,
-}: {
-  views: Views;
-  setViews: (v: Views) => void;
-  onTemplates: () => void;
-  onNetlist: () => void;
-}) {
-  const status = useSim((s) => s.status);
-  const t = useSim((s) => s.t);
-  const speed = useSim((s) => s.speed);
-  const lagging = useSim((s) => s.lagging);
-  const showValues = useSim((s) => s.showValues);
-  const title = useCircuit((s) => s.title);
-  const xp = useProgress((s) => s.xp);
-  const streak = useProgress((s) => s.streak);
-  const { level, pct } = levelOf(xp);
+function FileMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const running = status === 'running';
-  const active = status === 'running' || status === 'paused';
+  const title = useCircuit((s) => s.title);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    window.addEventListener('mousedown', close);
+    return () => window.removeEventListener('mousedown', close);
+  }, [open]);
 
   const save = () => {
     const doc = useCircuit.getState().toDoc();
-    download(`${title.toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşöçı]+/g, '-') || 'devre'}.ieeesim.json`, JSON.stringify(doc, null, 2), 'application/json');
+    download(`${slug(title)}.ieeesim.json`, JSON.stringify(doc, null, 2), 'application/json');
+  };
+  const exportNetlist = () => {
+    const { nodes, edges } = useCircuit.getState();
+    download(`${slug(title)}.cir`, buildSpiceNetlist(compileCircuit(nodes, edges), nodes, title));
   };
   const load = (f: File) => {
     f.text().then((txt) => {
@@ -55,81 +61,237 @@ export function TopBar({
       }
     });
   };
+  const item = (label: string, kbd: string | null, fn: () => void) => (
+    <button
+      className="menu-item"
+      onClick={() => {
+        setOpen(false);
+        fn();
+      }}
+    >
+      <span>{label}</span>
+      {kbd && <kbd>{kbd}</kbd>}
+    </button>
+  );
+
+  // Kısayollar
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === 's') {
+        e.preventDefault();
+        save();
+      } else if (k === 'o') {
+        e.preventDefault();
+        fileRef.current?.click();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
+
+  return (
+    <div className="menu" ref={ref}>
+      <button className={`btn ghost ${open ? 'on' : ''}`} onClick={() => setOpen(!open)} data-tour="file">
+        📁 Dosya <span className="caret">▾</span>
+      </button>
+      {open && (
+        <div className="menu-pop">
+          {item('Yeni devre', null, () => {
+            runner.stop();
+            useCircuit.getState().clear();
+          })}
+          {item('Aç… (.json)', 'Ctrl+O', () => fileRef.current?.click())}
+          {item('Kaydet (.json)', 'Ctrl+S', save)}
+          <div className="menu-sep" />
+          {item('Netlist’i görüntüle', null, () => useUI.getState().setNetlist(true))}
+          {item('SPICE netlist indir (.cir)', null, exportNetlist)}
+          <div className="menu-sep" />
+          {item('Deney kataloğu', 'Ctrl+K', () => useUI.getState().openCatalog('menu'))}
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept=".json" hidden onChange={(e) => e.target.files?.[0] && (load(e.target.files[0]), (e.target.value = ''))} />
+    </div>
+  );
+}
+
+function ExperimentSearch() {
+  const [q, setQ] = useState('');
+  const [focus, setFocus] = useState(false);
+  const [sel, setSel] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const results = searchCatalog(q, 9);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  useEffect(() => setSel(0), [q]);
+
+  const choose = (e: CatalogEntry) => {
+    setQ('');
+    inputRef.current?.blur();
+    openEntry(e);
+  };
+
+  return (
+    <div className="exp-search" data-tour="search">
+      <span className="exp-search-ico">🔍</span>
+      <input
+        ref={inputRef}
+        value={q}
+        placeholder="Deney bul… (doğrultucu, op-amp, 555, RC…)"
+        onChange={(e) => setQ(e.target.value)}
+        onFocus={() => setFocus(true)}
+        onBlur={() => setTimeout(() => setFocus(false), 150)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') (e.preventDefault(), setSel(Math.min(results.length - 1, sel + 1)));
+          if (e.key === 'ArrowUp') (e.preventDefault(), setSel(Math.max(0, sel - 1)));
+          if (e.key === 'Enter') {
+            if (results[sel]) choose(results[sel]);
+            else useUI.getState().openCatalog('menu');
+          }
+          if (e.key === 'Escape') (e.target as HTMLInputElement).blur();
+        }}
+      />
+      <kbd className="exp-search-kbd">Ctrl K</kbd>
+      {focus && (
+        <div className="exp-results">
+          {q.trim() === '' ? (
+            <button className="exp-res all" onMouseDown={() => useUI.getState().openCatalog('menu')}>
+              📚 Tüm deneyleri konu başlıklarına göre gör
+            </button>
+          ) : results.length ? (
+            results.map((r, i) => (
+              <button key={r.id} className={`exp-res ${i === sel ? 'sel' : ''}`} onMouseDown={() => choose(r)} onMouseEnter={() => setSel(i)}>
+                <span className="exp-res-topic">{topicById(r.topic)?.icon}</span>
+                <span className="exp-res-main">
+                  <b>{r.title}</b>
+                  <small>
+                    {topicById(r.topic)?.title} · {r.level}
+                    {!r.template && ' · yakında'}
+                  </small>
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className="exp-res empty">“{q}” için deney bulunamadı.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExperimentChip() {
+  const templateId = useCircuit((s) => s.templateId);
+  const title = useCircuit((s) => s.title);
+  const tpl = templateById(templateId);
+  const done = useProgress((s) => (tpl ? s.done[tpl.id]?.length ?? 0 : 0));
+  if (!tpl) {
+    return (
+      <div className="exp-chip free" title={title}>
+        <span className="muted small">Serbest çalışma</span>
+        <b>{title}</b>
+      </div>
+    );
+  }
+  return (
+    <button className="exp-chip" onClick={() => useUI.getState().setTab('lab')} title="Deney föyünü aç" data-tour="chip">
+      <span className="muted small">
+        {topicById(tpl.topic)?.icon} {topicById(tpl.topic)?.title}
+      </span>
+      <b>{tpl.title}</b>
+      <span className="exp-chip-prog">
+        <i style={{ width: `${(done / tpl.steps.length) * 100}%` }} />
+      </span>
+    </button>
+  );
+}
+
+function SimTools() {
+  const status = useSim((s) => s.status);
+  const t = useSim((s) => s.t);
+  const speed = useSim((s) => s.speed);
+  const lagging = useSim((s) => s.lagging);
+  const showValues = useSim((s) => s.showValues);
+  const views = useUI((s) => s.views);
+  const setViews = useUI((s) => s.setViews);
+  const running = status === 'running';
+  const active = status === 'running' || status === 'paused';
+  return (
+    <div className="simtools" data-tour="simtools">
+      <span className="simtools-label">Simülasyon</span>
+      {running ? (
+        <button className="btn run on" onClick={() => runner.pause()} data-tour="run">
+          ❚❚ Duraklat
+        </button>
+      ) : (
+        <button className="btn run" onClick={() => (status === 'paused' ? runner.resume() : runner.start())} data-tour="run">
+          ▶ {status === 'paused' ? 'Devam' : 'Başlat'}
+        </button>
+      )}
+      <button className="btn icon" disabled={!active && status !== 'error'} onClick={() => runner.stop()} title="Durdur">
+        ■
+      </button>
+      <button className="btn icon" disabled={!active} onClick={() => runner.restart()} title="Baştan başlat (t = 0)">
+        ↺
+      </button>
+      <select value={speed} onChange={(e) => useSim.setState({ speed: Number(e.target.value) })} title="Simülasyon hızı (ağır çekim)">
+        {[0.1, 0.25, 0.5, 1, 2, 4].map((s) => (
+          <option key={s} value={s}>
+            {String(s).replace('.', ',')}×
+          </option>
+        ))}
+      </select>
+      <span className={`sim-status ${status}`} title={lagging ? 'Bilgisayar istenen hızda hesaplayamıyor; simülasyon yavaşladı' : undefined}>
+        <i />
+        {status === 'running' ? `${formatSI(t, 's')}` : status === 'paused' ? 'Duraklatıldı' : status === 'error' ? 'Hata' : 'Hazır'}
+        {lagging && running && <em> · yavaş</em>}
+      </span>
+      <span className="simtools-sep" />
+      <button className={`toggle-btn ${views.three ? 'on' : ''}`} onClick={() => setViews({ three: !views.three })} data-tour="three">
+        🧊 <span className="tl">3D Görünüm</span>
+      </button>
+      <button className={`toggle-btn ${views.scope ? 'on' : ''}`} onClick={() => setViews({ scope: !views.scope })} data-tour="scope">
+        〰 <span className="tl">Osiloskop</span>
+      </button>
+      <button className={`toggle-btn ${showValues ? 'on' : ''}`} onClick={() => useSim.setState({ showValues: !showValues })} title="Canvas üzerinde canlı akım/gerilim değerleri">
+        ⓘ <span className="tl">Değer Okuma</span>
+      </button>
+    </div>
+  );
+}
+
+export function TopBar() {
+  const xp = useProgress((s) => s.xp);
+  const streak = useProgress((s) => s.streak);
+  const { level, pct } = levelOf(xp);
+  const views = useUI((s) => s.views);
+  const setViews = useUI((s) => s.setViews);
 
   return (
     <header className="topbar">
-      <div className="brand">
+      <div className="brand" title="IEEESIM · Tepecan Devre Laboratuvarı">
         <img src={FACES.bust} alt="Tepecan" />
-        <div>
-          <div className="brand-name">
-            IEEE<span>SIM</span>
-          </div>
-          <div className="brand-sub">Tepecan Devre Laboratuvarı</div>
+        <div className="brand-name">
+          IEEE<span>SIM</span>
         </div>
       </div>
-
-      <button className="btn ghost" onClick={onTemplates}>
-        📚 Deneyler
-      </button>
-      <div className="doc-title" title={title}>
-        {title}
-      </div>
-
-      <div className="sim-ctrl">
-        {running ? (
-          <button className="btn run on" onClick={() => runner.pause()}>
-            ❚❚ Duraklat
-          </button>
-        ) : (
-          <button className="btn run" onClick={() => (status === 'paused' ? runner.resume() : runner.start())}>
-            ▶ {status === 'paused' ? 'Devam' : 'Başlat'}
-          </button>
-        )}
-        <button className="btn icon" disabled={!active && status !== 'error'} onClick={() => runner.stop()} title="Durdur">
-          ■
-        </button>
-        <button className="btn icon" disabled={!active} onClick={() => runner.restart()} title="Baştan başlat (t = 0)">
-          ↺
-        </button>
-        <select value={speed} onChange={(e) => useSim.setState({ speed: Number(e.target.value) })} title="Simülasyon hızı (ağır çekim)">
-          {[0.1, 0.25, 0.5, 1, 2, 4].map((s) => (
-            <option key={s} value={s}>
-              {String(s).replace('.', ',')}×
-            </option>
-          ))}
-        </select>
-        <span className={`sim-status ${status}`}>
-          <i />
-          {status === 'running' ? `t = ${formatSI(t, 's')}` : status === 'paused' ? 'Duraklatıldı' : status === 'error' ? 'Hata' : 'Hazır'}
-          {lagging && running && <em title="Bilgisayar istenen hızda hesaplayamıyor; simülasyon yavaşladı"> · yavaş</em>}
-        </span>
-      </div>
-
-      <div className="views">
-        <button className={`toggle-btn ${views.three ? 'on' : ''}`} onClick={() => setViews({ ...views, three: !views.three })}>
-          🧊 3D Montaj
-        </button>
-        <button className={`toggle-btn ${views.scope ? 'on' : ''}`} onClick={() => setViews({ ...views, scope: !views.scope })}>
-          〰 Osiloskop
-        </button>
-        <button className={`toggle-btn ${showValues ? 'on' : ''}`} onClick={() => useSim.setState({ showValues: !showValues })} title="Canvas üzerinde canlı akım değerleri">
-          ⓘ Değerler
-        </button>
-      </div>
-
-      <div className="file-btns">
-        <button className="btn ghost sm" onClick={onNetlist} title="SPICE netlist / JSON">
-          ⟨/⟩ Netlist
-        </button>
-        <button className="btn ghost sm" onClick={save} title="Devreyi JSON olarak indir">
-          ⬇ Kaydet
-        </button>
-        <button className="btn ghost sm" onClick={() => fileRef.current?.click()} title="JSON devre dosyası aç">
-          ⬆ Aç
-        </button>
-        <input ref={fileRef} type="file" accept=".json" hidden onChange={(e) => e.target.files?.[0] && load(e.target.files[0])} />
-      </div>
-
+      <FileMenu />
+      <ExperimentSearch />
+      <ExperimentChip />
+      <div className="topbar-spacer" />
+      <SimTools />
       <div className="xp" title={`${xp} XP · ${streak} günlük seri`}>
         <span className="streak">🔥 {streak}</span>
         <div className="xp-lvl">
@@ -140,7 +302,8 @@ export function TopBar({
         </div>
         <span className="xp-n">⚡{xp}</span>
       </div>
-      <button className={`btn icon ${views.right ? 'on' : ''}`} onClick={() => setViews({ ...views, right: !views.right })} title="Sağ paneli aç/kapat">
+      <UserMenu />
+      <button className={`btn icon ${views.right ? 'on' : ''}`} onClick={() => setViews({ right: !views.right })} title="Sağ paneli aç/kapat">
         ☰
       </button>
     </header>
