@@ -10,6 +10,8 @@ GOOGLE_CLIENT_ID = ""
 AI_DAILY_FREE = "20"
 AI_DAILY_PREMIUM = "200"
 AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+# Premium kullanıcılar için daha güçlü (ve daha çok "neuron" harcayan) model:
+AI_MODEL_PREMIUM = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 # GOOGLE_CLIENT_SECRET gizlidir: `npx wrangler pages secret put GOOGLE_CLIENT_SECRET` ile ekle (bu dosyaya yazma!)
 
 [[d1_databases]]

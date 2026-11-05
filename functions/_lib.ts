@@ -11,6 +11,10 @@ export interface Env {
   AI_DAILY_FREE?: string;
   AI_DAILY_PREMIUM?: string;
   AI_MODEL?: string;
+  /** Premium kullanıcılar için (isteğe bağlı) daha büyük model */
+  AI_MODEL_PREMIUM?: string;
+  /** Yalnızca yerel geliştirme: Workers AI yokken sahte akış üret */
+  AI_FAKE?: string;
 }
 
 export type Ctx = EventContext<Env, string, Record<string, unknown>>;

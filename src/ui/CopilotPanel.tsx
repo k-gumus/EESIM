@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAI } from '../ai/store';
-import { listOllamaModels, WEBLLM_MODELS } from '../ai/providers';
+import { useAI, effectiveProvider } from '../ai/store';
+import { fetchQuota, lastQuota, listOllamaModels, WEBLLM_MODELS, type Quota } from '../ai/providers';
+import { useAuth } from '../auth/store';
+import { openLogin } from '../auth/api';
 import { FACES } from '../tepecan/mascot';
 import { Markdown } from './Markdown';
 
@@ -20,10 +22,22 @@ export function CopilotPanel() {
   const [models, setModels] = useState<string[] | null>(null);
   const [modelErr, setModelErr] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const cloudAi = useAuth((s) => s.cloudAi);
+  const user = useAuth((s) => s.user);
+  const [quota, setQuota] = useState<Quota | null>(lastQuota);
+  const eff = effectiveProvider(cfg);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  // Bulut kotası: panel açılınca ve her yanıttan sonra güncelle
+  useEffect(() => {
+    if (eff !== 'cloud') return;
+    if (busy) return;
+    if (lastQuota) setQuota({ ...lastQuota });
+    else fetchQuota().then(setQuota);
+  }, [eff, busy, user?.id]);
 
   const refreshModels = async () => {
     setModelErr(null);
@@ -48,7 +62,16 @@ export function CopilotPanel() {
     ask(t);
   };
 
-  const providerLabel = cfg.provider === 'off' ? 'Çevrimdışı mod' : cfg.provider === 'ollama' ? `Ollama · ${cfg.ollamaModel}` : `WebLLM · ${cfg.webllmModel.split('-').slice(0, 2).join(' ')}`;
+  const providerLabel =
+    eff === 'off'
+      ? cfg.provider === 'cloud'
+        ? 'Çevrimdışı mod (bulut yok)'
+        : 'Çevrimdışı mod'
+      : eff === 'cloud'
+        ? `Tepecan Bulut${quota ? ` · bugün ${quota.remaining}/${quota.limit} soru` : ''}`
+        : eff === 'ollama'
+          ? `Ollama · ${cfg.ollamaModel}`
+          : `WebLLM · ${cfg.webllmModel.split('-').slice(0, 2).join(' ')}`;
 
   return (
     <div className="copilot">
@@ -56,7 +79,7 @@ export function CopilotPanel() {
         <img src={FACES.bust} className="cop-avatar" alt="" />
         <div className="cop-title">
           <b>Tepecan'a Sor</b>
-          <span className={`cop-status ${cfg.provider !== 'off' ? 'on' : ''}`}>{providerLabel}</span>
+          <span className={`cop-status ${eff !== 'off' ? 'on' : ''}`}>{providerLabel}</span>
         </div>
         <button className="iconbtn" title="Sohbeti temizle" onClick={clear}>
           ⟲
@@ -69,12 +92,38 @@ export function CopilotPanel() {
       {showCfg && (
         <div className="cop-cfg">
           <div className="seg">
-            {(['off', 'ollama', 'webllm'] as const).map((p) => (
+            {(['cloud', 'ollama', 'webllm', 'off'] as const).map((p) => (
               <button key={p} className={cfg.provider === p ? 'on' : ''} onClick={() => setCfg({ provider: p })}>
-                {p === 'off' ? 'Kapalı' : p === 'ollama' ? 'Ollama' : 'WebLLM'}
+                {p === 'off' ? 'Kapalı' : p === 'cloud' ? 'Tepecan Bulut' : p === 'ollama' ? 'Ollama' : 'WebLLM'}
               </button>
             ))}
           </div>
+          {cfg.provider === 'cloud' && (
+            <p className="muted small">
+              {cloudAi ? (
+                <>
+                  Kurulum gerektirmez: sorular IEEESIM sunucusunda (Cloudflare Workers AI) yanıtlanır.{' '}
+                  {quota && (
+                    <>
+                      Bugün <b>{quota.remaining}</b>/{quota.limit} hakkın kaldı.{' '}
+                    </>
+                  )}
+                  {!user && (
+                    <>
+                      Misafirler günde 5 soru sorabilir;{' '}
+                      <button className="linkbtn" onClick={openLogin}>
+                        giriş yap
+                      </button>{' '}
+                      ve hakkını artır.
+                    </>
+                  )}
+                  {user?.premium && <b> Premium: daha büyük model ve daha yüksek kota.</b>}
+                </>
+              ) : (
+                <>Bu kopyada bulut sunucusu yok (tek dosya ya da statik barındırma). Ollama veya WebLLM’i seç.</>
+              )}
+            </p>
+          )}
           {cfg.provider === 'ollama' && (
             <>
               <label className="insp-row">

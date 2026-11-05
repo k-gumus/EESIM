@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { FixPatch, Issue } from '../circuit/types';
 import type { Mood } from '../tepecan/mascot';
 import { tepecan } from '../tepecan/mascot';
+import { useAuth } from '../auth/store';
 import { chatStream, type AIConfig, type ChatMsg } from './providers';
 import { buildContext, extractFix, SYSTEM_PROMPT } from './prompt';
 import { analyzeCircuit } from '../debug/rules';
@@ -36,13 +37,19 @@ interface AIState {
 }
 
 const CFG_KEY = 'ieeesim.ai.v1';
-const defaultCfg: AIConfig = { provider: 'off', ollamaUrl: 'http://localhost:11434', ollamaModel: 'qwen2.5:7b', webllmModel: 'Qwen2.5-3B-Instruct-q4f16_1-MLC' };
+const defaultCfg: AIConfig = { provider: 'cloud', ollamaUrl: 'http://localhost:11434', ollamaModel: 'qwen2.5:7b', webllmModel: 'Qwen2.5-3B-Instruct-q4f16_1-MLC' };
 function loadCfg(): AIConfig {
   try {
     return { ...defaultCfg, ...JSON.parse(localStorage.getItem(CFG_KEY) ?? '{}') };
   } catch {
     return defaultCfg;
   }
+}
+
+/** Bulut seçili ama sunucuda Workers AI yoksa (tek dosya, GitHub Pages) çevrimdışı davran */
+export function effectiveProvider(cfg: AIConfig): AIConfig['provider'] {
+  if (cfg.provider === 'cloud' && !useAuth.getState().cloudAi) return 'off';
+  return cfg.provider;
 }
 
 let mid = 1;
@@ -53,7 +60,7 @@ const WELCOME: UIMsg = {
   role: 'tepecan',
   mood: 'info',
   text:
-    'Selam! Ben **Tepecan** 🤖 Devreni netlist ve simülasyon sonuçlarından okurum.\n\n• **Devremi kontrol et** — hataları bulup düzeltmeyi öneririm (yapay zekâ olmadan da çalışır)\n• Teori sor: “diyot neden 0,7 V’ta iletir?”\n• Deney adımında takıldığında ipucu iste\n\nSerbest sohbet için ⚙️’den **Ollama** ya da **WebLLM**’i aç.',
+    'Selam! Ben **Tepecan** 🤖 Devreni netlist ve simülasyon sonuçlarından okurum.\n\n• **Devremi kontrol et** — hataları bulup düzeltmeyi öneririm (yapay zekâ olmadan da çalışır)\n• Teori sor: “diyot neden 0,7 V’ta iletir?”\n• Deney adımında takıldığında ipucu iste\n\nBana her şeyi sorabilirsin; ⚙️’den yapay zekâ kaynağını (Tepecan Bulut, Ollama, WebLLM) değiştirebilirsin.',
 };
 
 function moodFor(issues: Issue[]): Mood {
@@ -99,7 +106,7 @@ export const useAI = create<AIState>((set, get) => {
         push({ role: 'tepecan', mood: 'info', text: 'Canvas boş görünüyor. Paletten eleman ekle ya da bir deney şablonu yükle!', offline: true });
         return;
       }
-      if (get().cfg.provider === 'off' || !issues.some((i) => i.level !== 'info')) {
+      if (effectiveProvider(get().cfg) === 'off' || !issues.some((i) => i.level !== 'info')) {
         const fixable = issues.find((i) => i.fix);
         const lines = issues.length
           ? issues.map((i) => `${i.level === 'error' ? '⛔' : i.level === 'warning' ? '⚠️' : 'ℹ️'} ${i.message}`).join('\n')
@@ -112,16 +119,17 @@ export const useAI = create<AIState>((set, get) => {
           fixState: fixable ? 'pending' : undefined,
           offline: true,
         });
-        if (get().cfg.provider === 'off' || !issues.length) return;
+        if (effectiveProvider(get().cfg) === 'off' || !issues.length) return;
       }
       await get().ask('Devremi kontrol et: yukarıdaki otomatik tespitleri ve simülasyon sonuçlarını yorumla, varsa hatayı açıkla ve düzeltme öner.');
     },
 
     ask: async (text) => {
-      const { cfg } = get();
+      const cfg = { ...get().cfg, provider: effectiveProvider(get().cfg) };
       const isInternal = text.startsWith('Devremi kontrol et:');
       if (!isInternal) push({ role: 'user', text });
       if (cfg.provider === 'off') {
+        const cloudOff = get().cfg.provider === 'cloud';
         const tpl = templateById(useCircuit.getState().templateId);
         push({
           role: 'tepecan',
@@ -129,7 +137,10 @@ export const useAI = create<AIState>((set, get) => {
           offline: true,
           text:
             (tpl ? `**${tpl.title} — kısa teori**\n${tpl.theory}\n\n` : '') +
-            'Serbest soru-cevap için bir dil modeli bağlamam gerekiyor. ⚙️ simgesinden **Ollama** (bilgisayarındaki yerel model) ya da **WebLLM** (doğrudan tarayıcıda) seç. Bu arada **Devremi kontrol et** her zaman çalışır!',
+            (cloudOff
+              ? 'Bu kopyada **Tepecan Bulut** sunucusu yok (tek dosya ya da statik barındırma). ⚙️ simgesinden **Ollama** (bilgisayarındaki yerel model) ya da **WebLLM** (doğrudan tarayıcıda) seçebilirsin.'
+              : 'Serbest soru-cevap için bir dil modeli bağlamam gerekiyor. ⚙️ simgesinden **Tepecan Bulut**, **Ollama** (yerel model) ya da **WebLLM** (tarayıcıda) seç.') +
+            ' Bu arada **Devremi kontrol et** her zaman çalışır!',
         });
         return;
       }

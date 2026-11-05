@@ -36,6 +36,10 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - Tur: ilk girişte (giriş ya da misafir seçiminden hemen sonra) 10 adımlı spot ışıklı tur; sonunda katalog “★ Başlangıç yolu” ile açılır.
   Sonraki girişlerde (her yeni tarayıcı oturumunda bir kez) “Tekrar hoş geldin” kartı: seri/XP, kaldığın deney + ilerleme, sıradaki öneri, sürüm değiştiyse “Yenilikler”.
   Tur kullanıcı menüsünden ve bu karttan tekrar başlatılabilir. Esc/←/→/Enter klavyeyle çalışır.
+- Tepecan'a Sor varsayılanı artık “Tepecan Bulut” (/api/ask → Workers AI, SSE akışı). Sunucu yoksa otomatik çevrimdışı moda düşer; Ollama/WebLLM ayarlardan seçilebilir.
+  Kota (UTC günü): misafir IP başına 5, ücretsiz hesap 20, premium 200 (wrangler.toml’dan değiştirilebilir). Hata olursa hak iade edilir.
+  Model: @cf/meta/llama-3.1-8b-instruct; premium için @cf/meta/llama-3.3-70b-instruct-fp8-fast. Türkçe kalitesi yetmezse AI_MODEL değiştirilebilir (ör. Gemma/Mistral).
+  Premium bayrağı şimdilik elle: `wrangler d1 execute ieeesim --remote --command "UPDATE users SET premium=1 WHERE email='…'"`.
 - Saat kaynağı (clock) olan devrelerde zaman adımı periyodun 1/100'ü ile sınırlanır (buck/boost doğru çalışsın diye).
 
 ## Görevler
@@ -47,7 +51,7 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - [x] 5. Deney kataloğu: elektrik-elektronik mühendisliği eğitimi ve kariyerinde karşılaşılan deneylerin konu başlıklarına göre tam listesi; platformda simüle edilebilenler adım adım şablon olarak, kategori sayfası + arama
 - [x] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
 - [x] 7. İlk giriş eğitimi (Tepecan'lı adım adım tur) + sonraki girişler için “yenilikler / kaldığın yer” turu, “turu tekrar göster”
-- [ ] 8. Tepecan'a Sor backend: /api/ask (Workers AI), kota, premium bayrağı
+- [x] 8. Tepecan'a Sor backend: /api/ask (Workers AI), kota, premium bayrağı
 - [ ] 9. Test (birim + tarayıcı), build, Kerem'in klasörüne teslim, Cloudflare kurulum rehberi (alan adı, Pages, D1, R2, Google OAuth anahtarları)
 
 ## İLERLEME
@@ -58,3 +62,4 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - 2026-11-05 08:05 — Görev 4 tamam: 45 elemanın bilgi kartı (ne işe yarar, nasıl çalışır, formül, tipik değerler, dikkat, kılıf/sınır değerler, datasheet), PDF yükleme (IndexedDB; girişte buluta), elemanı kullanan deneylere kısayol. 61 test yeşil.
 - 2026-11-05 08:25 — Görev 6 tamam: giriş ekranı (Google, e-posta/şifre, kayıt, misafir, çevrimdışı modu), Pages Functions API (auth, progress, datasheets → R2), D1 şeması, wrangler.toml; wrangler ile yerelde uçtan uca test edildi (kayıt, giriş, hatalı şifre, çıkış, ilerleme, PDF yükle/indir/sil, köken denetimi, Google yönlendirmesi). 63 test yeşil.
 - 2026-11-05 08:40 — Görev 7 tamam: Tepecan’lı tanıtım turu (palet, canvas, Başlat, araçlar, Deney bul, Dosya, sağ panel, profil), tekrar hoş geldin kartı (kaldığın yer, öneri, yenilikler). Tarayıcıda uçtan uca denendi. 63 test yeşil.
+- 2026-11-05 08:55 — Görev 8 tamam: /api/ask (Workers AI akışı, günlük kota, premium modeli), istemcide “Tepecan Bulut” sağlayıcısı ve kalan hak göstergesi; yerelde sahte akışla uçtan uca denendi (5. sorudan sonra 429). 65 test yeşil.
