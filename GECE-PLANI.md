@@ -101,3 +101,6 @@ Kararlar:
 - 2026-11-05 13:50 — Tablet/telefon düzeni (v0.2.2): Kerem’in Android tabletinde Tepecan sohbet kutusu alttan kesiliyordu (sebep: `height: 100vh` adres çubuğunu hesaba katmıyor). `100dvh` + `interactive-widget=resizes-content` (klavye açılınca düzen kısalır, yazı kutusu klavyenin üstünde kalır).
   Dar ekranlarda üst bar sığdırıldı (taşma yok); telefonda iki satırlı üst bar, 🧩 eleman çekmecesi, alttan açılan föy/Tepecan paneli (✕ ile kapanır), dokunmatikte geniş bacak alanı, tur balonu ekrana sığar.
   1600×900, 1333×640/400, 1280×720, 1133×700, 1024×600/380, 800×1180, 390×780/420, 360×640’ta ölçüldü: yatay taşma yok, sohbet kutusu her boyutta görünür; 95 test yeşil.
+- 2026-11-05 22:20 — Canlıda (eesim.fyi) Tepecan’a Sor “5028: llama-3.1-8b-instruct was deprecated on 2026-05-30” veriyordu. Varsayılan model `@cf/google/gemma-4-26b-a4b-it`;
+  çalışmazsa gemma-4 → glm-4.7-flash → llama-3.3-70b yedek zinciri (düşünme modu kapalı), hepsi düşerse Türkçe mesaj + hak iadesi (PR #4).
+  Aynı ekran görüntüsünde S1 açıkken 7,9 nA görünüyordu: açık anahtar 1 TΩ, 1 nA altı akımlar 0 gösteriliyor. 102 test yeşil.
