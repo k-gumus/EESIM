@@ -97,3 +97,4 @@ Kararlar:
   R2 isteğe bağlı (yorum satırı); bağlı değilken PDF’ler tarayıcıda kalır.
 - Cloudflare’in agent-setup istemi okundu: uzak MCP sunucusu (mcp.cloudflare.com) + OAuth kuruyor. Bu oturum Cloudflare’e ağ erişimi olmayan bir sandbox’ta çalıştığı ve MCP ekleyemediği için uygulanmadı; adımlar Kerem’e iletildi.
 - 2026-11-05 13:05 — EESIM adı + Worker’a geçiş: yerelde `wrangler dev` ile boş veritabanından kayıt/giriş/ilerleme/PDF/Tepecan’a Sor uçtan uca denendi; 95 test yeşil.
+- 2026-11-05 12:55 — Kerem Worker’ı “eesim” adıyla yeniden oluşturdu: `wrangler.toml` adı “eesim” yapıldı. Paneldeki build komutu “npm run build disp” yazılmıştı (hatalı); boş bırakılması ya da `npm run build` yapılması söylendi.

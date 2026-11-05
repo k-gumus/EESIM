@@ -2,7 +2,7 @@
 # Kurulum rehberi: docs/CLOUDFLARE.md
 #
 # Cloudflare'deki Worker'ın adıyla AYNI olmalı (Workers & Pages listesinde görünen ad).
-name = "eeesim"
+name = "eesim"
 main = "worker/index.ts"
 compatibility_date = "2026-10-01"
 
