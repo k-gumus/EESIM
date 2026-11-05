@@ -18,7 +18,7 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - Bağımlı kaynaklar (E/G/F/H) teorik eleman: 3D montajda gösterilmez.
 - Osiloskoba XY modu eklendi (karakteristik eğriler, Lissajous).
 - Görev 5, 4'ten önce yapıldı: bilgi kartları katalogdaki deneylere bağlantı vereceği için önce katalog kuruldu.
-- Katalog: 12 konu başlığı; 49 etkileşimli föy + 66 “yakında” deney (toplam 115). Etkileşimli olmayanlar silik kartla listelenir, aranabilir.
+- Katalog: 12 konu başlığı; 49 etkileşimli föy + 61 “yakında” deney (toplam 110; ilk özette yanlışlıkla 66 yazılmıştı). Etkileşimli olmayanlar silik kartla listelenir, aranabilir.
   “★ Başlangıç yolu”: LED/Ohm → bölücü → RC → yarım dalga → pull-down → kapılar → eviren op-amp → 555.
 - Her föyün test sorularının doğru şıkkı birim testlerinde simülasyonla doğrulanır (catalog.test.ts).
 - Motor: Newton yakınsamazsa adım 8'e, sonra 64'e bölünür; yine olmazsa sözde-geçici gevşetme ile sıçrama çözülür (multivibratör, mandal).
@@ -69,10 +69,20 @@ Bunlar yapılmadan da her şey çalışır: `IEEESIM.html` (tek dosya) ve `npm r
 - 2026-11-04 23:50 — Plan yazıldı, 03:30 başlangıcı planlandı.
 - 2026-11-05 07:10 — Görev 0–2 tamam: ortam sağlam (23 test yeşil), yeni üst bar + Dosya menüsü + Deney bul + kullanıcı menüsü, “Tepecan'a Sor”.
 - 2026-11-05 07:40 — Görev 3 tamam: op-amp, E/G/F/H, potansiyometre, buton, pil, lamba, LDR, NTC, 7805, 6 lojik kapı, D-FF, saat, lojik giriş/gösterge, 555, BJT/MOSFET/Schottky hazır modelleri; semboller, SPICE çıktısı, 3D (DIP/TO-220/trimpot), osiloskop XY. 40 test yeşil.
-- 2026-11-05 07:50 — Görev 5 tamam: konu başlıklı katalog penceresi (kenar çubuğu, arama, seviye filtresi, yakında olanlar), 42 yeni föy (DC, geçici, AC, filtre, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme), 66 planlı deney; motor sağlamlaştırma. 60 test yeşil.
+- 2026-11-05 07:50 — Görev 5 tamam: konu başlıklı katalog penceresi (kenar çubuğu, arama, seviye filtresi, yakında olanlar), 42 yeni föy (DC, geçici, AC, filtre, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme), 61 planlı deney; motor sağlamlaştırma. 60 test yeşil.
 - 2026-11-05 08:05 — Görev 4 tamam: 45 elemanın bilgi kartı (ne işe yarar, nasıl çalışır, formül, tipik değerler, dikkat, kılıf/sınır değerler, datasheet), PDF yükleme (IndexedDB; girişte buluta), elemanı kullanan deneylere kısayol. 61 test yeşil.
 - 2026-11-05 08:25 — Görev 6 tamam: giriş ekranı (Google, e-posta/şifre, kayıt, misafir, çevrimdışı modu), Pages Functions API (auth, progress, datasheets → R2), D1 şeması, wrangler.toml; wrangler ile yerelde uçtan uca test edildi (kayıt, giriş, hatalı şifre, çıkış, ilerleme, PDF yükle/indir/sil, köken denetimi, Google yönlendirmesi). 63 test yeşil.
 - 2026-11-05 08:40 — Görev 7 tamam: Tepecan’lı tanıtım turu (palet, canvas, Başlat, araçlar, Deney bul, Dosya, sağ panel, profil), tekrar hoş geldin kartı (kaldığın yer, öneri, yenilikler). Tarayıcıda uçtan uca denendi. 63 test yeşil.
 - 2026-11-05 08:55 — Görev 8 tamam: /api/ask (Workers AI akışı, günlük kota, premium modeli), istemcide “Tepecan Bulut” sağlayıcısı ve kalan hak göstergesi; yerelde sahte akışla uçtan uca denendi (5. sorudan sonra 429). 65 test yeşil.
 - 2026-11-05 09:10 — Görev 9 tamam: 65 birim testi + tarayıcı testleri (tek dosya file://, Vite, wrangler yerel), dist ve tek dosya IEEESIM.html derlendi, docs/CLOUDFLARE.md ve README güncellendi, sürüm 0.2.0. Gece görevi bitti.
 - 2026-11-05 09:15 — Kerem'e özet mesajı gönderildi. Tüm görevler bitti; devam kontrolleri bir şey yapmamalı.
+
+## Öğleden sonra (5 Kasım, 12:05) — deney havuzu (Kerem’in 08:58 isteği)
+Kararlar:
+- “Yakında” listesinden 32 deney etkileşimli föye çevrildi; her konudan en az 2 (t_pool_a/b/c.ts). Kimlikler planned.ts ile aynı olduğu için katalogda otomatik yer değiştirdiler.
+- Seçim ölçütü: motorun gerçekçi simüle edebildiği ve sonucu sayıyla doğrulanabilen deneyler. Debounce (mekanik zıplama modeli yok), 7 segment, JK sayıcı, termokupl, strain gauge, LM317 (ADJ pinli regülatör yok), MPPT, akü şarj, Colpitts, VCO, enstrümantasyon/transempedans gibi deneyler sonraya kaldı.
+- Bobin geri tepmesinde MOSFET’in çığ kırılması 47 V’luk zener ile modellendi (yoksa gerilim sınırsız büyür).
+- Darlington lambası 3 W seçildi (5 W’ta 100 kΩ tabanla tam doyum sınırdaydı). Akım sınırlamada gerçekçi V_BE ile sınır ≈ 0,11 A çıktığı için soru “≈ 0,1 A” olarak yazıldı.
+- MOSFET denkleminin modeldeki biçimi I_D = ½K(V_GS − V_th)²; föy metinleri buna göre düzeltildi.
+- Değişiklikler `deney-havuzu` dalında; main’e PR ile girer (Kerem telefondan birleştirir).
+- 2026-11-05 12:25 — Deney havuzu: 32 yeni föy (toplam 81 etkileşimli + 29 yakında = 110), her quiz cevabı simülasyonla doğrulandı (93 test yeşil), şemalar ekran görüntüsüyle kontrol edildi, sürüm 0.2.1.

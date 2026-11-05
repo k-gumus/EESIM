@@ -16,7 +16,7 @@ Web tabanlı, 3D destekli ve yapay zekâ destekli elektronik devre simülatörü
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm test             # 65 test: motor, 49 deneyin quiz cevapları, bilgi kartları, eşitleme
+npm test             # 93 test: motor, 81 deneyin quiz cevapları, bilgi kartları, eşitleme
 npm run build        # dist/  → Cloudflare Pages / GitHub Pages / Vercel
 npm run build:single # dist-single/index.html → tek dosyalık sürüm (giriş/bulut yok, misafir modu)
 npm run dev:api      # build + Cloudflare Pages Functions yerelde (giriş, ilerleme, datasheet, Tepecan’a Sor)
@@ -36,7 +36,7 @@ npm run deploy       # Cloudflare Pages’e yayınla — kurulum: docs/CLOUDFLAR
 | **Osiloskop** | 2 kanal, tetikleme, 1-2-5 V/böl. ve zaman/böl., Maks/Min/Vpp/Ort/RMS/frekans ölçümleri, XY modu |
 | **Multimetre** | V⎓, V∿ (true-RMS), A⎓, A∿ — ampermetre gerçekten 0 Ω seri eleman olarak çözülür |
 | **3D Montaj** | Netlist’ten otomatik breadboard yerleşimi; renk kodlu dirençler, yanan LED, tıklanabilir anahtar, canlı ekranlı cihazlar |
-| **Deney kataloğu** | 12 konu başlığı (DC, geçici rejim, AC, filtreler, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme); 49 etkileşimli föy + 66 “yakında” deney; adım adım görevler, otomatik kontrol, quiz, XP / seviye / günlük seri |
+| **Deney kataloğu** | 12 konu başlığı (DC, geçici rejim, AC, filtreler, diyot, BJT, MOSFET, op-amp, osilatör, güç, dijital, ölçme); 81 etkileşimli föy + 29 “yakında” deney; adım adım görevler, otomatik kontrol, quiz, XP / seviye / günlük seri |
 | **Hesap** | Google ya da e-posta ile giriş, misafir modu; XP ve ilerleme her cihazda (Cloudflare D1) |
 | **Tanıtım turu** | İlk girişte Tepecan’lı spot ışıklı tur; sonraki girişlerde “kaldığın yer” kartı ve yenilikler |
 | **Tepecan’a Sor** | Netlist + simülasyon sonuçlarını okur; teorik mentor, lab asistanı, hata ayıklayıcı. Önerdiği düzeltmeyi tek tıkla uygular. Varsayılan: Tepecan Bulut (Workers AI, günlük kota); Ollama ve WebLLM de seçilebilir |
@@ -140,7 +140,7 @@ src/
   store/       devre durumu, geri al/yinele, düzeltme yamaları
   ui/          palet, canvas düğümleri/kabloları, osiloskop, özellikler, deney ve AI panelleri
   three/       breadboard yerleşimi ve 3D sahne
-  templates/   deney kataloğu: konu başlıkları, 49 föy (t_*.ts), planlı deneyler, doğrulama testleri
+  templates/   deney kataloğu: konu başlıkları, 81 föy (t_*.ts), planlı deneyler, doğrulama testleri
   ai/          Tepecan Bulut / Ollama / WebLLM sağlayıcıları, sistem istemi, sohbet durumu
   auth/        giriş ekranı, oturum, ilerleme eşitleme
   datasheets/  PDF depolama (IndexedDB / bulut)

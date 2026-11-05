@@ -1,7 +1,7 @@
 {
   "name": "ieeesim",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "IEEESIM — Tepecan ile web tabanlı, 3D destekli, yapay zeka destekli devre laboratuvarı",
   "type": "module",
   "scripts": {

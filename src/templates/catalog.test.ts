@@ -305,3 +305,247 @@ describe('Deney sonuçları (test sorularının doğru şıkkı)', () => {
     expect(led(n2)).toBeGreaterThan(5e-3);
   });
 });
+
+describe('Deney havuzu v0.2.1 (test sorularının doğru şıkkı)', () => {
+  const pp = (s: ReturnType<typeof sim>, n: string) => s.st(n).max - s.st(n).min;
+  const cur = (s: ReturnType<typeof sim>, name: string) => s.sim.currentsOf(name)![0];
+  const duty = (s: ReturnType<typeof sim>, n: string, th: number) => s.nets[n].filter((v) => v > th).length / s.nets[n].length;
+
+  it('Norton: 5 V açık devre, 10 mA kısa devre', () => {
+    const a = sim('norton');
+    expect(a.st('VA').last).toBeCloseTo(5, 2);
+    expect(a.st('VB').last).toBeCloseTo(5, 2);
+    expect(sim('norton', { mutate: (d) => set(d, 'S1', { closed: true }) }).sim.branchCurrent('DMM1')).toBeCloseTo(0.01, 4);
+  });
+
+  it('voltmetre yüklemesi: 3,33 V, 10 MΩ ile 4,76 V', () => {
+    expect(sim('meter-loading', { mutate: (d) => set(d, 'S1', { closed: true }) }).st('VOUT').last).toBeCloseTo(3.333, 2);
+    expect(sim('meter-loading', { mutate: (d) => { set(d, 'S1', { closed: true }); set(d, 'RM', { R: 10e6 }); } }).st('VOUT').last).toBeCloseTo(4.76, 1);
+  });
+
+  it('RL: son akım 50 mA; L = 300 mH ile 5 ms yetmez', () => {
+    const a = sim('rl-transient', { dur: 30e-3, dt: 1e-5, rec: 20e-3 });
+    expect(a.st('VR').max).toBeGreaterThan(4.9);
+    const b = sim('rl-transient', { dur: 30e-3, dt: 1e-5, rec: 20e-3, mutate: (d) => set(d, 'L1', { L: 0.3 }) });
+    expect(b.st('VR').max).toBeLessThan(4.6);
+  });
+
+  it('bobin geri tepmesi: ≈ 47 V, diyotla ≈ 12,7 V', () => {
+    const a = sim('inductive-kick', { dur: 0.3, dt: 1e-4, rec: 0.2 });
+    expect(a.st('VD').max).toBeGreaterThan(45);
+    expect(a.st('VD').max).toBeLessThan(49);
+    const b = sim('inductive-kick', { dur: 0.3, dt: 1e-4, rec: 0.2, mutate: (d) => set(d, 'S1', { closed: true }) });
+    expect(b.st('VD').max).toBeGreaterThan(12.3);
+    expect(b.st('VD').max).toBeLessThan(13.2);
+  });
+
+  it('paralel rezonans: 1592 Hz’te VT ≥ 4,5 V', () => {
+    const a = sim('parallel-resonance', { dur: 40e-3, dt: 2e-6, rec: 3e-3, mutate: (d) => set(d, 'VG1', { freq: 1592 }) });
+    expect(a.st('VT').max).toBeGreaterThan(4.5);
+  });
+
+  it('güç faktörü ≈ 0,54: kompanzasyonla kaynak akımı ≈ 0,54 katına iner', () => {
+    const a = sim('power-factor', { dur: 0.2, dt: 2e-5, rec: 0.04 });
+    const b = sim('power-factor', { dur: 0.2, dt: 2e-5, rec: 0.04, mutate: (d) => set(d, 'S1', { closed: true }) });
+    const r = pp(b, 'VI') / pp(a, 'VI');
+    expect(r).toBeGreaterThan(0.45);
+    expect(r).toBeLessThan(0.62);
+  });
+
+  it('bant geçiren: 2575 Hz’te ≈ 0,707; Q = 5 ile daha küçük', () => {
+    const a = sim('band-pass', { dur: 10e-3, dt: 1e-6, rec: 2e-3, mutate: (d) => set(d, 'VG1', { freq: 2575 }) });
+    expect(a.st('VOUT').max).toBeGreaterThan(0.66);
+    expect(a.st('VOUT').max).toBeLessThan(0.75);
+    const b = sim('band-pass', { dur: 20e-3, dt: 1e-6, rec: 2e-3, mutate: (d) => { set(d, 'VG1', { freq: 2575 }); set(d, 'R1', { R: 20 }); } });
+    expect(b.st('VOUT').max).toBeLessThan(0.3);
+  });
+
+  it('aktif YGF: 2 / 1,41 / 0,2', () => {
+    expect(sim('active-hpf', { dur: 2e-3, dt: 5e-7, rec: 0.5e-3 }).st('VOUT').max).toBeCloseTo(2, 1);
+    const c = sim('active-hpf', { dur: 6e-3, dt: 1e-6, rec: 2e-3, mutate: (d) => set(d, 'VG1', { freq: 1592 }) }).st('VOUT').max;
+    expect(c).toBeGreaterThan(1.33);
+    expect(c).toBeLessThan(1.5);
+    const l = sim('active-hpf', { dur: 40e-3, dt: 1e-5, rec: 13e-3, mutate: (d) => set(d, 'VG1', { freq: 159 }) }).st('VOUT').max;
+    expect(l).toBeGreaterThan(0.15);
+    expect(l).toBeLessThan(0.25);
+  });
+
+  it('tepe dedektörü: ≈ 4,4 V, dalgalanma ≈ 45 mV', () => {
+    const a = sim('peak-detector', { dur: 30e-3, dt: 5e-6, rec: 5e-3 });
+    expect(a.st('VOUT').avg).toBeGreaterThan(4.3);
+    expect(a.st('VOUT').avg).toBeLessThan(4.5);
+    expect(pp(a, 'VOUT')).toBeGreaterThan(0.03);
+    expect(pp(a, 'VOUT')).toBeLessThan(0.06);
+  });
+
+  it('ters polarite: 8,2 V; ters takınca ≈ 0', () => {
+    expect(sim('reverse-polarity').st('VL').last).toBeCloseTo(8.2, 1);
+    expect(Math.abs(sim('reverse-polarity', { mutate: (d) => set(d, 'V1', { V: -9 }) }).st('VL').last)).toBeLessThan(0.01);
+  });
+
+  it('paralel LED: mavi yanmaz, ayrı dirençlerle iki mavi de yanar', () => {
+    const a = sim('led-series-parallel');
+    expect(cur(a, 'LED2')).toBeLessThan(1e-4);
+    expect(cur(a, 'LED1')).toBeGreaterThan(0.018);
+    expect(cur(a, 'LED4')).toBeGreaterThan(0.015);
+    const b = sim('led-series-parallel', { mutate: (d) => set(d, 'R1', { R: 100 }) });
+    expect(cur(b, 'LED1')).toBeGreaterThan(0.028);
+  });
+
+  it('emetör izleyici: kazanç ≈ 0,98', () => {
+    const a = sim('emitter-follower', { dur: 10e-3, dt: 2e-6, rec: 2e-3 });
+    const g = pp(a, 'VOUT') / pp(a, 'VIN');
+    expect(g).toBeGreaterThan(0.94);
+    expect(g).toBeLessThan(1.0);
+  });
+
+  it('Darlington: tek transistör ≈ 4,3 mA, Darlington lambayı doyurur, V_CE ≈ 0,8 V', () => {
+    const a = sim('darlington', { mutate: (d) => set(d, 'IN1', { on: true }) });
+    const ic1 = a.sim.currentsOf('Q1')![1];
+    expect(ic1).toBeGreaterThan(0.0035);
+    expect(ic1).toBeLessThan(0.005);
+    expect(Math.abs(cur(a, 'LMP2'))).toBeGreaterThan(0.23);
+    expect(a.st('VC2').last).toBeGreaterThan(0.6);
+    expect(a.st('VC2').last).toBeLessThan(1.1);
+  });
+
+  it('diferansiyel çift: tek uç kazanç ≈ 110, zıt faz, ortak mod bastırılır', () => {
+    const a = sim('diff-pair', { dur: 4e-3, dt: 2e-6, rec: 2e-3 });
+    const g = pp(a, 'VC1') / 0.02;
+    expect(g).toBeGreaterThan(90);
+    expect(g).toBeLessThan(130);
+    const c1 = a.nets.VC1, c2 = a.nets.VC2;
+    const m1 = a.st('VC1').avg, m2 = a.st('VC2').avg;
+    const corr = c1.reduce((s, v, i) => s + (v - m1) * (c2[i] - m2), 0);
+    expect(corr).toBeLessThan(0);
+    const b = sim('diff-pair', { dur: 4e-3, dt: 2e-6, rec: 2e-3, mutate: (d) => set(d, 'VG2', { amp: 0.01 }) });
+    expect(pp(b, 'VC1')).toBeLessThan(0.05);
+  });
+
+  it('push-pull: tepe ≈ 4,25 V, ölü bölge ±0,5 V', () => {
+    const a = sim('push-pull', { dur: 3e-3, dt: 1e-6, rec: 1e-3 });
+    expect(a.st('VOUT').max).toBeGreaterThan(4.1);
+    expect(a.st('VOUT').max).toBeLessThan(4.4);
+    a.nets.VIN.forEach((v, i) => {
+      if (Math.abs(v) < 0.4) expect(Math.abs(a.nets.VOUT[i])).toBeLessThan(0.02);
+    });
+  });
+
+  it('I_D–V_GS: eşik 2,1 V, 5 V’ta ≈ 0,35 A', () => {
+    const a = sim('id-vgs', { dur: 40e-3, dt: 2e-5, rec: 20e-3 });
+    expect(a.st('VID').max).toBeGreaterThan(0.3);
+    expect(a.st('VID').max).toBeLessThan(0.4);
+    a.nets.VGS.forEach((v, i) => {
+      if (v < 2.0) expect(a.nets.VID[i]).toBeLessThan(0.002);
+    });
+  });
+
+  it('P-MOSFET yük anahtarı: IN = 1 → yük 12 V', () => {
+    expect(sim('load-switch').st('VOUT').last).toBeLessThan(0.1);
+    expect(sim('load-switch', { mutate: (d) => set(d, 'IN1', { on: true }) }).st('VOUT').last).toBeGreaterThan(11.5);
+  });
+
+  it('H-köprüsü: ±1,2 A, A = B → 0', () => {
+    expect(Math.abs(sim('h-bridge').sim.branchCurrent('DMM1'))).toBeLessThan(1e-3);
+    const f = sim('h-bridge', { mutate: (d) => set(d, 'B', { on: true }) }).sim.branchCurrent('DMM1');
+    expect(f).toBeGreaterThan(1.0);
+    expect(f).toBeLessThan(1.25);
+    const r = sim('h-bridge', { mutate: (d) => set(d, 'A', { on: true }) }).sim.branchCurrent('DMM1');
+    expect(r).toBeLessThan(-1.0);
+  });
+
+  it('zener + emetör izleyici: ≈ 5,5 V, yük artınca az düşer', () => {
+    const a = sim('zener-follower').st('VOUT').last;
+    expect(a).toBeGreaterThan(5.4);
+    expect(a).toBeLessThan(5.6);
+    const b = sim('zener-follower', { mutate: (d) => set(d, 'RL', { R: 47 }) }).st('VOUT').last;
+    expect(a - b).toBeGreaterThan(0);
+    expect(a - b).toBeLessThan(0.15);
+  });
+
+  it('akım sınırlama: kısa devrede ≈ 0,1 A', () => {
+    const i = sim('current-limit', { mutate: (d) => set(d, 'S1', { closed: true }) }).sim.branchCurrent('DMM1');
+    expect(i).toBeGreaterThan(0.09);
+    expect(i).toBeLessThan(0.125);
+  });
+
+  it('fark kuvvetlendiricisi: 1 V; ortak modda 0; R4 hatasıyla ≈ 0,17 V', () => {
+    expect(sim('difference-amp').st('VOUT').last).toBeCloseTo(1, 1);
+    expect(Math.abs(sim('difference-amp', { mutate: (d) => set(d, 'V2', { V: 2 }) }).st('VOUT').last)).toBeLessThan(0.05);
+    const e = sim('difference-amp', { mutate: (d) => { set(d, 'V2', { V: 2 }); set(d, 'R4', { R: 11e3 }); } }).st('VOUT').last;
+    expect(e).toBeGreaterThan(0.13);
+    expect(e).toBeLessThan(0.21);
+  });
+
+  it('türev alıcı: ±0,4 V kare', () => {
+    const a = sim('differentiator', { dur: 4e-3, dt: 1e-6, rec: 2e-3 });
+    expect(a.st('VOUT').max).toBeGreaterThan(0.37);
+    expect(a.st('VOUT').max).toBeLessThan(0.45);
+  });
+
+  it('hassas doğrultucu: 0,5 V tepe; sıradan diyot ≈ 0,12 V', () => {
+    const a = sim('precision-rectifier', { dur: 40e-3, dt: 1e-5, rec: 20e-3 });
+    expect(a.st('VP').max).toBeGreaterThan(0.48);
+    expect(a.st('VP').min).toBeGreaterThan(-0.02);
+    expect(a.st('VD').max).toBeLessThan(0.2);
+  });
+
+  it('pencere karşılaştırıcı: periyodun ≈ %20’si', () => {
+    const a = sim('comparator-window', { dur: 0.3, dt: 1e-4, rec: 0.2 });
+    const dd = duty(a, 'OK', 2.5);
+    expect(dd).toBeGreaterThan(0.16);
+    expect(dd).toBeLessThan(0.24);
+  });
+
+  it('Wien ≈ 1,6 kHz; faz kaydırmalı ≈ 650 Hz ve kazanç düşünce söner', () => {
+    const w = sim('wien', { dur: 30e-3, dt: 2e-6, rec: 10e-3 });
+    expect(w.freq('OUT', 0)).toBeGreaterThan(1400);
+    expect(w.freq('OUT', 0)).toBeLessThan(1700);
+    expect(w.st('OUT').max).toBeGreaterThan(1);
+    const r = sim('rc-phase-shift', { dur: 40e-3, dt: 5e-6, rec: 20e-3 });
+    expect(r.freq('OUT', 0)).toBeGreaterThan(550);
+    expect(r.freq('OUT', 0)).toBeLessThan(720);
+    const off = sim('rc-phase-shift', { dur: 60e-3, dt: 5e-6, rec: 5e-3, mutate: (d) => set(d, 'RF', { R: 220e3 }) });
+    expect(pp(off, 'OUT')).toBeLessThan(0.5);
+  });
+
+  it('555 PWM: ≈ 1,4 kHz; konum 0,5 → %50, 0,2 → %20', () => {
+    const a = sim('555-pwm', { dur: 8e-3, dt: 1e-6, rec: 5e-3 });
+    expect(a.freq('OUT')).toBeGreaterThan(1100);
+    expect(a.freq('OUT')).toBeLessThan(1600);
+    const d1 = duty(a, 'OUT', 3);
+    expect(d1).toBeGreaterThan(0.44);
+    expect(d1).toBeLessThan(0.56);
+    const b = sim('555-pwm', { dur: 8e-3, dt: 1e-6, rec: 5e-3, mutate: (d) => set(d, 'POT1', { pos: 0.2 }) });
+    const d2 = duty(b, 'OUT', 3);
+    expect(d2).toBeGreaterThan(0.14);
+    expect(d2).toBeLessThan(0.28);
+    expect(b.freq('OUT')).toBeGreaterThan(1000);
+  });
+
+  it('tam toplayıcı, MUX, kaydırmalı yazmaç', () => {
+    const f = sim('full-adder', { mutate: (d) => { set(d, 'A', { on: true }); set(d, 'B', { on: true }); set(d, 'CIN', { on: true }); } });
+    expect(level(f.sim, f.circ, 'S')).toBe(1);
+    expect(level(f.sim, f.circ, 'COUT')).toBe(1);
+    const g = sim('full-adder', { mutate: (d) => { set(d, 'A', { on: true }); set(d, 'B', { on: true }); } });
+    expect(level(g.sim, g.circ, 'S')).toBe(0);
+    expect(level(g.sim, g.circ, 'COUT')).toBe(1);
+    const m0 = sim('mux', { mutate: (d) => set(d, 'D1', { on: true }) });
+    expect(level(m0.sim, m0.circ, 'Y')).toBe(0);
+    const m1 = sim('mux', { mutate: (d) => { set(d, 'D1', { on: true }); set(d, 'SEL', { on: true }); } });
+    expect(level(m1.sim, m1.circ, 'Y')).toBe(1);
+    const s = sim('shift-register', {
+      phases: [{ dur: 0.6, mutate: (d) => set(d, 'DIN', { on: true }) }, { dur: 1.0, mutate: (d) => set(d, 'DIN', { on: false }) }],
+      dt: 1e-3,
+    });
+    expect(level(s.sim, s.circ, 'Q0')).toBe(0);
+    expect(level(s.sim, s.circ, 'Q2')).toBe(1);
+  });
+
+  it('R-2R DAC: 101 → 3,125 V; ampermetre iç direnci → 91 mA', () => {
+    const a = sim('dac-r2r', { mutate: (d) => { set(d, 'B2', { on: true }); set(d, 'B0', { on: true }); } });
+    expect(a.st('VOUT').last).toBeCloseTo(3.125, 2);
+    expect(sim('meter-internal').sim.branchCurrent('DMM1')).toBeCloseTo(0.1, 3);
+    expect(sim('meter-internal', { mutate: (d) => set(d, 'S1', { closed: false }) }).sim.branchCurrent('DMM1')).toBeCloseTo(0.0909, 3);
+  });
+});
