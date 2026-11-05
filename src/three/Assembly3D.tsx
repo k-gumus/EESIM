@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { buildAssembly, rowZ, type Assembly, type Hole, type PlacedInstrument, type PlacedPart } from './layout';
+import { buildAssembly, DIP_PINS, rowZ, type Assembly, type Hole, type PlacedInstrument, type PlacedPart } from './layout';
 import { runner, useSim } from '../sim/runner';
 import { useCircuit } from '../store/circuitStore';
 import { formatMeter, formatSI } from '../circuit/format';
@@ -415,7 +415,183 @@ function To92Part({ p, cols }: { p: PlacedPart; cols: number }) {
   );
 }
 
+// ───────────── v0.2 parçaları ─────────────
+function DipPart({ p, cols }: { p: PlacedPart; cols: number }) {
+  const { selected, onClick } = useSelect(p.id);
+  const dip = p.dip!;
+  const half = dip.pins / 2;
+  const x0 = dip.c0 - cols / 2;
+  const cx = x0 + (half - 1) / 2;
+  const w = half - 0.2;
+  const part = DIP_PINS[p.type]?.part ?? '';
+  const legs: V3[] = [];
+  for (let k = 0; k < half; k++) {
+    legs.push([x0 + k, 0, rowZ(5)]);
+    legs.push([x0 + k, 0, rowZ(4)]);
+  }
+  return (
+    <group onClick={onClick}>
+      {legs.map((l, i) => (
+        <Rod key={i} a={l} b={[l[0], 0.9, l[2] + (l[2] > 0 ? -0.35 : 0.35)]} r={0.1} />
+      ))}
+      <mesh position={[cx, 1.25, 0]} castShadow>
+        <boxGeometry args={[w, 0.9, 2.6]} />
+        <meshStandardMaterial color="#141414" roughness={0.55} />
+      </mesh>
+      <mesh position={[cx - w / 2 + 0.05, 1.71, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.32, 20, -Math.PI / 2, Math.PI]} />
+        <meshStandardMaterial color="#2a2a2a" />
+      </mesh>
+      <mesh position={[x0 + 0.25, 1.71, 0.75]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.13, 12]} />
+        <meshStandardMaterial color="#3a3a3a" />
+      </mesh>
+      {selected && <SelRing at={[cx, 0.05, 0]} r={Math.max(2.4, half / 1.6)} />}
+      <Html position={[cx, 3.2, 0]} center distanceFactor={42} style={{ pointerEvents: 'none' }}>
+        <div className="lbl3d">
+          {p.name} <small>{part}</small>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+function ThreeLegPart({ p, cols }: { p: PlacedPart; cols: number }) {
+  const { selected, onClick } = useSelect(p.id);
+  const pts = p.legs.map((l) => holePos(l.hole, cols));
+  const M: V3 = [pts.reduce((a, v) => a + v[0], 0) / 3, 0, pts.reduce((a, v) => a + v[2], 0) / 3];
+  const isReg = p.type === 'reg78';
+  const base = isReg ? 1.4 : 0.8;
+  return (
+    <group onClick={onClick}>
+      {pts.map((h, i) => (
+        <Polyline key={i} pts={[h, [h[0], 0.6, h[2]], [M[0] + (i - 1) * 0.8, base, M[2]]]} r={isReg ? 0.12 : 0.08} />
+      ))}
+      {isReg ? (
+        <group position={[M[0], base, M[2]]}>
+          <mesh position={[0, 1.6, 0]} castShadow>
+            <boxGeometry args={[3.9, 3.4, 1.7]} />
+            <meshStandardMaterial color="#111" roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 4.4, -0.65]}>
+            <boxGeometry args={[3.9, 2.6, 0.45]} />
+            <meshStandardMaterial color="#c9ced6" metalness={0.85} roughness={0.25} />
+          </mesh>
+          <mesh position={[0, 4.6, -0.65]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.55, 0.55, 0.5, 20]} />
+            <meshStandardMaterial color="#1b2236" />
+          </mesh>
+        </group>
+      ) : (
+        <group position={[M[0], base, M[2]]}>
+          <mesh position={[0, 0.55, 0]} castShadow>
+            <boxGeometry args={[3.2, 1.1, 2.4]} />
+            <meshStandardMaterial color="#1f4fa8" roughness={0.6} />
+          </mesh>
+          <mesh position={[0, 1.2, 0]} rotation={[0, (Number(p.params.pos ?? 0.5) - 0.5) * 4.5, 0]}>
+            <cylinderGeometry args={[0.85, 0.85, 0.3, 20]} />
+            <meshStandardMaterial color="#e8e2d0" />
+          </mesh>
+          <mesh position={[0, 1.37, 0]} rotation={[0, (Number(p.params.pos ?? 0.5) - 0.5) * 4.5, 0]}>
+            <boxGeometry args={[1.3, 0.06, 0.18]} />
+            <meshStandardMaterial color="#555" />
+          </mesh>
+        </group>
+      )}
+      {selected && <SelRing at={[M[0], 0.05, M[2]]} r={2.4} />}
+      <PartLabel at={[M[0], isReg ? 8.6 : 3.2, M[2]]} name={`${p.name}${isReg ? ` · 78${String(Number(p.params.Vout ?? 5)).padStart(2, '0')}` : ''}`} />
+    </group>
+  );
+}
+
+function SmallTwoLeg({ p, cols }: { p: PlacedPart; cols: number }) {
+  const { selected, onClick } = useSelect(p.id);
+  const A = holePos(p.legs[0].hole, cols);
+  const B = holePos(p.legs[1].hole, cols);
+  const M: V3 = [(A[0] + B[0]) / 2, 0, (A[2] + B[2]) / 2];
+  const ang = Math.atan2(B[2] - A[2], B[0] - A[0]);
+  const glow = useRef<THREE.MeshStandardMaterial>(null);
+  const light = useRef<THREE.PointLight>(null);
+  useFrame(() => {
+    if (p.type !== 'lamp') return;
+    const st = useSim.getState();
+    const on = st.status === 'running' || st.status === 'paused';
+    const b = on ? Math.min(1.4, st.comp[p.id]?.probe.brightness ?? 0) : 0;
+    if (glow.current) glow.current.emissiveIntensity = 0.05 + b * 3;
+    if (light.current) light.current.intensity = b * 40;
+  });
+  const top = p.type === 'lamp' ? 1.6 : p.type === 'button' ? 0.9 : 1.4;
+  const ex = Math.cos(ang) * 0.5;
+  const ez = Math.sin(ang) * 0.5;
+  return (
+    <group
+      onClick={onClick}
+      onPointerDown={(e) => {
+        if (p.type !== 'button') return;
+        e.stopPropagation();
+        useCircuit.getState().updateParams(p.id, { pressed: true }, false);
+        const up = () => {
+          useCircuit.getState().updateParams(p.id, { pressed: false }, false);
+          window.removeEventListener('pointerup', up);
+        };
+        window.addEventListener('pointerup', up);
+      }}
+    >
+      <Polyline pts={[A, [A[0], 0.5, A[2]], [M[0] - ex, top, M[2] - ez]]} r={0.07} />
+      <Polyline pts={[B, [B[0], 0.5, B[2]], [M[0] + ex, top, M[2] + ez]]} r={0.07} />
+      <group position={[M[0], top, M[2]]} rotation={[0, -ang, 0]}>
+        {p.type === 'button' && (
+          <>
+            <mesh position={[0, 0.4, 0]} castShadow>
+              <boxGeometry args={[2.4, 0.8, 2.4]} />
+              <meshStandardMaterial color="#2b2f36" metalness={0.5} />
+            </mesh>
+            <mesh position={[0, p.params.pressed ? 0.95 : 1.25, 0]}>
+              <cylinderGeometry args={[0.7, 0.7, 0.7, 20]} />
+              <meshStandardMaterial color="#e53935" />
+            </mesh>
+          </>
+        )}
+        {p.type === 'lamp' && (
+          <>
+            <mesh position={[0, 0.5, 0]}>
+              <cylinderGeometry args={[0.8, 0.9, 1, 20]} />
+              <meshStandardMaterial color="#b8bcc4" metalness={0.8} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 2.0, 0]}>
+              <sphereGeometry args={[1.5, 24, 18]} />
+              <meshStandardMaterial ref={glow} color="#fff2c4" emissive="#ffcc55" emissiveIntensity={0.05} transparent opacity={0.75} roughness={0.1} />
+            </mesh>
+            <pointLight ref={light} position={[0, 2.2, 0]} color="#ffd27a" intensity={0} distance={22} decay={2} />
+          </>
+        )}
+        {p.type === 'ldr' && (
+          <>
+            <mesh position={[0, 0.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[1.0, 1.0, 0.4, 24]} />
+              <meshStandardMaterial color="#c8742c" roughness={0.6} />
+            </mesh>
+            <mesh position={[0, 0.2, 0.21]}>
+              <planeGeometry args={[1.4, 1.4]} />
+              <meshStandardMaterial color="#8a2f12" />
+            </mesh>
+          </>
+        )}
+        {p.type === 'ntc' && (
+          <mesh position={[0, 0.3, 0]}>
+            <sphereGeometry args={[0.55, 16, 12]} />
+            <meshStandardMaterial color="#1c1c1c" roughness={0.4} />
+          </mesh>
+        )}
+      </group>
+      {selected && <SelRing at={[M[0], 0.05, M[2]]} r={2} />}
+      <PartLabel at={[M[0], top + 3, M[2]]} name={`${p.name}${p.type === 'button' ? ' (basılı tut)' : ''}`} />
+    </group>
+  );
+}
+
 function PartView({ p, cols }: { p: PlacedPart; cols: number }) {
+  if (p.dip) return <DipPart p={p} cols={cols} />;
   switch (p.type) {
     case 'capacitor':
       return <CapPart p={p} cols={cols} />;
@@ -428,6 +604,14 @@ function PartView({ p, cols }: { p: PlacedPart; cols: number }) {
     case 'nmos':
     case 'pmos':
       return <To92Part p={p} cols={cols} />;
+    case 'pot':
+    case 'reg78':
+      return <ThreeLegPart p={p} cols={cols} />;
+    case 'button':
+    case 'lamp':
+    case 'ldr':
+    case 'ntc':
+      return <SmallTwoLeg p={p} cols={cols} />;
     default:
       return <AxialPart p={p} cols={cols} />;
   }
@@ -454,6 +638,10 @@ function instGeom(inst: PlacedInstrument): InstGeom {
       return { w: 8, h: 1.8, d: 13, color: '#f2b705', terms: { pos: [-1.6, 1.0, 5.4], com: [1.6, 1.0, 5.4] } };
     case 'scope':
       return { w: 18, h: 10, d: 9, color: '#262c38', terms: { ch1: [-3, 1.6, 4.6], ch2: [1, 1.6, 4.6] } };
+    case 'battery':
+      return { w: 5, h: 8, d: 3, color: '#1f2a44', terms: { p: [-1.2, 8.2, 0], n: [1.2, 8.2, 0] } };
+    case 'logic':
+      return { w: 5, h: 2.4, d: 5, color: '#2a3550', terms: { y: [0, 1.4, 2.6], a: [0, 1.4, 2.6] } };
   }
 }
 
@@ -475,7 +663,7 @@ function InstrumentDisplay({ inst }: { inst: PlacedInstrument }) {
       break;
     case 'siggen':
       text = `${formatSI(Number(p.freq), 'Hz')}`;
-      sub = `${formatSI(Number(p.amp), 'V')}p ${p.wave === 'square' ? '⊓' : p.wave === 'triangle' ? '⋀' : '∿'}`;
+      sub = inst.type === 'clock' ? `KARE 0–${formatSI(Number(p.V), 'V')}` : `${formatSI(Number(p.amp), 'V')}p ${p.wave === 'square' ? '⊓' : p.wave === 'triangle' ? '⋀' : '∿'}`;
       break;
     case 'dmm':
       text = on && meter ? formatMeter(meter.value, meter.unit) : '- - - -';
@@ -484,6 +672,14 @@ function InstrumentDisplay({ inst }: { inst: PlacedInstrument }) {
     case 'transformer':
       text = `${p.n}:1`;
       sub = inst.type === 'xfmr_ct' ? 'ORTA UÇLU TRAFO' : 'TRAFO';
+      break;
+    case 'battery':
+      text = formatMeter(Number(p.V), 'V');
+      sub = 'PİL';
+      break;
+    case 'logic':
+      text = inst.type === 'logicin' ? (p.on ? '1' : '0') : 'PROB';
+      sub = inst.type === 'logicin' ? 'LOJİK GİRİŞ' : 'LOJİK GÖSTERGE';
       break;
     default:
       return null;

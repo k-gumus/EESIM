@@ -13,12 +13,16 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 - Tepecan'a Sor: varsayılan sağlayıcı Cloudflare Workers AI (sunucu tarafı, kurulum gerektirmez); Ollama/WebLLM gelişmiş ayar olarak kalır.
   Kullanıcı başına günlük kota + `premium` bayrağı (ileride ücretli plan için hazır).
 - Deney kataloğu ders koduna göre değil konu başlığına göre kategorize edilir.
+- Op-amp makro modeli: giriş direnci → slew sınırlı gm → baskın kutup (R1‖C1) → yumuşak doyumlu çıkış. Besleme pinleri yok; ±Vcc parametre. LM741/TL081/LM358/ideal hazır modelleri.
+- Lojik: 5 V CMOS benzeri davranışsal kapılar; boşta giriş ~2,5 V'a süzülür (belirsiz) → pull-up/pull-down dersi gerçekçi. D-FF ve 555 durumları her kabul edilen adımda güncellenir.
+- Bağımlı kaynaklar (E/G/F/H) teorik eleman: 3D montajda gösterilmez.
+- Osiloskoba XY modu eklendi (karakteristik eğriler, Lissajous).
 
 ## Görevler
 - [x] 0. Ortam: proje klasörü + node_modules kontrolü, eksikse Kerem'in klasöründen geri yükle; git init; testler yeşil
 - [x] 1. Üst bar yeniden tasarımı: Logo | Dosya (Yeni/Aç/Kaydet/Netlist-JSON dışa aktar) | Deney bul (arama, Ctrl+K) | açık deney adı | Simülasyon araçları (3D / Osiloskop / Değer okuma) + Başlat
 - [x] 2. Sağ panel: “Tepecan AI” → “Tepecan'a Sor”
-- [ ] 3. Motor genişletme: kontrollü kaynaklar (E/G/F/H), op-amp makro modeli (doyumlu), potansiyometre, buton (pull-up/pull-down örnekleri), pil, lamba, Schottky, LDR/termistör, lojik kapılar + saat kaynağı, 555 (davranışsal), BJT/MOSFET hazır modelleri (2N2222, BC547, 2N7000, IRF540)
+- [x] 3. Motor genişletme: kontrollü kaynaklar (E/G/F/H), op-amp makro modeli (doyumlu), potansiyometre, buton (pull-up/pull-down örnekleri), pil, lamba, Schottky, LDR/termistör, lojik kapılar + saat kaynağı, 555 (davranışsal), BJT/MOSFET hazır modelleri (2N2222, BC547, 2N7000, IRF540)
 - [ ] 4. Eleman bilgi kartları: Ne işe yarar / Nasıl çalışır / Tipik değerler / Dikkat (ör. pull-down neden gerekir) / malzeme-kılıf-sınır değerleri / datasheet bağlantısı + PDF yükleme (misafirde IndexedDB, girişli kullanıcıda R2)
 - [ ] 5. Deney kataloğu: elektrik-elektronik mühendisliği eğitimi ve kariyerinde karşılaşılan deneylerin konu başlıklarına göre tam listesi; platformda simüle edilebilenler adım adım şablon olarak, kategori sayfası + arama
 - [ ] 6. Giriş sistemi: giriş ekranı, Google OAuth + e-posta/şifre, D1 şeması, oturum çerezleri, ilerleme/XP senkronu, wrangler ile yerel test
@@ -29,3 +33,4 @@ Kaynak: Kerem'in el yazısı notları (sim.pdf). Her aşama bitince bu dosyadaki
 ## İLERLEME
 - 2026-11-04 23:50 — Plan yazıldı, 03:30 başlangıcı planlandı.
 - 2026-11-05 07:10 — Görev 0–2 tamam: ortam sağlam (23 test yeşil), yeni üst bar + Dosya menüsü + Deney bul + kullanıcı menüsü, “Tepecan'a Sor”.
+- 2026-11-05 07:40 — Görev 3 tamam: op-amp, E/G/F/H, potansiyometre, buton, pil, lamba, LDR, NTC, 7805, 6 lojik kapı, D-FF, saat, lojik giriş/gösterge, 555, BJT/MOSFET/Schottky hazır modelleri; semboller, SPICE çıktısı, 3D (DIP/TO-220/trimpot), osiloskop XY. 40 test yeşil.

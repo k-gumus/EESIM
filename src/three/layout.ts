@@ -16,6 +16,8 @@ export interface PlacedPart {
   type: CompType;
   params: Record<string, ParamValue>;
   legs: { pin: string; hole: Hole }[];
+  /** DIP entegre: ilk sütun ve bacak sayısı (kanalın iki yanında) */
+  dip?: { c0: number; pins: number };
 }
 
 export interface Jumper {
@@ -36,7 +38,7 @@ export interface PlacedInstrument {
   name: string;
   type: CompType;
   params: Record<string, ParamValue>;
-  kind: 'psu' | 'siggen' | 'dmm' | 'scope' | 'transformer' | 'current-source';
+  kind: 'psu' | 'siggen' | 'dmm' | 'scope' | 'transformer' | 'current-source' | 'battery' | 'logic';
   x: number;
   z: number;
   leads: InstrumentLead[];
@@ -67,9 +69,28 @@ export const rowZ = (row: number): number => {
 };
 
 const JUMPER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835', '#fb8c00', '#8e24aa', '#00acc1', '#f06292'];
-const THREE_PIN = new Set<CompType>(['npn', 'pnp', 'nmos', 'pmos']);
-/** TO-92 bacak sırası (soldan sağa, düz yüz öne bakarken): 2N3904/2N3906 → E B C, 2N7000 → S G D */
-const LEG_ORDER: Partial<Record<CompType, string[]>> = { npn: ['e', 'b', 'c'], pnp: ['e', 'b', 'c'], nmos: ['s', 'g', 'd'], pmos: ['s', 'g', 'd'] };
+const THREE_PIN = new Set<CompType>(['npn', 'pnp', 'nmos', 'pmos', 'pot', 'reg78']);
+/** Bacak sırası (soldan sağa, ön yüz bakarken): 2N3904/2N3906 → E B C, 2N7000 → S G D, 78xx → IN GND OUT, trimpot → 1 W 3 */
+const LEG_ORDER: Partial<Record<CompType, string[]>> = {
+  npn: ['e', 'b', 'c'],
+  pnp: ['e', 'b', 'c'],
+  nmos: ['s', 'g', 'd'],
+  pmos: ['s', 'g', 'd'],
+  pot: ['a', 'w', 'b'],
+  reg78: ['in', 'gnd', 'out'],
+};
+/** DIP entegre bacak numaraları (gerçek kılıf pin-out'ları: LM741, NE555, 74HC08/32/00/02/86/04, 74HC74) */
+export const DIP_PINS: Partial<Record<CompType, { n: number; map: Record<string, number>; part: string }>> = {
+  opamp: { n: 8, map: { n: 2, p: 3, o: 6 }, part: 'LM741' },
+  timer555: { n: 8, map: { gnd: 1, trig: 2, out: 3, reset: 4, ctrl: 5, thr: 6, dis: 7, vcc: 8 }, part: 'NE555' },
+  and: { n: 14, map: { a: 1, b: 2, y: 3 }, part: '74HC08' },
+  or: { n: 14, map: { a: 1, b: 2, y: 3 }, part: '74HC32' },
+  nand: { n: 14, map: { a: 1, b: 2, y: 3 }, part: '74HC00' },
+  nor: { n: 14, map: { a: 2, b: 3, y: 1 }, part: '74HC02' },
+  xor: { n: 14, map: { a: 1, b: 2, y: 3 }, part: '74HC86' },
+  not: { n: 14, map: { a: 1, y: 2 }, part: '74HC04' },
+  dff: { n: 14, map: { d: 2, clk: 3, q: 5, qn: 6 }, part: '74HC74' },
+};
 
 interface Hub {
   col: number;
@@ -101,7 +122,7 @@ export function buildAssembly(circ: CompiledCircuit): Assembly {
   const netDist = new Map<number, number>();
   const queue: number[] = [];
   for (const e of instruments) {
-    if (e.type === 'vdc' || e.type === 'vac' || e.type === 'idc') {
+    if (['vdc', 'vac', 'idc', 'battery', 'clock', 'logicin'].includes(e.type)) {
       const n = e.nets[0];
       if (n && !netDist.has(n)) (netDist.set(n, 0), queue.push(n));
     }
@@ -186,10 +207,18 @@ export function buildAssembly(circ: CompiledCircuit): Assembly {
       for (const n of p.nets) {
         if (n !== 0 && !hubs.has(n)) {
           newHub(n, nextCol);
-          nextCol += 4;
+          nextCol += DIP_PINS[p.type] ? 3 : 4;
         }
       }
     }
+  }
+  // DIP entegreler için sütun blokları (kanalın üstünde)
+  const dipCol = new Map<string, number>();
+  for (const p of board) {
+    const d = DIP_PINS[p.type];
+    if (!d) continue;
+    dipCol.set(p.id, nextCol + 1);
+    nextCol += d.n / 2 + 2;
   }
   // Cihazların tahtaya giren netleri (örn. sadece DMM'ye bağlı bir düğüm) — kartta elemanı olmayanlar hariç
   const boardNets = new Set<number>();
@@ -206,6 +235,24 @@ export function buildAssembly(circ: CompiledCircuit): Assembly {
   // 2) Eleman yerleşimi
   const parts: PlacedPart[] = [];
   for (const p of board) {
+    const dp = DIP_PINS[p.type];
+    if (dp) {
+      const c0 = dipCol.get(p.id)!;
+      const half = dp.n / 2;
+      const pos = (k: number): Hole => (k <= half ? { col: c0 + k - 1, row: 5 } : { col: c0 + (dp.n - k), row: 4 });
+      for (let k = 1; k <= dp.n; k++) take(pos(k));
+      const legs = p.pins.map((pin, i) => {
+        const k = dp.map[pin];
+        const hole = pos(k);
+        const net = p.nets[i];
+        const from = take({ col: hole.col, row: k <= half ? 7 : 2 });
+        const to = net === 0 ? takeRail(hole.col, k > half) : takeHole(net);
+        jumpers.push({ a: from, b: to, color: colorOf(net) });
+        return { pin, hole };
+      });
+      parts.push({ id: p.id, name: p.name, type: p.type, params: p.params, legs, dip: { c0, pins: dp.n } });
+      continue;
+    }
     if (THREE_PIN.has(p.type)) {
       const pp = blocks.get(p.id)!;
       const order = LEG_ORDER[p.type]!;
@@ -284,7 +331,8 @@ export function buildAssembly(circ: CompiledCircuit): Assembly {
   }
 
   // 3) Masa üstü cihazlar
-  const back = instruments.filter((e) => ['vdc', 'vac', 'idc', 'xfmr', 'xfmr_ct'].includes(e.type));
+  const back = instruments.filter((e) => ['vdc', 'vac', 'idc', 'xfmr', 'xfmr_ct', 'battery', 'clock', 'logicin', 'logicprobe'].includes(e.type));
+  if (elements.some((e) => ['vcvs', 'vccs', 'cccs', 'ccvs'].includes(e.type))) warnings.push('Bağımlı kaynaklar teorik modeldir; 3D montajda gösterilmez');
   const front = instruments.filter((e) => ['multimeter', 'scope'].includes(e.type));
   const cols = Math.max(30, nextCol + 3);
   const spread = (list: typeof instruments, i: number) => {

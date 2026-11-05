@@ -18,7 +18,31 @@ export type CompType =
   | 'ground'
   | 'label'
   | 'multimeter'
-  | 'scope';
+  | 'scope'
+  // v0.2 eklemeleri
+  | 'opamp'
+  | 'vcvs'
+  | 'vccs'
+  | 'cccs'
+  | 'ccvs'
+  | 'pot'
+  | 'button'
+  | 'battery'
+  | 'lamp'
+  | 'ldr'
+  | 'ntc'
+  | 'reg78'
+  | 'and'
+  | 'or'
+  | 'not'
+  | 'nand'
+  | 'nor'
+  | 'xor'
+  | 'clock'
+  | 'logicin'
+  | 'logicprobe'
+  | 'dff'
+  | 'timer555';
 
 export type ParamValue = number | string | boolean;
 

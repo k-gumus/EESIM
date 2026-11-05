@@ -47,6 +47,7 @@ export function Oscilloscope() {
   const vdiv = [Number(p.ch1Div) || 1, Number(p.ch2Div) || 1];
   const pos = [Number(p.ch1Pos) || 0, Number(p.ch2Pos) || 0];
   const trig = Number(p.trig) || 0;
+  const xy = !!p.xy;
 
   // Kanal → net eşlemesi (bağlı değilse −1)
   const chNets = useMemo(() => {
@@ -158,6 +159,32 @@ export function Oscilloscope() {
       }
 
       const ms: (Meas | null)[] = [null, null];
+      if (xy) {
+        if (chNets[0] < 0 || chNets[1] < 0) return;
+        const ax = chNets[0] === 0 ? null : h.nets[chNets[0]];
+        const ay = chNets[1] === 0 ? null : h.nets[chNets[1]];
+        ctx.strokeStyle = '#7CFFB2';
+        ctx.lineWidth = 1.6;
+        ctx.shadowColor = '#7CFFB2';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        let first = true;
+        for (let i = 0; i < h.count; i++) {
+          const k = h.idx(i);
+          const t = h.t[k];
+          if (t < tStart || t > tEnd) continue;
+          const X = W / 2 + ((ax ? ax[k] : 0) / vdiv[0] + pos[0]) * dx;
+          const Y = H / 2 - ((ay ? ay[k] : 0) / vdiv[1] + pos[1]) * dy;
+          if (first) (ctx.moveTo(X, Y), (first = false));
+          else ctx.lineTo(X, Y);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#9fb0d4';
+        ctx.font = '11px monospace';
+        ctx.fillText('XY: X = CH1, Y = CH2', 8, 16);
+        return;
+      }
       for (let c = 0; c < 2; c++) {
         const net = chNets[c];
         if (net < 0) continue;
@@ -228,7 +255,7 @@ export function Oscilloscope() {
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [scope, chNets, timeDiv, vdiv[0], vdiv[1], pos[0], pos[1], trig]);
+  }, [scope, chNets, timeDiv, vdiv[0], vdiv[1], pos[0], pos[1], trig, xy]);
 
   if (!scope) {
     return (
@@ -266,6 +293,9 @@ export function Oscilloscope() {
               </option>
             ))}
           </select>
+          <button className={`btn sm ${xy ? 'on' : ''}`} onClick={() => updateParams(scope.id, { xy: !xy })} title="XY modu: CH1 yatay, CH2 dikey (karakteristik eğriler, Lissajous)">
+            XY
+          </button>
           <button className={`btn sm ${frozen ? 'on' : ''}`} onClick={() => setFrozen(!frozen)}>
             {frozen ? '▶ Devam' : '❚❚ Dondur'}
           </button>

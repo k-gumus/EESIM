@@ -12,10 +12,14 @@ export interface ParamDef {
   key: string;
   label: string;
   unit?: string;
-  kind: 'number' | 'select' | 'bool' | 'text';
+  kind: 'number' | 'select' | 'bool' | 'text' | 'slider';
   default: ParamValue;
   options?: { value: string; label: string }[];
   min?: number;
+  max?: number;
+  step?: number;
+  /** kaydırıcı logaritmik mi */
+  log?: boolean;
   /** select değiştiğinde diğer parametrelere uygulanacak hazır değerler */
   presets?: Record<string, Record<string, ParamValue>>;
   advanced?: boolean;
@@ -34,13 +38,21 @@ export interface Physical {
     | 'led-5mm'
     | 'to92'
     | 'slide-switch'
+    | 'dip8'
+    | 'dip14'
+    | 'to220'
+    | 'trimpot'
+    | 'tactile'
+    | 'bulb'
+    | 'ldr'
+    | 'thermistor'
     | 'instrument'
     | 'none';
   length?: number;
   diameter?: number;
   /** breadboard'a takılır mı, yoksa masa üstü cihaz mı */
   onBoard: boolean;
-  instrument?: 'psu' | 'siggen' | 'dmm' | 'scope' | 'transformer' | 'current-source';
+  instrument?: 'psu' | 'siggen' | 'dmm' | 'scope' | 'transformer' | 'current-source' | 'battery' | 'logic';
 }
 
 export interface CompDef {
@@ -59,12 +71,23 @@ export interface CompDef {
   description: string;
 }
 
-export type Category = 'Pasif Elemanlar' | 'Yarı İletkenler' | 'Kaynaklar' | 'Ölçü Aletleri' | 'Bağlantı';
+export type Category =
+  | 'Kaynaklar'
+  | 'Pasif Elemanlar'
+  | 'Anahtar ve Sensörler'
+  | 'Yarı İletkenler'
+  | 'Entegre Devreler'
+  | 'Dijital'
+  | 'Ölçü Aletleri'
+  | 'Bağlantı';
 
 export const CATEGORIES: { id: Category; icon: string }[] = [
   { id: 'Kaynaklar', icon: '⚡' },
   { id: 'Pasif Elemanlar', icon: '〰' },
+  { id: 'Anahtar ve Sensörler', icon: '⏻' },
   { id: 'Yarı İletkenler', icon: '▶' },
+  { id: 'Entegre Devreler', icon: '▭' },
+  { id: 'Dijital', icon: '01' },
   { id: 'Ölçü Aletleri', icon: '◎' },
   { id: 'Bağlantı', icon: '⏚' },
 ];
@@ -81,6 +104,7 @@ const vert = (p = 'p', n = 'n'): PinDef[] => [
 export const DIODE_MODELS: Record<string, { Is: number; N: number; Imax: number; label: string }> = {
   '1N4001': { Is: 14.11e-9, N: 1.984, Imax: 1, label: '1N4001 (doğrultucu, 1 A)' },
   '1N4148': { Is: 2.52e-9, N: 1.752, Imax: 0.3, label: '1N4148 (sinyal, 300 mA)' },
+  '1N5819': { Is: 31.7e-6, N: 1.373, Imax: 1, label: '1N5819 (Schottky, ~0,3 V)' },
   ideal: { Is: 1e-14, N: 1, Imax: 10, label: 'Genel (Is=10 fA, n=1)' },
 };
 
@@ -91,6 +115,21 @@ export const LED_COLORS: Record<string, { vf: number; rgb: string; label: string
   blue: { vf: 3.0, rgb: '#3b9bff', label: 'Mavi (3,0 V)' },
   white: { vf: 3.0, rgb: '#f2f6ff', label: 'Beyaz (3,0 V)' },
 };
+
+function gate(type: 'and' | 'or' | 'nand' | 'nor' | 'xor', label: string, description: string): CompDef {
+  return {
+    type, label, short: type.toUpperCase(), prefix: 'G', category: 'Dijital',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'a', label: 'A', x: 0, y: 20 },
+      { id: 'b', label: 'B', x: 0, y: 60 },
+      { id: 'y', label: 'Y', x: 80, y: 40 },
+    ],
+    params: [],
+    physical: { body: 'dip14', onBoard: true },
+    description: description + ' 5 V CMOS benzeri; eşik 2,5 V. Boşta kalan giriş belirsizdir!',
+  };
+}
 
 export const LIBRARY: Record<CompType, CompDef> = {
   resistor: {
@@ -122,7 +161,7 @@ export const LIBRARY: Record<CompType, CompDef> = {
     description: 'Manyetik alanda enerji depolar: v = L·di/dt. DC’de kısa devre gibi davranır.',
   },
   switch: {
-    type: 'switch', label: 'Anahtar', short: 'S', prefix: 'S', category: 'Pasif Elemanlar',
+    type: 'switch', label: 'Anahtar', short: 'S', prefix: 'S', category: 'Anahtar ve Sensörler',
     w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
     params: [{ key: 'closed', label: 'Kapalı', kind: 'bool', default: false, hint: 'Canvas üzerinde tıklayarak da açıp kapatabilirsin' }],
     physical: { body: 'slide-switch', onBoard: true },
@@ -203,6 +242,21 @@ export const LIBRARY: Record<CompType, CompDef> = {
       { id: 'e', label: 'E', x: 40, y: 80 },
     ],
     params: [
+      {
+        key: 'model', label: 'Model', kind: 'select', default: 'genel',
+        options: [
+          { value: 'genel', label: 'Genel (β = 100)' },
+          { value: '2N3904', label: '2N3904 (küçük sinyal)' },
+          { value: '2N2222', label: '2N2222 (anahtarlama, 600 mA)' },
+          { value: 'BC547', label: 'BC547B' },
+        ],
+        presets: {
+          genel: { beta: 100, betaR: 1, Is: 1e-14 },
+          '2N3904': { beta: 416, betaR: 0.737, Is: 6.734e-15 },
+          '2N2222': { beta: 256, betaR: 6.09, Is: 14.34e-15 },
+          BC547: { beta: 290, betaR: 7.5, Is: 7e-15 },
+        },
+      },
       { key: 'beta', label: 'Akım kazancı βF', kind: 'number', default: 100, min: 1 },
       { key: 'betaR', label: 'Ters kazanç βR', kind: 'number', default: 1, min: 0.01, advanced: true },
       { key: 'Is', label: 'Doyma akımı Is', unit: 'A', kind: 'number', default: 1e-14, advanced: true },
@@ -219,6 +273,19 @@ export const LIBRARY: Record<CompType, CompDef> = {
       { id: 'e', label: 'E', x: 40, y: 0 },
     ],
     params: [
+      {
+        key: 'model', label: 'Model', kind: 'select', default: 'genel',
+        options: [
+          { value: 'genel', label: 'Genel (β = 100)' },
+          { value: '2N3906', label: '2N3906 (küçük sinyal)' },
+          { value: 'BC557', label: 'BC557B' },
+        ],
+        presets: {
+          genel: { beta: 100, betaR: 1, Is: 1e-14 },
+          '2N3906': { beta: 181, betaR: 4.98, Is: 1.41e-15 },
+          BC557: { beta: 250, betaR: 5, Is: 5e-15 },
+        },
+      },
       { key: 'beta', label: 'Akım kazancı βF', kind: 'number', default: 100, min: 1 },
       { key: 'betaR', label: 'Ters kazanç βR', kind: 'number', default: 1, min: 0.01, advanced: true },
       { key: 'Is', label: 'Doyma akımı Is', unit: 'A', kind: 'number', default: 1e-14, advanced: true },
@@ -235,6 +302,19 @@ export const LIBRARY: Record<CompType, CompDef> = {
       { id: 's', label: 'S', x: 40, y: 80 },
     ],
     params: [
+      {
+        key: 'model', label: 'Model', kind: 'select', default: 'genel',
+        options: [
+          { value: 'genel', label: 'Genel (Vth = 1 V)' },
+          { value: '2N7000', label: '2N7000 (küçük sinyal, 200 mA)' },
+          { value: 'IRF540', label: 'IRF540N (güç, 33 A)' },
+        ],
+        presets: {
+          genel: { Vth: 1, K: 2e-3, lambda: 0 },
+          '2N7000': { Vth: 2.1, K: 0.1, lambda: 0.01 },
+          IRF540: { Vth: 3.5, K: 3, lambda: 0.005 },
+        },
+      },
       { key: 'Vth', label: 'Eşik gerilimi Vth', unit: 'V', kind: 'number', default: 1 },
       { key: 'K', label: "k'n·(W/L)", unit: 'A/V²', kind: 'number', default: 2e-3, min: 1e-9 },
       { key: 'lambda', label: 'Kanal boyu modülasyonu λ', unit: '1/V', kind: 'number', default: 0, advanced: true },
@@ -251,6 +331,19 @@ export const LIBRARY: Record<CompType, CompDef> = {
       { id: 's', label: 'S', x: 40, y: 0 },
     ],
     params: [
+      {
+        key: 'model', label: 'Model', kind: 'select', default: 'genel',
+        options: [
+          { value: 'genel', label: 'Genel (|Vth| = 1 V)' },
+          { value: 'BS250', label: 'BS250 (küçük sinyal)' },
+          { value: 'IRF9540', label: 'IRF9540 (güç)' },
+        ],
+        presets: {
+          genel: { Vth: 1, K: 2e-3, lambda: 0 },
+          BS250: { Vth: 2, K: 0.05, lambda: 0.01 },
+          IRF9540: { Vth: 3.5, K: 2, lambda: 0.005 },
+        },
+      },
       { key: 'Vth', label: '|Vth|', unit: 'V', kind: 'number', default: 1 },
       { key: 'K', label: "k'p·(W/L)", unit: 'A/V²', kind: 'number', default: 2e-3, min: 1e-9 },
       { key: 'lambda', label: 'Kanal boyu modülasyonu λ', unit: '1/V', kind: 'number', default: 0, advanced: true },
@@ -343,13 +436,288 @@ export const LIBRARY: Record<CompType, CompDef> = {
       { key: 'ch1Pos', label: 'CH1 konum', unit: 'böl.', kind: 'number', default: 0, advanced: true },
       { key: 'ch2Pos', label: 'CH2 konum', unit: 'böl.', kind: 'number', default: 0, advanced: true },
       { key: 'trig', label: 'Tetik seviyesi', unit: 'V', kind: 'number', default: 0, advanced: true },
+      { key: 'xy', label: 'XY modu', kind: 'bool', default: false, advanced: true },
     ],
     physical: { body: 'instrument', onBoard: false, instrument: 'scope' },
     description: 'İki kanallı osiloskop. Problar devre toprağına göre ölçer (toprak klipsi GND’de).',
   },
+  // ───────────── v0.2: yeni elemanlar ─────────────
+  battery: {
+    type: 'battery', label: 'Pil / Akü', short: 'BAT', prefix: 'BAT', category: 'Kaynaklar',
+    w: 40, h: 80, pins: vert('p', 'n'), rotatable: true, electrical: true,
+    params: [
+      {
+        key: 'preset', label: 'Tip', kind: 'select', default: '9V',
+        options: [
+          { value: 'AA', label: 'AA kalem pil (1,5 V)' },
+          { value: '9V', label: '9 V pil' },
+          { value: 'Li', label: 'Li-ion hücre (3,7 V)' },
+          { value: '12V', label: '12 V kurşun-asit akü' },
+          { value: 'custom', label: 'Özel' },
+        ],
+        presets: { AA: { V: 1.5, Rint: 0.15 }, '9V': { V: 9, Rint: 1.5 }, Li: { V: 3.7, Rint: 0.05 }, '12V': { V: 12, Rint: 0.02 } },
+      },
+      { key: 'V', label: 'Gerilim', unit: 'V', kind: 'number', default: 9 },
+      { key: 'Rint', label: 'İç direnç', unit: 'Ω', kind: 'number', default: 1.5, min: 0, advanced: true },
+    ],
+    physical: { body: 'instrument', onBoard: false, instrument: 'battery' },
+    description: 'İç dirençli gerçek pil. Yük akımı arttıkça uç gerilimi I·R_iç kadar düşer.',
+  },
+  clock: {
+    type: 'clock', label: 'Kare Dalga / Saat', short: 'CLK', prefix: 'CLK', category: 'Kaynaklar',
+    w: 40, h: 80, pins: vert('p', 'n'), rotatable: true, electrical: true,
+    params: [
+      { key: 'freq', label: 'Frekans', unit: 'Hz', kind: 'number', default: 1000, min: 1e-3 },
+      { key: 'duty', label: 'Doluluk oranı', kind: 'slider', default: 0.5, min: 0.01, max: 0.99, step: 0.01 },
+      { key: 'V', label: 'Yüksek seviye', unit: 'V', kind: 'number', default: 5 },
+    ],
+    physical: { body: 'instrument', onBoard: false, instrument: 'siggen' },
+    description: '0 V ile V arasında gidip gelen kare dalga (PWM). Dijital devrelerde saat (clock) sinyali olarak kullanılır.',
+  },
+  vcvs: {
+    type: 'vcvs', label: 'Bağımlı Gerilim Kaynağı (VCVS)', short: 'E', prefix: 'E', category: 'Kaynaklar',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'op', label: '+', x: 60, y: 0 },
+      { id: 'on', label: '−', x: 60, y: 80 },
+      { id: 'cp', label: 'c+', x: 0, y: 20 },
+      { id: 'cn', label: 'c−', x: 0, y: 60 },
+    ],
+    params: [{ key: 'gain', label: 'Kazanç μ', unit: 'V/V', kind: 'number', default: 10 }],
+    physical: { body: 'none', onBoard: false },
+    description: 'Gerilim kontrollü gerilim kaynağı: V(+,−) = μ·V(c+,c−). Devre teorisi derslerindeki “bağımlı kaynak”.',
+  },
+  vccs: {
+    type: 'vccs', label: 'Bağımlı Akım Kaynağı (VCCS)', short: 'G', prefix: 'G', category: 'Kaynaklar',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'op', label: '+', x: 60, y: 0 },
+      { id: 'on', label: '−', x: 60, y: 80 },
+      { id: 'cp', label: 'c+', x: 0, y: 20 },
+      { id: 'cn', label: 'c−', x: 0, y: 60 },
+    ],
+    params: [{ key: 'gain', label: 'Geçiş iletkenliği gm', unit: 'S', kind: 'number', default: 1e-3 }],
+    physical: { body: 'none', onBoard: false },
+    description: 'Gerilim kontrollü akım kaynağı: (+) ucundan kaynağın içinden (−) ucuna gm·V(c+,c−) akar. Transistörün küçük işaret modeli.',
+  },
+  cccs: {
+    type: 'cccs', label: 'Akım Kontrollü Akım K. (CCCS)', short: 'F', prefix: 'F', category: 'Kaynaklar',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'op', label: '+', x: 60, y: 0 },
+      { id: 'on', label: '−', x: 60, y: 80 },
+      { id: 'sp', label: 'i→', x: 0, y: 20 },
+      { id: 'sn', label: '→', x: 0, y: 60 },
+    ],
+    params: [{ key: 'gain', label: 'Akım kazancı β', unit: 'A/A', kind: 'number', default: 10 }],
+    physical: { body: 'none', onBoard: false },
+    description: 'Algılama ucundan (üst→alt) geçen akımın β katını üretir. BJT’nin “Ic = β·Ib” modelinin özü.',
+  },
+  ccvs: {
+    type: 'ccvs', label: 'Akım Kontrollü Gerilim K. (CCVS)', short: 'H', prefix: 'H', category: 'Kaynaklar',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'op', label: '+', x: 60, y: 0 },
+      { id: 'on', label: '−', x: 60, y: 80 },
+      { id: 'sp', label: 'i→', x: 0, y: 20 },
+      { id: 'sn', label: '→', x: 0, y: 60 },
+    ],
+    params: [{ key: 'gain', label: 'Geçiş direnci r', unit: 'Ω', kind: 'number', default: 1000 }],
+    physical: { body: 'none', onBoard: false },
+    description: 'Algılama ucundan geçen akımla orantılı gerilim üretir: V = r·i (transimpedans).',
+  },
+  pot: {
+    type: 'pot', label: 'Potansiyometre', short: 'POT', prefix: 'POT', category: 'Pasif Elemanlar',
+    w: 80, h: 40, rotatable: true, electrical: true,
+    pins: [
+      { id: 'a', label: '1', x: 0, y: 20 },
+      { id: 'w', label: 'W', x: 40, y: 0 },
+      { id: 'b', label: '3', x: 80, y: 20 },
+    ],
+    params: [
+      { key: 'R', label: 'Toplam direnç', unit: 'Ω', kind: 'number', default: 10e3, min: 1 },
+      { key: 'pos', label: 'Konum (1 → 3)', kind: 'slider', default: 0.5, min: 0, max: 1, step: 0.01, hint: 'Simülasyon çalışırken kaydır' },
+    ],
+    physical: { body: 'trimpot', onBoard: true },
+    description: 'Ayarlı gerilim bölücü: orta uç (W) 1 ile 3 arasında kayar. Ses ayarı, kalibrasyon, referans gerilimi.',
+  },
+  button: {
+    type: 'button', label: 'Buton', short: 'BTN', prefix: 'BTN', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [
+      {
+        key: 'kind', label: 'Tip', kind: 'select', default: 'NO',
+        options: [
+          { value: 'NO', label: 'Normalde açık (NO)' },
+          { value: 'NC', label: 'Normalde kapalı (NC)' },
+        ],
+      },
+      { key: 'pressed', label: 'Basılı', kind: 'bool', default: false, hint: 'Canvas’ta butonun üstüne basılı tut' },
+    ],
+    physical: { body: 'tactile', onBoard: true },
+    description: 'Basıldığı sürece kontak kapanır. Dijital girişlerde mutlaka pull-up ya da pull-down direnciyle kullanılır.',
+  },
+  lamp: {
+    type: 'lamp', label: 'Lamba', short: 'LMP', prefix: 'LMP', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [
+      { key: 'Vnom', label: 'Anma gerilimi', unit: 'V', kind: 'number', default: 6, min: 0.1 },
+      { key: 'Pnom', label: 'Anma gücü', unit: 'W', kind: 'number', default: 0.3, min: 1e-3 },
+    ],
+    physical: { body: 'bulb', onBoard: true },
+    description: 'Akkor lamba (sabit dirençli model, R = V²/P). Parlaklık harcanan güçle orantılıdır.',
+  },
+  ldr: {
+    type: 'ldr', label: 'LDR (Işık Sensörü)', short: 'LDR', prefix: 'LDR', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [
+      { key: 'lux', label: 'Işık şiddeti', unit: 'lx', kind: 'slider', default: 100, min: 0.1, max: 10000, log: true },
+      { key: 'R10', label: '10 lx’teki direnç', unit: 'Ω', kind: 'number', default: 20e3, advanced: true },
+      { key: 'gamma', label: 'γ (eğim)', kind: 'number', default: 0.7, advanced: true },
+    ],
+    physical: { body: 'ldr', onBoard: true },
+    description: 'Işık arttıkça direnci düşen foto-direnç (CdS). R = R10·(E/10 lx)^−γ.',
+  },
+  ntc: {
+    type: 'ntc', label: 'NTC Termistör', short: 'NTC', prefix: 'NTC', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [
+      { key: 'temp', label: 'Sıcaklık', unit: '°C', kind: 'slider', default: 25, min: -20, max: 120, step: 1 },
+      { key: 'R25', label: '25 °C direnci', unit: 'Ω', kind: 'number', default: 10e3, advanced: true },
+      { key: 'B', label: 'B sabiti', unit: 'K', kind: 'number', default: 3950, advanced: true },
+    ],
+    physical: { body: 'thermistor', onBoard: true },
+    description: 'Sıcaklık arttıkça direnci üstel olarak düşer: R = R25·e^(B(1/T − 1/298 K)).',
+  },
+  opamp: {
+    type: 'opamp', label: 'Op-Amp', short: 'U', prefix: 'U', category: 'Entegre Devreler',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'p', label: '+', x: 0, y: 60 },
+      { id: 'n', label: '−', x: 0, y: 20 },
+      { id: 'o', label: 'çıkış', x: 80, y: 40 },
+    ],
+    params: [
+      {
+        key: 'model', label: 'Model', kind: 'select', default: 'LM741',
+        options: [
+          { value: 'ideal', label: 'İdeal' },
+          { value: 'LM741', label: 'LM741 (1 MHz, 0,5 V/µs)' },
+          { value: 'TL081', label: 'TL081 (3 MHz, 13 V/µs)' },
+          { value: 'LM358', label: 'LM358 (1 MHz, 0,3 V/µs)' },
+        ],
+        presets: {
+          ideal: { A0: 1e6, GBW: 100e6, SR: 1000 },
+          LM741: { A0: 2e5, GBW: 1e6, SR: 0.5 },
+          TL081: { A0: 2e5, GBW: 3e6, SR: 13 },
+          LM358: { A0: 1e5, GBW: 1e6, SR: 0.3 },
+        },
+      },
+      { key: 'Vcc', label: 'Pozitif besleme', unit: 'V', kind: 'number', default: 15 },
+      { key: 'Vee', label: 'Negatif besleme', unit: 'V', kind: 'number', default: -15 },
+      { key: 'A0', label: 'Açık çevrim kazancı', unit: 'V/V', kind: 'number', default: 2e5, advanced: true },
+      { key: 'GBW', label: 'Kazanç-bant genişliği', unit: 'Hz', kind: 'number', default: 1e6, advanced: true },
+      { key: 'SR', label: 'Slew rate', unit: 'V/µs', kind: 'number', default: 0.5, advanced: true },
+    ],
+    physical: { body: 'dip8', onBoard: true },
+    description: 'İşlemsel kuvvetlendirici: Vout = A·(V+ − V−). Negatif geri beslemeyle girişler arası fark ~0 olur (sanal kısa devre). Besleme uçları ±Vcc parametresiyle ideal kabul edilir.',
+  },
+  timer555: {
+    type: 'timer555', label: '555 Zamanlayıcı', short: 'U', prefix: 'U', category: 'Entegre Devreler',
+    w: 100, h: 100, rotatable: false, electrical: true,
+    pins: [
+      { id: 'vcc', label: 'VCC 8', x: 60, y: 0 },
+      { id: 'gnd', label: 'GND 1', x: 60, y: 100 },
+      { id: 'trig', label: 'TRIG 2', x: 0, y: 40 },
+      { id: 'thr', label: 'THR 6', x: 0, y: 60 },
+      { id: 'ctrl', label: 'CV 5', x: 0, y: 80 },
+      { id: 'reset', label: 'RST 4', x: 0, y: 20 },
+      { id: 'dis', label: 'DIS 7', x: 100, y: 60 },
+      { id: 'out', label: 'OUT 3', x: 100, y: 40 },
+    ],
+    params: [],
+    physical: { body: 'dip8', onBoard: true },
+    description: 'NE555: iki karşılaştırıcı + SR mandal + deşarj transistörü. TRIG < Vcc/3 → çıkış yüksek; THR > 2Vcc/3 → çıkış düşük ve DIS toprağa çeker.',
+  },
+  reg78: {
+    type: 'reg78', label: 'Gerilim Regülatörü 78xx', short: 'U', prefix: 'U', category: 'Entegre Devreler',
+    w: 80, h: 60, rotatable: false, electrical: true,
+    pins: [
+      { id: 'in', label: 'GİRİŞ', x: 0, y: 20 },
+      { id: 'gnd', label: 'GND', x: 40, y: 60 },
+      { id: 'out', label: 'ÇIKIŞ', x: 80, y: 20 },
+    ],
+    params: [
+      {
+        key: 'Vout', label: 'Çıkış gerilimi', unit: 'V', kind: 'number', default: 5,
+        hint: '7805 → 5 V, 7809 → 9 V, 7812 → 12 V',
+      },
+      { key: 'drop', label: 'Düşüm gerilimi', unit: 'V', kind: 'number', default: 2, advanced: true },
+    ],
+    physical: { body: 'to220', onBoard: true },
+    description: 'Doğrusal regülatör: giriş en az ~2 V yüksek oldukça çıkışı sabit tutar; aradaki fark ısı olarak harcanır (P = (Vin − Vout)·I).',
+  },
+  logicin: {
+    type: 'logicin', label: 'Lojik Anahtar (0/1)', short: 'IN', prefix: 'IN', category: 'Dijital',
+    w: 60, h: 40, rotatable: false, electrical: true,
+    pins: [{ id: 'y', label: '', x: 60, y: 20 }],
+    params: [
+      { key: 'on', label: 'Değer (1 = 5 V)', kind: 'bool', default: false, hint: 'Canvas’ta çift tıkla' },
+      { key: 'V', label: 'Yüksek seviye', unit: 'V', kind: 'number', default: 5, advanced: true },
+    ],
+    physical: { body: 'instrument', onBoard: false, instrument: 'logic' },
+    description: 'Toprağa göre 0 V ya da 5 V veren ideal lojik kaynak. Gerçek devrede bunu bir buton + pull-up/pull-down direnci yapar.',
+  },
+  logicprobe: {
+    type: 'logicprobe', label: 'Lojik Gösterge', short: 'OUT', prefix: 'P', category: 'Dijital',
+    w: 60, h: 40, rotatable: false, electrical: true,
+    pins: [{ id: 'a', label: '', x: 0, y: 20 }],
+    params: [],
+    physical: { body: 'instrument', onBoard: false, instrument: 'logic' },
+    description: 'Bağlı olduğu düğümü okur: > 3,5 V → 1 (yanar), < 1,5 V → 0, arası → ? (belirsiz/boşta).',
+  },
+  and: gate('and', 'VE (AND)', 'Y = A·B — iki giriş de 1 ise çıkış 1.'),
+  or: gate('or', 'VEYA (OR)', 'Y = A + B — girişlerden biri 1 ise çıkış 1.'),
+  nand: gate('nand', 'VE-DEĞİL (NAND)', 'Y = (A·B)′ — evrensel kapı: tüm kapılar NAND ile kurulabilir.'),
+  nor: gate('nor', 'VEYA-DEĞİL (NOR)', 'Y = (A + B)′ — o da evrensel bir kapı.'),
+  xor: gate('xor', 'ÖZEL VEYA (XOR)', 'Y = A ⊕ B — girişler farklıysa 1. Toplayıcıların temel taşı.'),
+  not: {
+    type: 'not', label: 'DEĞİL (NOT)', short: 'NOT', prefix: 'G', category: 'Dijital',
+    w: 80, h: 40, rotatable: true, electrical: true,
+    pins: [
+      { id: 'a', label: 'A', x: 0, y: 20 },
+      { id: 'y', label: 'Y', x: 80, y: 20 },
+    ],
+    params: [],
+    physical: { body: 'dip14', onBoard: true },
+    description: 'Evirici: Y = A′. 5 V CMOS benzeri; eşik 2,5 V.',
+  },
+  dff: {
+    type: 'dff', label: 'D Flip-Flop', short: 'FF', prefix: 'FF', category: 'Dijital',
+    w: 80, h: 80, rotatable: false, electrical: true,
+    pins: [
+      { id: 'd', label: 'D', x: 0, y: 20 },
+      { id: 'clk', label: 'CLK', x: 0, y: 60 },
+      { id: 'q', label: 'Q', x: 80, y: 20 },
+      { id: 'qn', label: 'Q̄', x: 80, y: 60 },
+    ],
+    params: [],
+    physical: { body: 'dip14', onBoard: true },
+    description: 'Saatin yükselen kenarında D girişini Q’ya kopyalar ve bir sonraki kenara kadar tutar (1 bitlik bellek).',
+  },
 };
 
-export const LIB_LIST: CompDef[] = Object.values(LIBRARY);
+export const PALETTE_ORDER: CompType[] = [
+  'vdc', 'battery', 'vac', 'clock', 'idc', 'vcvs', 'vccs', 'cccs', 'ccvs',
+  'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct',
+  'switch', 'button', 'lamp', 'ldr', 'ntc',
+  'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos',
+  'opamp', 'timer555', 'reg78',
+  'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',
+  'multimeter', 'scope', 'ground', 'label',
+];
+
+export const LIB_LIST: CompDef[] = PALETTE_ORDER.map((t) => LIBRARY[t]);
 
 export function defaultParams(type: CompType): Record<string, ParamValue> {
   const out: Record<string, ParamValue> = {};

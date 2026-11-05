@@ -37,6 +37,32 @@ function NumberField({ def, value, onChange }: { def: ParamDef; value: number; o
   );
 }
 
+function SliderField({ def, value, onChange }: { def: ParamDef; value: number; onChange: (v: number, commit: boolean) => void }) {
+  const min = def.min ?? 0;
+  const max = def.max ?? 1;
+  const toPos = (v: number) => (def.log ? (Math.log10(v / min) / Math.log10(max / min)) * 1000 : ((v - min) / (max - min)) * 1000);
+  const fromPos = (x: number) => {
+    const t = x / 1000;
+    let v = def.log ? min * Math.pow(max / min, t) : min + t * (max - min);
+    if (def.step) v = Math.round(v / def.step) * def.step;
+    return +v.toPrecision(4);
+  };
+  const show = def.unit ? formatSI(value, def.unit, 3) : `%${Math.round(value * 100)}`;
+  return (
+    <div className="sliderfield">
+      <input
+        type="range"
+        min={0}
+        max={1000}
+        value={toPos(value)}
+        onChange={(e) => onChange(fromPos(Number(e.target.value)), false)}
+        onPointerUp={(e) => onChange(fromPos(Number((e.target as HTMLInputElement).value)), true)}
+      />
+      <span className="mono small">{show}</span>
+    </div>
+  );
+}
+
 export function Inspector() {
   const selectedId = useCircuit((s) => s.selectedId);
   const node = useCircuit((s) => s.nodes.find((n) => n.id === s.selectedId));
@@ -80,6 +106,9 @@ export function Inspector() {
             <label key={p.key} className="insp-row" title={p.hint}>
               <span>{p.label}</span>
               {p.kind === 'number' && <NumberField def={p} value={Number(node.data.params[p.key])} onChange={(v) => setParam(p, v)} />}
+              {p.kind === 'slider' && (
+                <SliderField def={p} value={Number(node.data.params[p.key])} onChange={(v, commit) => updateParams(node.id, { [p.key]: v }, commit)} />
+              )}
               {p.kind === 'select' && (
                 <select value={String(node.data.params[p.key])} onChange={(e) => setParam(p, e.target.value)}>
                   {p.options!.map((o) => (

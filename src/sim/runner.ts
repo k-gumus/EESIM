@@ -582,6 +582,12 @@ class SimRunner {
           }
         }
       }
+      if (el.type === 'lamp') {
+        const i = live.I[0] ?? 0;
+        const v = Number(el.params.Vnom) || 6;
+        const pn = Number(el.params.Pnom) || 0.3;
+        live.probe.brightness = Math.min(1.5, (i * i * ((v * v) / pn)) / pn);
+      }
       if (el.type === 'resistor' && this.hist) {
         const pmax = parseFloat(String(el.params.Pmax)) || 0.25;
         const s = this.hist.curStats(el.id, win);

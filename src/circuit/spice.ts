@@ -2,6 +2,7 @@
 import type { Node } from '@xyflow/react';
 import { DIODE_MODELS, LED_COLORS } from './library';
 import { spiceNum } from './format';
+import { OPAMP_MODELS, resistanceOf } from '../engine/simulator';
 import type { CompData, CompiledCircuit } from './types';
 
 const num = (v: unknown, d: number) => {
@@ -14,6 +15,7 @@ export function buildSpiceNetlist(circ: CompiledCircuit, nodes: Node<CompData>[]
   const lines: string[] = [];
   const models = new Map<string, string>();
   const comments: string[] = [];
+  const subckts: string[] = [];
   lines.push(`* ${title}`);
   lines.push(`* IEEESIM tarafından üretildi — ${new Date().toISOString().slice(0, 10)}`);
 
@@ -129,6 +131,107 @@ export function buildSpiceNetlist(circ: CompiledCircuit, nodes: Node<CompData>[]
         lines.push(`F${el.name}B ${n[0]} ${n[1]} V${el.name}_SB ${+(-k).toPrecision(6)}`);
         break;
       }
+      case 'battery':
+        lines.push(`V${el.name} ${el.name}_int ${n[1]} DC ${spiceNum(num(p.V, 9))}`);
+        lines.push(`R${el.name}_IC ${n[0]} ${el.name}_int ${spiceNum(Math.max(1e-6, num(p.Rint, 0)))} ; iç direnç`);
+        break;
+      case 'clock': {
+        const f = num(p.freq, 1000);
+        const T = 1 / f;
+        maxFreq = Math.max(maxFreq, f);
+        hasAC = true;
+        lines.push(`V${el.name} ${n[0]} ${n[1]} PULSE(0 ${spiceNum(num(p.V, 5))} 0 1n 1n ${spiceNum(num(p.duty, 0.5) * T)} ${spiceNum(T)})`);
+        break;
+      }
+      case 'vcvs':
+        lines.push(`${el.name} ${n[0]} ${n[1]} ${n[2]} ${n[3]} ${num(p.gain, 10)}`);
+        break;
+      case 'vccs':
+        lines.push(`${el.name} ${n[0]} ${n[1]} ${n[2]} ${n[3]} ${spiceNum(num(p.gain, 1e-3))}`);
+        break;
+      case 'cccs':
+        lines.push(`V${el.name}_S ${n[2]} ${n[3]} DC 0 ; akım algılama`);
+        lines.push(`${el.name} ${n[0]} ${n[1]} V${el.name}_S ${num(p.gain, 10)}`);
+        break;
+      case 'ccvs':
+        lines.push(`V${el.name}_S ${n[2]} ${n[3]} DC 0 ; akım algılama`);
+        lines.push(`${el.name} ${n[0]} ${n[1]} V${el.name}_S ${spiceNum(num(p.gain, 1000))}`);
+        break;
+      case 'pot': {
+        const R = num(p.R, 10e3);
+        const pos = Math.min(1, Math.max(0, num(p.pos, 0.5)));
+        lines.push(`R${el.name}A ${n[0]} ${n[1]} ${spiceNum(Math.max(0.01, R * pos))} ; potansiyometre %${Math.round(pos * 100)}`);
+        lines.push(`R${el.name}B ${n[1]} ${n[2]} ${spiceNum(Math.max(0.01, R * (1 - pos)))}`);
+        break;
+      }
+      case 'button':
+        lines.push(`R${el.name} ${n[0]} ${n[1]} ${!!p.pressed !== (p.kind === 'NC') ? '1m' : '1G'} ; buton ${p.kind} ${p.pressed ? 'BASILI' : 'serbest'}`);
+        break;
+      case 'lamp':
+      case 'ldr':
+      case 'ntc':
+        lines.push(`R${el.name} ${n[0]} ${n[1]} ${spiceNum(resistanceOf(el))} ; ${el.type === 'lamp' ? 'lamba' : el.type === 'ldr' ? `LDR @ ${num(p.lux, 100)} lx` : `NTC @ ${num(p.temp, 25)} °C`}`);
+        break;
+      case 'opamp': {
+        const m = OPAMP_MODELS[String(p.model)] ?? OPAMP_MODELS.LM741;
+        const A0 = num(p.A0, m.A0);
+        const GBW = num(p.GBW, m.GBW);
+        const vcc = num(p.Vcc, 15);
+        const vee = num(p.Vee, -15);
+        const sub = `OPAMP_${String(p.model ?? 'X')}_${el.name}`;
+        lines.push(`X${el.name} ${n[0]} ${n[1]} ${n[2]} ${sub}`);
+        subckts.push(
+          [
+            `.subckt ${sub} inp inn out`,
+            `Rin inp inn ${spiceNum(m.Rin)}`,
+            `G1 0 x inp inn ${+(A0 / 1e6).toPrecision(4)}`,
+            `R1 x 0 1MEG`,
+            `C1 x 0 ${spiceNum(1 / (2 * Math.PI * 1e6 * (GBW / A0)))}`,
+            `B1 y 0 V = max(min(V(x), ${vcc - m.head}), ${vee + m.head})`,
+            `Rout y out ${m.Rout}`,
+            `.ends`,
+          ].join('\n'),
+        );
+        break;
+      }
+      case 'reg78': {
+        const vo = num(p.Vout, 5);
+        lines.push(`B${el.name} ${el.name}_o ${n[1]} V = min(${vo}, V(${n[0]},${n[1]}) - ${num(p.drop, 2)}) ; 78${String(vo).padStart(2, '0')} davranışsal`);
+        lines.push(`R${el.name}_O ${el.name}_o ${n[2]} 0.05`);
+        break;
+      }
+      case 'and':
+      case 'or':
+      case 'nand':
+      case 'nor':
+      case 'xor':
+      case 'not': {
+        const u = (k: number) => `u(V(${n[k]})-2.5)`;
+        const expr: Record<string, string> = {
+          not: `1-${u(0)}`,
+          and: `${u(0)}*${u(1)}`,
+          nand: `1-${u(0)}*${u(1)}`,
+          or: `1-(1-${u(0)})*(1-${u(1)})`,
+          nor: `(1-${u(0)})*(1-${u(1)})`,
+          xor: `${u(0)}+${u(1)}-2*${u(0)}*${u(1)}`,
+        };
+        const out = n[n.length - 1];
+        lines.push(`B${el.name} ${el.name}_y 0 V = 5*(${expr[el.type]}) ; ${el.type.toUpperCase()} kapısı`);
+        lines.push(`R${el.name}_O ${el.name}_y ${out} 50`);
+        break;
+      }
+      case 'logicin':
+        lines.push(`V${el.name} ${n[0]} 0 DC ${p.on ? spiceNum(num(p.V, 5)) : 0} ; lojik ${p.on ? 1 : 0}`);
+        break;
+      case 'logicprobe':
+        comments.push(`* ${el.name}: lojik gösterge → V(${n[0]})`);
+        break;
+      case 'dff':
+        comments.push(`* ${el.name}: D flip-flop (D=${n[0]}, CLK=${n[1]}, Q=${n[2]}, Q̄=${n[3]}) — ngspice'ta XSPICE d_dff modeli gerekir`);
+        break;
+      case 'timer555':
+        lines.push(`X${el.name} ${n[1]} ${n[2]} ${n[7]} ${n[5]} ${n[4]} ${n[3]} ${n[6]} ${n[0]} NE555 ; üretici makromodeli (ör. TI NE555) .include ile eklenmeli`);
+        break;
       case 'multimeter':
         if (String(p.mode).endsWith('A')) lines.push(`V${el.name} ${n[0]} ${n[1]} DC 0 ; ampermetre (${p.mode})`);
         else comments.push(`* ${el.name}: voltmetre (${p.mode}) → V(${n[0]},${n[1]})`);
@@ -139,6 +242,10 @@ export function buildSpiceNetlist(circ: CompiledCircuit, nodes: Node<CompData>[]
     }
   }
 
+  if (subckts.length) {
+    lines.push('');
+    lines.push(...subckts);
+  }
   if (models.size) {
     lines.push('');
     lines.push(...models.values());

@@ -28,6 +28,7 @@ class DSU {
 }
 
 export const pinKey = (nodeId: string, pin: string) => `${nodeId}:${pin}`;
+const LOGIC_IN_TYPES = new Set(['and', 'or', 'nand', 'nor', 'xor', 'not', 'dff']);
 
 export function compileCircuit(nodes: Node<CompData>[], edges: Edge[]): CompiledCircuit {
   const dsu = new DSU();
@@ -143,8 +144,10 @@ function findIssues(
   const active = elements.filter((e) => e.type !== 'scope');
   if (active.length === 0) return issues;
 
-  if (!hasGround) {
-    const src = elements.find((e) => e.type === 'vdc' || e.type === 'vac' || e.type === 'idc');
+  const FLOATING_SRC = new Set(['vdc', 'vac', 'idc', 'battery', 'clock', 'xfmr', 'xfmr_ct', 'vcvs', 'vccs', 'cccs', 'ccvs']);
+  // Yalnızca lojik kaynak/kapılardan oluşan devrelerde toprak örtüktür
+  if (!hasGround && elements.some((e) => FLOATING_SRC.has(e.type))) {
+    const src = elements.find((e) => ['vdc', 'vac', 'idc', 'battery', 'clock'].includes(e.type));
     issues.push({
       level: 'error',
       code: 'no-ground',
@@ -164,7 +167,7 @@ function findIssues(
       const net = e.nets[i];
       const members = netMembers.get(net) ?? [];
       if (members.length <= 1 && net !== 0) {
-        if (e.type === 'scope' || e.type === 'multimeter') return;
+        if (e.type === 'scope' || e.type === 'multimeter' || e.type === 'logicprobe' || LOGIC_IN_TYPES.has(e.type)) return;
         issues.push({
           level: 'warning',
           code: 'floating-pin',
@@ -174,7 +177,7 @@ function findIssues(
       }
     });
 
-    if ((e.type === 'vdc' || e.type === 'vac') && e.nets[0] === e.nets[1]) {
+    if (['vdc', 'vac', 'battery', 'clock'].includes(e.type) && e.nets[0] === e.nets[1]) {
       issues.push({
         level: 'error',
         code: 'short-source',
@@ -206,6 +209,35 @@ function findIssues(
         comp: e.name,
         message: `${e.name} elemanının iki ucu aynı düğümde; üzerinden akım akmaz (kısa devre edilmiş).`,
       });
+    }
+  }
+
+  // Lojik girişler: sürücüsü olmayan (boşta) giriş → pull-up / pull-down uyarısı
+  const typeOf = new Map(nodes.map((n) => [n.id, n.data.type]));
+  const LOGIC_IN: Record<string, string[]> = { and: ['a', 'b'], or: ['a', 'b'], nand: ['a', 'b'], nor: ['a', 'b'], xor: ['a', 'b'], not: ['a'], dff: ['d', 'clk'] };
+  const isPassiveReader = (key: string) => {
+    const [id, pin] = key.split(':');
+    const t = typeOf.get(id);
+    if (!t) return true;
+    if (t === 'label' || t === 'scope' || t === 'logicprobe') return true;
+    if (t === 'multimeter') return true;
+    return (LOGIC_IN[t] ?? []).includes(pin);
+  };
+  for (const e of elements) {
+    const ins = LOGIC_IN[e.type];
+    if (!ins) continue;
+    for (const pin of ins) {
+      const net = e.nets[e.pins.indexOf(pin)];
+      if (net === 0) continue;
+      const members = netMembers.get(net) ?? [];
+      if (members.every(isPassiveReader)) {
+        issues.push({
+          level: 'warning',
+          code: 'floating-input',
+          comp: e.name,
+          message: `${e.name} kapısının ${pin.toUpperCase()} girişi boşta: seviyesi belirsiz (~2,5 V). Bir pull-down (toprağa ~10 kΩ) ya da pull-up (5 V'a ~10 kΩ) direnci ekle.`,
+        });
+      }
     }
   }
 

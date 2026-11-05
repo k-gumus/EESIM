@@ -26,9 +26,25 @@ function valueText(d: CompData): string {
     case 'vac': return `${formatSI(n('amp'), 'V')}p · ${formatSI(n('freq'), 'Hz')}`;
     case 'idc': return formatSI(n('I'), 'A');
     case 'xfmr': case 'xfmr_ct': return `${n('n')}:1`;
+    case 'battery': return formatSI(n('V'), 'V');
+    case 'clock': return `${formatSI(n('freq'), 'Hz')} · %${Math.round(n('duty') * 100)}`;
+    case 'vcvs': return `×${n('gain')}`;
+    case 'vccs': return `gm=${formatSI(n('gain'), 'S')}`;
+    case 'cccs': return `β=${n('gain')}`;
+    case 'ccvs': return `r=${formatSI(n('gain'), 'Ω')}`;
+    case 'pot': return `${formatSI(n('R'), 'Ω')} · %${Math.round(n('pos') * 100)}`;
+    case 'button': return p.pressed ? 'BASILI' : p.kind === 'NC' ? 'NC' : 'NO';
+    case 'lamp': return `${formatSI(n('Vnom'), 'V')} ${formatSI(n('Pnom'), 'W')}`;
+    case 'ldr': return `${formatSI(n('lux'), 'lx')}`;
+    case 'ntc': return `${n('temp')} °C`;
+    case 'opamp': return String(p.model ?? '');
+    case 'reg78': return `78${String(n('Vout')).padStart(2, '0')}`;
     default: return '';
   }
 }
+
+const logicLevel = (v: number | undefined) => (v === undefined ? undefined : v > 3.5 ? 1 : v < 1.5 ? 0 : 0.5);
+const NO_PIN_LABELS = new Set(['opamp', 'timer555', 'dff', 'reg78', 'and', 'or', 'nand', 'nor', 'xor', 'not', 'logicin', 'logicprobe', 'battery', 'clock', 'button', 'lamp', 'ldr', 'ntc']);
 
 const REGION_BJT = ['kesim', 'aktif', 'doyum', 'ters aktif'];
 const REGION_MOS = ['kesim', 'doyum', 'triyot'];
@@ -85,6 +101,23 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
       case 'pmos':
         readout = `Id ${formatSI(Math.abs(I[1] ?? 0), 'A')} · ${REGION_MOS[live.probe.region ?? 0]}`;
         break;
+      case 'lamp':
+      case 'ldr':
+      case 'ntc':
+      case 'button':
+        readout = formatSI(Math.abs(I[0] ?? 0), 'A');
+        break;
+      case 'battery':
+      case 'clock':
+        readout = formatSI(-(I[0] ?? 0), 'A');
+        break;
+      case 'opamp':
+        readout = `Vo ${formatSI(live.probe.vo ?? 0, 'V')}${live.probe.sat ? ' · DOYUM' : ''}`;
+        break;
+      case 'timer555':
+      case 'dff':
+        readout = `Q = ${live.probe.q ? 1 : 0}`;
+        break;
     }
   }
 
@@ -109,9 +142,28 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         if (data.type === 'switch') {
           e.stopPropagation();
           toggle(id);
+        } else if (data.type === 'logicin') {
+          e.stopPropagation();
+          useCircuit.getState().updateParams(id, { on: !data.params.on });
         }
       }}
-      title={data.type === 'switch' ? 'Çift tıkla: aç/kapat' : undefined}
+      onPointerDown={(e) => {
+        if (data.type === 'button' && e.button === 0 && (e.target as HTMLElement).closest('.sym')) {
+          useCircuit.getState().updateParams(id, { pressed: true }, false);
+          const up = () => {
+            useCircuit.getState().updateParams(id, { pressed: false }, false);
+            window.removeEventListener('pointerup', up);
+          };
+          window.addEventListener('pointerup', up);
+        }
+      }}
+      title={
+        data.type === 'switch' || data.type === 'logicin'
+          ? 'Çift tıkla: değiştir'
+          : data.type === 'button'
+            ? 'Basılı tut: buton kapanır'
+            : undefined
+      }
     >
       {isMeter ? (
         <MeterBody mode={String(data.params.mode)} reading={meter ? formatMeter(meter.value, meter.unit) : '— — —'} active={active} name={data.name} />
@@ -123,7 +175,11 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
             <Symbol
               type={data.type}
               params={data.params}
-              live={{ brightness: active ? live?.probe.brightness : 0, burnt: active && !!live?.probe.burnt }}
+              live={{
+                brightness: active ? live?.probe.brightness : 0,
+                burnt: active && !!live?.probe.burnt,
+                level: data.type === 'logicprobe' && active ? logicLevel(netV[pinNet?.[`${id}:a`] ?? -1]) : undefined,
+              }}
             />
           </g>
         </svg>
@@ -157,7 +213,7 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
             style={{ left: rp.x, top: rp.y, right: 'auto', bottom: 'auto', transform: 'translate(-50%, -50%)' }}
             title={pinTitle(p.id, p.label)}
           >
-            {(isMeter || isScope || def.type === 'xfmr' || def.type === 'xfmr_ct' || data.type === 'npn' || data.type === 'pnp' || data.type === 'nmos' || data.type === 'pmos' || data.type === 'diode' || data.type === 'led' || data.type === 'zener') && (
+            {def.pins.length > 1 && !NO_PIN_LABELS.has(data.type) && !['resistor', 'capacitor', 'inductor', 'switch'].includes(data.type) && (
               <span className={`pinlbl ${side}`}>{p.label}</span>
             )}
           </Handle>

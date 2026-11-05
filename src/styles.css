@@ -17,6 +17,7 @@
   --sym: #c3d1f2;
   --grid: #26324f;
   --label-bg: rgba(41, 182, 255, 0.09);
+  --sym-fill: rgba(195, 209, 242, 0.06);
   --mono: 'JetBrains Mono', 'Cascadia Code', ui-monospace, Consolas, monospace;
   --sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
   --r: 10px;
@@ -2226,4 +2227,20 @@ kbd {
 .tabs button {
   white-space: nowrap;
   font-size: 12px;
+}
+.sliderfield {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sliderfield input {
+  flex: 1;
+  accent-color: var(--accent);
+  min-width: 0;
+  padding: 0;
+}
+.sliderfield span {
+  min-width: 52px;
+  text-align: right;
+  color: #ffe36e;
 }
