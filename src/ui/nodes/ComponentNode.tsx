@@ -1,7 +1,7 @@
 import { memo, useEffect } from 'react';
 import { Handle, Position, useUpdateNodeInternals, type NodeProps, type Node } from '@xyflow/react';
 import { LIBRARY, LED_COLORS, DIODE_MODELS, pinSide, rotatePin, rotatedSize } from '../../circuit/library';
-import { formatMeter, formatSI } from '../../circuit/format';
+import { formatCurrent, formatMeter, formatSI } from '../../circuit/format';
 import type { CompData } from '../../circuit/types';
 import { useSim } from '../../sim/runner';
 import { useCircuit } from '../../store/circuitStore';
@@ -83,33 +83,33 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
       case 'switch':
       case 'diode':
       case 'zener':
-        readout = formatSI(Math.abs(I[0] ?? 0), 'A');
+        readout = formatCurrent(Math.abs(I[0] ?? 0));
         break;
       case 'led':
-        readout = (live.probe.burnt ? '💥 YANDI · ' : '') + formatSI(Math.abs(I[0] ?? 0), 'A');
+        readout = (live.probe.burnt ? '💥 YANDI · ' : '') + formatCurrent(Math.abs(I[0] ?? 0));
         break;
       case 'vdc':
       case 'vac':
       case 'idc':
-        readout = formatSI(-(I[0] ?? 0), 'A');
+        readout = formatCurrent(-(I[0] ?? 0));
         break;
       case 'npn':
       case 'pnp':
-        readout = `Ic ${formatSI(Math.abs(I[1] ?? 0), 'A')} · ${REGION_BJT[live.probe.region ?? 0]}`;
+        readout = `Ic ${formatCurrent(Math.abs(I[1] ?? 0))} · ${REGION_BJT[live.probe.region ?? 0]}`;
         break;
       case 'nmos':
       case 'pmos':
-        readout = `Id ${formatSI(Math.abs(I[1] ?? 0), 'A')} · ${REGION_MOS[live.probe.region ?? 0]}`;
+        readout = `Id ${formatCurrent(Math.abs(I[1] ?? 0))} · ${REGION_MOS[live.probe.region ?? 0]}`;
         break;
       case 'lamp':
       case 'ldr':
       case 'ntc':
       case 'button':
-        readout = formatSI(Math.abs(I[0] ?? 0), 'A');
+        readout = formatCurrent(Math.abs(I[0] ?? 0));
         break;
       case 'battery':
       case 'clock':
-        readout = formatSI(-(I[0] ?? 0), 'A');
+        readout = formatCurrent(-(I[0] ?? 0));
         break;
       case 'opamp':
         readout = `Vo ${formatSI(live.probe.vo ?? 0, 'V')}${live.probe.sat ? ' · DOYUM' : ''}`;

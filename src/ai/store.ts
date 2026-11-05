@@ -4,7 +4,7 @@ import type { FixPatch, Issue } from '../circuit/types';
 import type { Mood } from '../tepecan/mascot';
 import { tepecan } from '../tepecan/mascot';
 import { useAuth } from '../auth/store';
-import { chatStream, type AIConfig, type ChatMsg } from './providers';
+import { chatStream, stripThink, type AIConfig, type ChatMsg } from './providers';
 import { buildContext, extractFix, SYSTEM_PROMPT } from './prompt';
 import { analyzeCircuit } from '../debug/rules';
 import { useCircuit } from '../store/circuitStore';
@@ -164,12 +164,14 @@ export const useAI = create<AIState>((set, get) => {
         for await (const chunk of chatStream(cfg, messages, abort.signal, (t, p) => set({ progress: { text: t, p } }))) {
           if (get().progress) set({ progress: null });
           acc += chunk;
-          patch(id, { text: acc.replace(/```tepecan-fix[\s\S]*$/, '').trim() || '…' });
+          patch(id, { text: stripThink(acc).replace(/```tepecan-fix[\s\S]*$/, '').trim() || '…' });
         }
-        const { clean, fix } = extractFix(acc);
+        const { clean, fix } = extractFix(stripThink(acc));
         patch(id, { text: clean || '(boş yanıt)', fix, fixState: fix ? 'pending' : undefined, streaming: false, mood: fix ? 'surprised' : 'info' });
       } catch (e) {
-        patch(id, { text: `Bağlantı sorunu: ${(e as Error).message}`, mood: 'error', streaming: false, offline: true });
+        // Tepecan Bulut kendi Türkçe mesajını verir; Ollama/WebLLM hataları ham gelir
+        const msg = (e as Error).message;
+        patch(id, { text: cfg.provider === 'cloud' ? `⚠️ ${msg}` : `Bağlantı sorunu: ${msg}`, mood: 'error', streaming: false, offline: true });
       } finally {
         set({ busy: false, progress: null });
       }

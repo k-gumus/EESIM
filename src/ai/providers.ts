@@ -140,6 +140,11 @@ export function* parseSSE(buf: { rest: string }, chunk: string): Generator<strin
   }
 }
 
+/** Bazı modeller düşünme adımlarını <think>…</think> içinde akıtır: öğrenciye yalnızca cevabı göster (akış sürerken kapanmamış blok da gizlenir) */
+export function stripThink(s: string): string {
+  return s.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/<think>[\s\S]*$/, '').replace(/^\s+/, '');
+}
+
 async function* cloudStream(messages: ChatMsg[], signal: AbortSignal): AsyncGenerator<string> {
   let r: Response;
   try {
