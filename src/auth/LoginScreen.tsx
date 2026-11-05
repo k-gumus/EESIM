@@ -50,9 +50,9 @@ export function LoginScreen() {
       <div className="login-shell">
         <section className="login-hero">
           <div className="login-brand">
-            IEEE<span>SIM</span>
+            EE<span>SIM</span>
           </div>
-          <p className="login-tag">IEEE Yeditepe · Tepecan’lı devre laboratuvarı</p>
+          <p className="login-tag">Elektrik-elektronik öğrencileri için Tepecan’lı devre laboratuvarı</p>
           <ul className="login-points">
             <li>⚡ Devreni kur, gerçek zamanlı simüle et</li>
             <li>📈 Osiloskop, multimetre ve 3D breadboard</li>

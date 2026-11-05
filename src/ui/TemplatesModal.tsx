@@ -68,7 +68,7 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
             <div className="bubble">
               {first ? (
                 <>
-                  <b>Merhaba, ben Tepecan!</b> 🤖 IEEE Yeditepe laboratuvarına hoş geldin. Devreleri burada kurar, osiloskopta ölçer, 3D breadboard’da görürsün.
+                  <b>Merhaba, ben Tepecan!</b> 🤖 EESIM devre laboratuvarına hoş geldin. Devreleri burada kurar, osiloskopta ölçer, 3D breadboard’da görürsün.
                   Nereden başlayacağını bilmiyorsan <b>★ Başlangıç</b> yolunu izle.
                 </>
               ) : (

@@ -169,7 +169,7 @@ describe('Yarı iletkenler', () => {
   });
 });
 
-describe('EE212 deneyleri (geçici analiz)', () => {
+describe('Laboratuvar deneyleri (geçici analiz)', () => {
   it('yarım dalga doğrultucu', () => {
     const { sim, net } = setup(
       quickDoc(

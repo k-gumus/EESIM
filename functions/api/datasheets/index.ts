@@ -18,6 +18,7 @@ export const onRequestGet = async (ctx: Ctx) => {
 export const onRequestPost = async (ctx: Ctx) => {
   const u = await requireUser(ctx);
   if (u instanceof Response) return u;
+  if (!ctx.env.FILES) return err('Bulut dosya deposu (R2) bağlı değil; PDF tarayıcıda saklanacak.', 503);
   const url = new URL(ctx.request.url);
   const key = (url.searchParams.get('key') ?? '').slice(0, 64);
   const name = (url.searchParams.get('name') ?? 'datasheet.pdf').replace(/[\\/\r\n]/g, '_').slice(0, 120);

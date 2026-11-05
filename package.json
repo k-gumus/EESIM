@@ -1,8 +1,8 @@
 {
-  "name": "ieeesim",
+  "name": "eesim",
   "private": true,
-  "version": "0.2.0",
-  "description": "IEEESIM — Tepecan ile web tabanlı, 3D destekli, yapay zeka destekli devre laboratuvarı",
+  "version": "0.2.1",
+  "description": "EESIM — Tepecan ile web tabanlı, 3D destekli, yapay zekâ destekli devre laboratuvarı",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,11 +10,11 @@
     "build:single": "vite build --mode single",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p functions",
-    "dev:api": "npm run build && wrangler pages dev dist",
-    "db:local": "wrangler d1 execute ieeesim --local --file=schema.sql",
-    "db:remote": "wrangler d1 execute ieeesim --remote --file=schema.sql",
-    "deploy": "npm run build && wrangler pages deploy dist"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
+    "dev:api": "wrangler dev",
+    "db:local": "wrangler d1 execute eesim --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute eesim --remote --file=schema.sql",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.87",

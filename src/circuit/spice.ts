@@ -10,14 +10,14 @@ const num = (v: unknown, d: number) => {
   return isFinite(n) ? n : d;
 };
 
-export function buildSpiceNetlist(circ: CompiledCircuit, nodes: Node<CompData>[], title = 'IEEESIM devresi'): string {
+export function buildSpiceNetlist(circ: CompiledCircuit, nodes: Node<CompData>[], title = 'EESIM devresi'): string {
   const N = (i: number) => (i === 0 ? '0' : circ.netNames[i]);
   const lines: string[] = [];
   const models = new Map<string, string>();
   const comments: string[] = [];
   const subckts: string[] = [];
   lines.push(`* ${title}`);
-  lines.push(`* IEEESIM tarafından üretildi — ${new Date().toISOString().slice(0, 10)}`);
+  lines.push(`* EESIM tarafından üretildi — ${new Date().toISOString().slice(0, 10)}`);
 
   let hasAC = false;
   let maxFreq = 0;

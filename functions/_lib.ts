@@ -1,9 +1,12 @@
-// Pages Functions ortak yardımcıları: yanıtlar, çerezler, oturum, parola özeti
+// API ortak yardımcıları (Cloudflare Worker — worker/index.ts yönlendirir): yanıtlar, çerezler, oturum, parola özeti
 /// <reference types="@cloudflare/workers-types" />
 
 export interface Env {
   DB: D1Database;
-  FILES: R2Bucket;
+  /** R2 (datasheet PDF'leri). R2 etkinleştirilmemişse bağlanmaz; o zaman PDF'ler tarayıcıda saklanır. */
+  FILES?: R2Bucket;
+  /** Statik site (dist/) */
+  ASSETS?: Fetcher;
   AI?: Ai;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;

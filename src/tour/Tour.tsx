@@ -22,7 +22,7 @@ interface Step {
 const STEPS: Step[] = [
   {
     title: 'Merhaba, ben Tepecan! 🤖',
-    text: 'IEEESIM’e hoş geldin. Bir dakikada her şeyin yerini göstereyim. İstediğin an **Esc** ile çıkabilirsin.',
+    text: 'EESIM’e hoş geldin. Bir dakikada her şeyin yerini göstereyim. İstediğin an **Esc** ile çıkabilirsin.',
     mood: 'hello',
   },
   {

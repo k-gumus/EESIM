@@ -1,4 +1,4 @@
-// Hazır deney paketleri (EE212 laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
+// Hazır deney paketleri (laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
 
 import { doc, D4001, D4148, type Template } from './lib';
 export type { StepCheck, LabStep, Template } from './lib';
@@ -6,6 +6,9 @@ import { DC_TEMPLATES } from './t_dc';
 import { TRANSIENT_TEMPLATES, AC_TEMPLATES, FILTER_TEMPLATES } from './t_transient_ac';
 import { DIODE_TEMPLATES, BJT_TEMPLATES, MOSFET_TEMPLATES } from './t_semis';
 import { OPAMP_TEMPLATES, OSC_TEMPLATES, POWER_TEMPLATES, DIGITAL_TEMPLATES, MEASURE_TEMPLATES } from './t_more';
+import { POOL_A } from './t_pool_a';
+import { POOL_B } from './t_pool_b';
+import { POOL_C } from './t_pool_c';
 
 // ───────────────────────────── 0. Isınma: LED ve Ohm Yasası ─────────────────────────────
 const ledOhm: Template = {
@@ -600,5 +603,7 @@ export const TEMPLATES: Template[] = [
   halfWave, fullWave, clipper, clamper, zener, ...DIODE_TEMPLATES,
   bjt, ...BJT_TEMPLATES, ...MOSFET_TEMPLATES,
   ...OPAMP_TEMPLATES, ...OSC_TEMPLATES, ...POWER_TEMPLATES, ...DIGITAL_TEMPLATES, ...MEASURE_TEMPLATES,
+  // v0.2.1 deney havuzu (katalogda konularına göre gruplanır)
+  ...POOL_A, ...POOL_B, ...POOL_C,
 ];
 export const templateById = (id: string | null) => TEMPLATES.find((t) => t.id === id);

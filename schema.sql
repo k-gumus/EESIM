@@ -1,6 +1,6 @@
--- IEEESIM — Cloudflare D1 şeması
--- Yerel:  npx wrangler d1 execute ieeesim --local --file=schema.sql
--- Canlı:  npx wrangler d1 execute ieeesim --remote --file=schema.sql
+-- EESIM — Cloudflare D1 şeması
+-- Worker bu dosyayı gömer ve ilk API isteğinde kendiliğinden uygular (worker/schema.ts).
+-- Elle çalıştırmak istersen:  npx wrangler d1 execute eesim --remote --file=schema.sql
 
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,
