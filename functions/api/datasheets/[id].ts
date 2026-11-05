@@ -8,6 +8,7 @@ export const onRequestGet = async (ctx: Ctx) => {
   if (u instanceof Response) return u;
   const row = await ctx.env.DB.prepare('SELECT id, name FROM datasheets WHERE id = ? AND user_id = ?').bind(idOf(ctx), u.id).first<{ id: string; name: string }>();
   if (!row) return err('Bulunamadı.', 404);
+  if (!ctx.env.FILES) return err('Bulut dosya deposu (R2) bağlı değil.', 503);
   const obj = await ctx.env.FILES.get(`ds/${u.id}/${row.id}.pdf`);
   if (!obj) return err('Dosya bulunamadı.', 404);
   return new Response(obj.body, {
@@ -26,6 +27,6 @@ export const onRequestDelete = async (ctx: Ctx) => {
   const id = idOf(ctx);
   const r = await ctx.env.DB.prepare('DELETE FROM datasheets WHERE id = ? AND user_id = ?').bind(id, u.id).run();
   if (!r.meta.changes) return err('Bulunamadı.', 404);
-  await ctx.env.FILES.delete(`ds/${u.id}/${id}.pdf`);
+  await ctx.env.FILES?.delete(`ds/${u.id}/${id}.pdf`);
   return json({ ok: true });
 };

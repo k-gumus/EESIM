@@ -86,3 +86,14 @@ Kararlar:
 - MOSFET denkleminin modeldeki biçimi I_D = ½K(V_GS − V_th)²; föy metinleri buna göre düzeltildi.
 - Değişiklikler `deney-havuzu` dalında; main’e PR ile girer (Kerem telefondan birleştirir).
 - 2026-11-05 12:25 — Deney havuzu: 32 yeni föy (toplam 81 etkileşimli + 29 yakında = 110), her quiz cevabı simülasyonla doğrulandı (93 test yeşil), şemalar ekran görüntüsüyle kontrol edildi, sürüm 0.2.1.
+
+## Öğle (5 Kasım, 12:37) — EESIM adı ve Cloudflare Worker (Kerem’in isteği)
+Kararlar:
+- Uygulamanın adı **EESIM** oldu; arayüz, yapay zekâ istemi, dokümanlar ve paket adından “IEEE” ve “Yeditepe” çıkarıldı. Tek dosyalık sürüm artık `EESIM.html`.
+- Tarayıcıda saklanan anahtarlar (`ieeesim.*`, IndexedDB `ieeesim`) değiştirilmedi: mevcut kullanıcıların ilerlemesi kaybolmasın diye. Kullanıcı bunları görmez.
+- Kalan marka izi: Tepecan görsellerinin göğsünde “IEEE YEDITEPE UNIVERSITY” logosu var (görsellerin kendisi). Logosuz görseller gerekiyor.
+- Yayın **Cloudflare Workers**’a çevrildi (Kerem depoyu Worker “eeesim” olarak bağlamıştı): `worker/index.ts` siteyi sunar ve /api’yi `functions/` işleyicilerine yönlendirir.
+  `wrangler.toml` adı “eeesim”. D1 için database_id yok: wrangler ilk yayında “eesim” veritabanını kendisi oluşturur; tablolar ilk API isteğinde `schema.sql`’den kurulur (manuel adım yok).
+  R2 isteğe bağlı (yorum satırı); bağlı değilken PDF’ler tarayıcıda kalır.
+- Cloudflare’in agent-setup istemi okundu: uzak MCP sunucusu (mcp.cloudflare.com) + OAuth kuruyor. Bu oturum Cloudflare’e ağ erişimi olmayan bir sandbox’ta çalıştığı ve MCP ekleyemediği için uygulanmadı; adımlar Kerem’e iletildi.
+- 2026-11-05 13:05 — EESIM adı + Worker’a geçiş: yerelde `wrangler dev` ile boş veritabanından kayıt/giriş/ilerleme/PDF/Tepecan’a Sor uçtan uca denendi; 95 test yeşil.

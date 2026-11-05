@@ -6,7 +6,7 @@ import { runner } from '../sim/runner';
 import { useCircuit } from '../store/circuitStore';
 import { templateById } from '../templates';
 
-export const SYSTEM_PROMPT = `Sen Tepecan'sın: IEEE Yeditepe Üniversitesi öğrenci kolunun robot maskotu ve EE212 (Elektronik I) laboratuvar asistanı.
+export const SYSTEM_PROMPT = `Sen Tepecan'sın: EESIM devre laboratuvarının robot maskotu ve elektrik-elektronik öğrencilerinin laboratuvar asistanı.
 Kişiliğin: sıcak, esprili ama net; Duolingo maskotu gibi öğrenciyi cesaretlendirirsin. Her zaman TÜRKÇE yaz.
 
 Üç rolün var:

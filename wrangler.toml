@@ -1,27 +1,55 @@
-# IEEESIM — Cloudflare Pages yapılandırması
-# Ayrıntılı kurulum: docs/CLOUDFLARE.md
-name = "ieeesim"
+# EESIM — Cloudflare Workers yapılandırması (statik site + /api)
+# Kurulum rehberi: docs/CLOUDFLARE.md
+#
+# Cloudflare'deki Worker'ın adıyla AYNI olmalı (Workers & Pages listesinde görünen ad).
+name = "eeesim"
+main = "worker/index.ts"
 compatibility_date = "2026-10-01"
-pages_build_output_dir = "dist"
+
+# `wrangler deploy` önce siteyi derler (dist/)
+[build]
+command = "npm run build"
+
+# Statik site: dist/. /api/* istekleri önce Worker'a gider, diğer her şey dosyalardan sunulur.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# schema.sql dosyası Worker'a metin olarak gömülür (tablolar ilk istekte otomatik oluşturulur)
+[[rules]]
+type = "Text"
+globs = ["**/*.sql"]
+fallthrough = true
 
 [vars]
-# Google Cloud Console → API'ler ve Hizmetler → Kimlik bilgileri → OAuth istemci kimliği (Web uygulaması)
+# Google ile giriş: Google Cloud Console → Kimlik bilgileri → OAuth istemci kimliği (Web uygulaması).
+# Boş kalırsa giriş ekranında yalnızca e-posta/şifre çalışır.
 GOOGLE_CLIENT_ID = ""
+# GOOGLE_CLIENT_SECRET gizlidir: panelde Worker → Settings → Variables and Secrets → "Secret" olarak ekle (bu dosyaya yazma!)
 AI_DAILY_FREE = "20"
 AI_DAILY_PREMIUM = "200"
 AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
 # Premium kullanıcılar için daha güçlü (ve daha çok "neuron" harcayan) model:
 AI_MODEL_PREMIUM = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-# GOOGLE_CLIENT_SECRET gizlidir: `npx wrangler pages secret put GOOGLE_CLIENT_SECRET` ile ekle (bu dosyaya yazma!)
 
+# Veritabanı (D1). database_id yazmaya gerek yok: ilk `wrangler deploy` "eesim" adlı veritabanını
+# kendisi oluşturur ve sonraki yayınlarda aynısını kullanır. Tablolar ilk API isteğinde kurulur.
 [[d1_databases]]
 binding = "DB"
-database_name = "ieeesim"
-database_id = "BURAYA-D1-KIMLIGI"   # `npx wrangler d1 create ieeesim` çıktısındaki database_id
+database_name = "eesim"
 
-[[r2_buckets]]
-binding = "FILES"
-bucket_name = "ieeesim-files"
+# Dosya deposu (R2) — kullanıcıların yüklediği datasheet PDF'leri için. İSTEĞE BAĞLI.
+# Panelde R2'yi etkinleştirdikten sonra aşağıdaki üç satırın başındaki # işaretini kaldır.
+# R2 bağlı değilken PDF'ler kullanıcının tarayıcısında saklanır; başka hiçbir şey etkilenmez.
+# [[r2_buckets]]
+# binding = "FILES"
+# bucket_name = "eesim-files"
 
+# Tepecan'a Sor (Workers AI) — ek kurulum gerekmez
 [ai]
 binding = "AI"
+
+[observability]
+enabled = true

@@ -1,29 +1,29 @@
-# IEEESIM · Tepecan Devre Laboratuvarı
+# EESIM · Tepecan Devre Laboratuvarı
 
-> Elektrik öğrencileri için simülasyon aracı — depo: [k-gumus/EESIM](https://github.com/k-gumus/EESIM) · Lisans: MIT
+> Elektrik-elektronik öğrencileri için simülasyon aracı — depo: [k-gumus/EESIM](https://github.com/k-gumus/EESIM) · Lisans: MIT
 
-Web tabanlı, 3D destekli ve yapay zekâ destekli elektronik devre simülatörü — IEEE Yeditepe için, EE212 laboratuvarı odaklı, tamamen Türkçe.
+Web tabanlı, 3D destekli ve yapay zekâ destekli elektronik devre simülatörü — elektrik-elektronik öğrencileri için, tamamen Türkçe.
 
 ![Şematik + Tepecan AI](docs/ekran-2d.png)
 ![3D breadboard montajı](docs/ekran-3d.png)
 
 ## Hızlı başlangıç
 
-**Kurulumsuz deneme:** `IEEESIM.html` dosyasına çift tıkla. Tek dosyalık sürümdür; simülasyon, 3D montaj, deneyler ve Tepecan’ın kural tabanlı hata ayıklayıcısı çalışır. (Tarayıcı içi WebLLM bu sürüme gömülmez; Ollama kullanılabilir.)
+**Kurulumsuz deneme:** `EESIM.html` dosyasına çift tıkla. Tek dosyalık sürümdür; simülasyon, 3D montaj, deneyler ve Tepecan’ın kural tabanlı hata ayıklayıcısı çalışır. (Tarayıcı içi WebLLM bu sürüme gömülmez; Ollama kullanılabilir.)
 
 **Geliştirme (Node.js 18+):**
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm test             # 93 test: motor, 81 deneyin quiz cevapları, bilgi kartları, eşitleme
-npm run build        # dist/  → Cloudflare Pages / GitHub Pages / Vercel
+npm test             # 95 test: motor, 81 deneyin quiz cevapları, bilgi kartları, eşitleme
+npm run build        # dist/  (statik site; GitHub Pages / Vercel’de de çalışır)
 npm run build:single # dist-single/index.html → tek dosyalık sürüm (giriş/bulut yok, misafir modu)
-npm run dev:api      # build + Cloudflare Pages Functions yerelde (giriş, ilerleme, datasheet, Tepecan’a Sor)
-npm run deploy       # Cloudflare Pages’e yayınla — kurulum: docs/CLOUDFLARE.md
+npm run dev:api      # Cloudflare Worker yerelde (giriş, ilerleme, datasheet, Tepecan’a Sor)
+npm run deploy       # Cloudflare’e yayınla — kurulum: docs/CLOUDFLARE.md
 ```
 
-> Proje OneDrive klasöründe olduğu için `node_modules` (≈300 MB) senkronizasyonu yavaşlatabilir. Geliştirmeyi OneDrive dışındaki bir klasörde (ör. `C:\dev\IEEESIM`) yapman önerilir.
+> Proje OneDrive klasöründe olduğu için `node_modules` (≈300 MB) senkronizasyonu yavaşlatabilir. Geliştirmeyi OneDrive dışındaki bir klasörde (ör. `C:\dev\EESIM`) yapman önerilir.
 
 ## Özellikler
 
@@ -124,7 +124,7 @@ Kontrol türleri: `run`, `switch`, `param`, `pin` (bir pinin hangi etiketli dü�
 
 ## Yayınlama
 
-- **Cloudflare (önerilen, giriş + bulut özellikleri):** adım adım rehber → [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md)
+- **Cloudflare Workers (önerilen, giriş + bulut özellikleri):** adım adım rehber → [`docs/CLOUDFLARE.md`](docs/CLOUDFLARE.md). GitHub’a bağlıyken her `main` gönderimi otomatik yayınlanır; veritabanı ve tablolar ilk yayında kendiliğinden kurulur.
 - **GitHub Pages:** `docs/github-pages-deploy.yml` dosyasını `.github/workflows/deploy.yml` olarak taşı, depoya gönder → Settings → Pages → Source: GitHub Actions. Her `main` gönderiminde testler çalışır ve site yayınlanır.
 - **Vercel:** Framework “Vite”, build `npm run build`, çıktı `dist`.
 
@@ -148,9 +148,10 @@ src/
   debug/       kural tabanlı hata ayıklayıcı
   gamify/      XP, seviye, günlük seri
   tepecan/     maskot görselleri ve konuşma balonu olay yolu
-functions/     Cloudflare Pages Functions: /api/auth, /api/progress, /api/datasheets, /api/ask
-schema.sql     D1 veritabanı şeması
-wrangler.toml  Cloudflare yapılandırması (D1, R2, Workers AI, Google OAuth)
+worker/        Cloudflare Worker girişi: statik site + /api yönlendirici, D1 şemasını otomatik kurma
+functions/     API işleyicileri: /api/auth, /api/progress, /api/datasheets, /api/ask
+schema.sql     D1 veritabanı şeması (Worker’a gömülür)
+wrangler.toml  Cloudflare yapılandırması (Worker adı, D1, R2, Workers AI, Google OAuth)
 ```
 
 ## Lisans

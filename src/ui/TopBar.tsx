@@ -42,7 +42,7 @@ function FileMenu() {
 
   const save = () => {
     const doc = useCircuit.getState().toDoc();
-    download(`${slug(title)}.ieeesim.json`, JSON.stringify(doc, null, 2), 'application/json');
+    download(`${slug(title)}.eesim.json`, JSON.stringify(doc, null, 2), 'application/json');
   };
   const exportNetlist = () => {
     const { nodes, edges } = useCircuit.getState();
@@ -57,7 +57,7 @@ function FileMenu() {
         useCircuit.getState().loadDoc(doc, null);
         tepecan.say({ mood: 'success', title: 'Devre yüklendi', text: `“${doc.title ?? f.name}” açıldı.`, ttl: 3000 });
       } catch {
-        tepecan.say({ mood: 'error', title: 'Dosya okunamadı', text: 'Bu bir IEEESIM JSON devre dosyası gibi görünmüyor.', ttl: 5000 });
+        tepecan.say({ mood: 'error', title: 'Dosya okunamadı', text: 'Bu bir EESIM devre dosyası (.json) gibi görünmüyor.', ttl: 5000 });
       }
     });
   };
@@ -281,10 +281,10 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="brand" title="IEEESIM · Tepecan Devre Laboratuvarı">
+      <div className="brand" title="EESIM · Tepecan Devre Laboratuvarı">
         <img src={FACES.bust} alt="Tepecan" />
         <div className="brand-name">
-          IEEE<span>SIM</span>
+          EE<span>SIM</span>
         </div>
       </div>
       <FileMenu />

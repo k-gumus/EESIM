@@ -1,4 +1,4 @@
-// IEEESIM simülasyon çekirdeği
+// EESIM simülasyon çekirdeği
 // Modified Nodal Analysis (MNA) + Newton-Raphson (doğrusal olmayan elemanlar) + BDF2/Geri-Euler geçici analiz.
 // Tamamen istemci tarafında çalışır, harici bağımlılık yoktur.
 

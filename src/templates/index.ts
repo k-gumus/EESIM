@@ -1,4 +1,4 @@
-// Hazır deney paketleri (EE212 laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
+// Hazır deney paketleri (laboratuvar föyleri). Her şablon bir JSON devre belgesi + adım adım görevler içerir.
 
 import { doc, D4001, D4148, type Template } from './lib';
 export type { StepCheck, LabStep, Template } from './lib';

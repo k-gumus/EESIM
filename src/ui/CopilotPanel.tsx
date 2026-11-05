@@ -102,7 +102,7 @@ export function CopilotPanel() {
             <p className="muted small">
               {cloudAi ? (
                 <>
-                  Kurulum gerektirmez: sorular IEEESIM sunucusunda (Cloudflare Workers AI) yanıtlanır.{' '}
+                  Kurulum gerektirmez: sorular EESIM sunucusunda (Cloudflare Workers AI) yanıtlanır.{' '}
                   {quota && (
                     <>
                       Bugün <b>{quota.remaining}</b>/{quota.limit} hakkın kaldı.{' '}

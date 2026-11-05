@@ -10,7 +10,12 @@ export default defineConfig(({ mode }) => {
   const single = mode === 'single';
   return {
     base: './',
-    plugins: [react(), ...(single ? [viteSingleFile()] : [])],
+    plugins: [
+      react(),
+      ...(single ? [viteSingleFile()] : []),
+      // Worker testleri schema.sql'i metin olarak içe aktarır (wrangler'daki "Text" kuralının karşılığı)
+      { name: 'sql-as-text', transform: (code: string, id: string) => (id.endsWith('.sql') ? `export default ${JSON.stringify(code)};` : undefined) },
+    ],
     define: { __SINGLE_FILE__: JSON.stringify(single) },
     resolve: single
       ? { alias: { '@mlc-ai/web-llm': fileURLToPath(new URL('./src/ai/webllm-stub.ts', import.meta.url)) } }
@@ -20,6 +25,6 @@ export default defineConfig(({ mode }) => {
       assetsInlineLimit: single ? 100_000_000 : 4096,
       chunkSizeWarningLimit: 4000,
     },
-    test: { environment: 'node', include: ['src/**/*.test.ts'] },
+    test: { environment: 'node', include: ['src/**/*.test.ts', 'worker/**/*.test.ts'] },
   };
 });
