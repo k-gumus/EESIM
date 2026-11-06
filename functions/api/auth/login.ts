@@ -1,8 +1,11 @@
 // POST /api/auth/login  { email, password }
-import { createSession, err, json, publicUser, verifyPassword, type Ctx, type UserRow } from '../../_lib';
+import { clientKey, createSession, err, json, publicUser, rateLimit, verifyPassword, type Ctx, type UserRow } from '../../_lib';
 
 export const onRequestPost = async (ctx: Ctx) => {
   const { env, request } = ctx;
+  // Kaba kuvvet koruması: IP başına 10 dk'da en çok 10 giriş denemesi
+  if (!(await rateLimit(env, `login:${await clientKey(request)}`, 10, 600)))
+    return err('Çok fazla giriş denemesi yaptın. Lütfen birkaç dakika sonra tekrar dene.', 429);
   let body: { email?: string; password?: string };
   try {
     body = await request.json();

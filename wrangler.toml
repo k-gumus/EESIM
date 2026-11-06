@@ -54,5 +54,10 @@ database_name = "eesim"
 [ai]
 binding = "AI"
 
+# Zamanlanmış temizlik: her gün 03:00 UTC'de süresi dolmuş oturumları, eski kota ve
+# hız sınırı kayıtlarını siler (worker/index.ts → scheduled). Ek kurulum gerekmez.
+[triggers]
+crons = ["0 3 * * *"]
+
 [observability]
 enabled = true

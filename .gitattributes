@@ -1,0 +1,9 @@
+# Satır sonlarını tutarlı tut: depoda her zaman LF.
+# Windows'ta geliştirirken dosyalar CRLF'e dönüşebilir; bu, schema.sql gibi
+# metin olarak gömülen dosyalarda ayrıştırma hatalarına yol açabiliyordu.
+* text=auto eol=lf
+
+# İkili dosyalar dokunulmasın
+*.webp binary
+*.png binary
+*.pdf binary

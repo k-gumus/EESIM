@@ -1,8 +1,11 @@
 // POST /api/auth/register  { name, email, password }
-import { createSession, err, hashPassword, isEmail, json, publicUser, type Ctx, type UserRow } from '../../_lib';
+import { clientKey, createSession, err, hashPassword, isEmail, json, publicUser, rateLimit, type Ctx, type UserRow } from '../../_lib';
 
 export const onRequestPost = async (ctx: Ctx) => {
   const { env, request } = ctx;
+  // Spam/otomasyon koruması: IP başına saatte en çok 5 kayıt denemesi
+  if (!(await rateLimit(env, `register:${await clientKey(request)}`, 5, 3600)))
+    return err('Çok fazla kayıt denemesi yaptın. Lütfen biraz sonra tekrar dene.', 429);
   let body: { name?: string; email?: string; password?: string };
   try {
     body = await request.json();
