@@ -6,6 +6,7 @@ import type { CompData } from '../../circuit/types';
 import { useSim } from '../../sim/runner';
 import { useCircuit } from '../../store/circuitStore';
 import { Symbol } from '../symbols';
+import { t } from '../../i18n';
 
 const SIDE: Record<string, Position> = { left: Position.Left, right: Position.Right, top: Position.Top, bottom: Position.Bottom };
 
@@ -16,10 +17,10 @@ function valueText(d: CompData): string {
     case 'resistor': return formatSI(n('R'), 'Ω');
     case 'capacitor': return formatSI(n('C'), 'F');
     case 'inductor': return formatSI(n('L'), 'H');
-    case 'switch': return p.closed ? 'KAPALI' : 'AÇIK';
-    case 'diode': return DIODE_MODELS[String(p.model)] ? String(p.model) === 'ideal' ? 'genel' : String(p.model) : 'özel';
+    case 'switch': return p.closed ? t('KAPALI') : t('AÇIK');
+    case 'diode': return DIODE_MODELS[String(p.model)] ? String(p.model) === 'ideal' ? t('genel') : String(p.model) : t('özel');
     case 'zener': return `${String(n('Vz')).replace('.', ',')} V`;
-    case 'led': return (LED_COLORS[String(p.color)]?.label ?? '').split(' ')[0];
+    case 'led': return t(LED_COLORS[String(p.color)]?.label ?? '').split(' ')[0];
     case 'npn': case 'pnp': return `β=${n('beta')}`;
     case 'nmos': case 'pmos': return `Vth=${String(n('Vth')).replace('.', ',')} V`;
     case 'vdc': return formatSI(n('V'), 'V');
@@ -33,7 +34,7 @@ function valueText(d: CompData): string {
     case 'cccs': return `β=${n('gain')}`;
     case 'ccvs': return `r=${formatSI(n('gain'), 'Ω')}`;
     case 'pot': return `${formatSI(n('R'), 'Ω')} · %${Math.round(n('pos') * 100)}`;
-    case 'button': return p.pressed ? 'BASILI' : p.kind === 'NC' ? 'NC' : 'NO';
+    case 'button': return p.pressed ? t('BASILI') : p.kind === 'NC' ? 'NC' : 'NO';
     case 'lamp': return `${formatSI(n('Vnom'), 'V')} ${formatSI(n('Pnom'), 'W')}`;
     case 'ldr': return `${formatSI(n('lux'), 'lx')}`;
     case 'ntc': return `${n('temp')} °C`;
@@ -86,7 +87,7 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         readout = formatCurrent(Math.abs(I[0] ?? 0));
         break;
       case 'led':
-        readout = (live.probe.burnt ? '💥 YANDI · ' : '') + formatCurrent(Math.abs(I[0] ?? 0));
+        readout = (live.probe.burnt ? `💥 ${t('YANDI')} · ` : '') + formatCurrent(Math.abs(I[0] ?? 0));
         break;
       case 'vdc':
       case 'vac':
@@ -159,9 +160,9 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
       }}
       title={
         data.type === 'switch' || data.type === 'logicin'
-          ? 'Çift tıkla: değiştir'
+          ? t('Çift tıkla: değiştir')
           : data.type === 'button'
-            ? 'Basılı tut: buton kapanır'
+            ? t('Basılı tut: buton kapanır')
             : undefined
       }
     >

@@ -169,7 +169,7 @@ export const LIBRARY: Record<CompType, CompDef> = {
     w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
     params: [{ key: 'closed', label: 'Kapalı', kind: 'bool', default: false, hint: 'Canvas üzerinde tıklayarak da açıp kapatabilirsin' }],
     physical: { body: 'slide-switch', onBoard: true },
-    description: 'Açık: ~1 GΩ, Kapalı: ~1 mΩ',
+    description: 'Açık: ~1 TΩ, Kapalı: ~1 mΩ',
   },
   xfmr: {
     type: 'xfmr', label: 'Transformatör', short: 'T', prefix: 'T', category: 'Pasif Elemanlar',

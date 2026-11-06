@@ -1,6 +1,7 @@
 // Canvas grafiği (React Flow düğümleri + kablolar) → düğüm (net) listesi + eleman listesi + sorun tespiti
 import type { Edge, Node } from '@xyflow/react';
 import { LIBRARY } from './library';
+import { t } from '../i18n';
 import type { CompData, CompiledCircuit, CompiledElement, Issue, WireTreeEntry } from './types';
 
 class DSU {
@@ -151,10 +152,10 @@ function findIssues(
     issues.push({
       level: 'error',
       code: 'no-ground',
-      message: 'Devrede toprak (GND) yok! SPICE ve MNA bir 0 V referans düğümü olmadan gerilimleri hesaplayamaz.',
+      message: t('Devrede toprak (GND) yok! SPICE ve MNA bir 0 V referans düğümü olmadan gerilimleri hesaplayamaz.'),
       comp: src?.name,
       fix: src
-        ? { summary: `${src.name} kaynağının (−) ucuna toprak ekle`, actions: [{ op: 'connectGround', id: src.name, pin: 'n' }] }
+        ? { summary: t('{n} kaynağının (−) ucuna toprak ekle', { n: src.name }), actions: [{ op: 'connectGround', id: src.name, pin: 'n' }] }
         : undefined,
     });
   }
@@ -172,7 +173,7 @@ function findIssues(
           level: 'warning',
           code: 'floating-pin',
           comp: e.name,
-          message: `${e.name} elemanının ${pinLabel(e, pin)} ucu hiçbir yere bağlı değil.`,
+          message: t('{n} elemanının {p} ucu hiçbir yere bağlı değil.', { n: e.name, p: pinLabel(e, pin) }),
         });
       }
     });
@@ -182,7 +183,7 @@ function findIssues(
         level: 'error',
         code: 'short-source',
         comp: e.name,
-        message: `${e.name} gerilim kaynağının iki ucu aynı düğüme bağlı: kaynak kısa devre!`,
+        message: t('{n} gerilim kaynağının iki ucu aynı düğüme bağlı: kaynak kısa devre!', { n: e.name }),
       });
     }
     if (e.type === 'multimeter' && String(e.params.mode).endsWith('A')) {
@@ -197,8 +198,8 @@ function findIssues(
           level: 'error',
           code: 'ammeter-parallel',
           comp: e.name,
-          message: `${e.name} akım kademesinde ama ${src.name} kaynağına PARALEL bağlı. Gerçek laboratuvarda bu sigortayı attırır! Ampermetre seri bağlanmalı.`,
-          fix: { summary: `${e.name}'yi gerilim kademesine (V ⎓) al`, actions: [{ op: 'set', id: e.name, param: 'mode', value: 'DCV' }] },
+          message: t('{n} akım kademesinde ama {s} kaynağına PARALEL bağlı. Gerçek laboratuvarda bu sigortayı attırır! Ampermetre seri bağlanmalı.', { n: e.name, s: src.name }),
+          fix: { summary: t('{n}’yi gerilim kademesine (V ⎓) al', { n: e.name }), actions: [{ op: 'set', id: e.name, param: 'mode', value: 'DCV' }] },
         });
       }
     }
@@ -207,7 +208,7 @@ function findIssues(
         level: 'info',
         code: 'shorted-element',
         comp: e.name,
-        message: `${e.name} elemanının iki ucu aynı düğümde; üzerinden akım akmaz (kısa devre edilmiş).`,
+        message: t('{n} elemanının iki ucu aynı düğümde; üzerinden akım akmaz (kısa devre edilmiş).', { n: e.name }),
       });
     }
   }
@@ -235,7 +236,7 @@ function findIssues(
           level: 'warning',
           code: 'floating-input',
           comp: e.name,
-          message: `${e.name} kapısının ${pin.toUpperCase()} girişi boşta: seviyesi belirsiz (~2,5 V). Bir pull-down (toprağa ~10 kΩ) ya da pull-up (5 V'a ~10 kΩ) direnci ekle.`,
+          message: t('{n} kapısının {p} girişi boşta: seviyesi belirsiz (~2,5 V). Bir pull-down (toprağa ~10 kΩ) ya da pull-up (5 V’a ~10 kΩ) direnci ekle.', { n: e.name, p: pin.toUpperCase() }),
         });
       }
     }

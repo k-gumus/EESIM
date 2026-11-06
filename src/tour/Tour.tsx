@@ -9,6 +9,8 @@ import { TEMPLATES, templateById } from '../templates';
 import { openEntry } from '../ui/TopBar';
 import { CATALOG } from '../templates/catalog';
 import { WHATS_NEW, APP_VERSION } from './whatsNew';
+import { t } from '../i18n';
+import { entrySubtitle, entryTitle } from '../i18n/content';
 
 interface Step {
   target?: string;
@@ -157,8 +159,8 @@ function Spotlight({ onDone }: { onDone: (openCatalog: boolean) => void }) {
       <div className="tour-bubble" style={{ ...style, width: W }}>
         <img src={POSES[step.mood]} alt="" className="tour-mascot" />
         <div className="tour-content">
-          <div className="tour-title">{step.title}</div>
-          <div className="tour-text">{md(step.text)}</div>
+          <div className="tour-title">{t(step.title)}</div>
+          <div className="tour-text">{md(t(step.text))}</div>
           <div className="tour-foot">
             <div className="tour-dots">
               {STEPS.map((_, k) => (
@@ -167,7 +169,7 @@ function Spotlight({ onDone }: { onDone: (openCatalog: boolean) => void }) {
             </div>
             {!last && (
               <button className="linkbtn" onClick={() => onDone(false)}>
-                Atla
+                {t('Atla')}
               </button>
             )}
             {i > 0 && (
@@ -176,7 +178,7 @@ function Spotlight({ onDone }: { onDone: (openCatalog: boolean) => void }) {
               </button>
             )}
             <button className="btn primary" onClick={next} autoFocus>
-              {last ? 'İlk deneyi seç →' : i === 0 ? 'Başlayalım →' : 'İleri →'}
+              {last ? t('İlk deneyi seç →') : i === 0 ? t('Başlayalım →') : t('İleri →')}
             </button>
           </div>
         </div>
@@ -257,53 +259,58 @@ function WelcomeBack({ onClose }: { onClose: () => void }) {
         <div className="wb-head">
           <img src={POSES.hello} alt="" />
           <div>
-            <h2>Tekrar hoş geldin{user ? `, ${user.name.split(' ')[0]}` : ''}! 👋</h2>
+            <h2>
+              {t('Tekrar hoş geldin')}
+              {user ? `, ${user.name.split(' ')[0]}` : ''}! 👋
+            </h2>
             <div className="wb-stats">
-              <span>🔥 {streak} günlük seri</span>
-              <span>⭐ Seviye {level}</span>
+              <span>🔥 {t('{n} günlük seri', { n: streak })}</span>
+              <span>⭐ {t('Seviye')} {level}</span>
               <span>⚡ {xp} XP</span>
-              <span>✅ {Object.keys(completed).length} deney tamamlandı</span>
+              <span>✅ {t('{n} deney tamamlandı', { n: Object.keys(completed).length })}</span>
             </div>
             <div className="progress">
               <span style={{ width: `${pct}%` }} />
             </div>
           </div>
-          <button className="iconbtn close" onClick={close} title="Kapat">
+          <button className="iconbtn close" onClick={close} title={t('Kapat')}>
             ✕
           </button>
         </div>
         <div className="wb-body">
           {last && !lastFinished && (
             <div className="wb-card">
-              <div className="wb-label">Kaldığın yer</div>
-              <div className="wb-title">{last.title}</div>
+              <div className="wb-label">{t('Kaldığın yer')}</div>
+              <div className="wb-title">{entryTitle(last)}</div>
               <div className="muted small">
-                {lastDone}/{last.steps.length} adım
+                {lastDone}/{last.steps.length} {t('adım')}
               </div>
               <div className="progress thin">
                 <span style={{ width: `${(lastDone / last.steps.length) * 100}%` }} />
               </div>
               <button className="btn primary" onClick={() => go(last.id)}>
-                Kaldığın yerden devam et →
+                {t('Kaldığın yerden devam et →')}
               </button>
             </div>
           )}
           {suggestion && (
             <div className="wb-card">
-              <div className="wb-label">{last ? 'Sıradaki öneri' : 'Başlamak için'}</div>
-              <div className="wb-title">{suggestion.title}</div>
-              <div className="muted small">{suggestion.subtitle}</div>
+              <div className="wb-label">{last ? t('Sıradaki öneri') : t('Başlamak için')}</div>
+              <div className="wb-title">{entryTitle(suggestion)}</div>
+              <div className="muted small">{entrySubtitle(suggestion)}</div>
               <button className="btn primary" onClick={() => go(suggestion.id)}>
-                Deneyi aç →
+                {t('Deneyi aç →')}
               </button>
             </div>
           )}
           {news.length > 0 && (
             <div className="wb-news">
-              <div className="wb-label">Yenilikler · v{APP_VERSION}</div>
+              <div className="wb-label">
+                {t('Yenilikler')} · v{APP_VERSION}
+              </div>
               <ul>
                 {news.map((n) => (
-                  <li key={n}>{md(n)}</li>
+                  <li key={n}>{md(t(n))}</li>
                 ))}
               </ul>
             </div>
@@ -311,14 +318,14 @@ function WelcomeBack({ onClose }: { onClose: () => void }) {
         </div>
         <div className="wb-foot">
           <button className="linkbtn" onClick={() => (close(), useUI.getState().startTour('first'))}>
-            🧭 Turu tekrar göster
+            🧭 {t('Turu tekrar göster')}
           </button>
           <div style={{ flex: 1 }} />
           <button className="btn" onClick={() => (close(), useUI.getState().openCatalog('menu'))}>
-            📚 Deney kataloğu
+            📚 {t('Deney kataloğu')}
           </button>
           <button className="btn" onClick={close}>
-            Kapat
+            {t('Kapat')}
           </button>
         </div>
       </div>

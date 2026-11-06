@@ -4,6 +4,7 @@ import { CATEGORIES, LIB_LIST, type CompDef } from '../circuit/library';
 import { Symbol } from './symbols';
 import { useCircuit } from '../store/circuitStore';
 import { useUI, isNarrow } from '../store/uiStore';
+import { t } from '../i18n';
 
 function Icon({ def }: { def: CompDef }) {
   if (def.type === 'multimeter')
@@ -60,16 +61,18 @@ export function Palette() {
   return (
     <aside className="palette">
       <div className="palette-head">
-        <span>Elemanlar</span>
-        <button className="iconbtn pal-close" onClick={() => useUI.getState().setPalette(false)} title="Kapat">
+        <span>{t('Elemanlar')}</span>
+        <button className="iconbtn pal-close" onClick={() => useUI.getState().setPalette(false)} title={t('Kapat')}>
           ✕
         </button>
       </div>
-      <input className="palette-search" placeholder="Ara: direnç, diyot…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <input className="palette-search" placeholder={t('Ara: direnç, diyot…')} value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="palette-scroll">
         {CATEGORIES.map((cat) => {
           const items = LIB_LIST.filter(
-            (d) => d.category === cat.id && (!query || d.label.toLocaleLowerCase('tr').includes(query) || d.short.toLowerCase().includes(query)),
+            (d) =>
+              d.category === cat.id &&
+              (!query || d.label.toLocaleLowerCase('tr').includes(query) || t(d.label).toLocaleLowerCase().includes(query) || d.short.toLowerCase().includes(query)),
           );
           if (!items.length) return null;
           const isOpen = query ? true : open[cat.id] !== false;
@@ -77,7 +80,7 @@ export function Palette() {
             <section key={cat.id} className="pal-cat">
               <button className="pal-cat-head" onClick={() => setOpen({ ...open, [cat.id]: !isOpen })}>
                 <span className={`chev ${isOpen ? 'open' : ''}`}>›</span>
-                {cat.id}
+                {t(cat.id)}
                 <span className="pal-count">{items.length}</span>
               </button>
               {isOpen && (
@@ -92,14 +95,14 @@ export function Palette() {
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
                       onClick={() => addCenter(d)}
-                      title={`${d.label} — ${d.description}\n(Sürükle ya da tıkla · ⓘ bilgi kartı)`}
+                      title={`${t(d.label)} — ${t(d.description)}\n(${t('Sürükle ya da tıkla · ⓘ bilgi kartı')})`}
                     >
                       <Icon def={d} />
-                      <span>{d.label}</span>
+                      <span>{t(d.label)}</span>
                       <span
                         className="pal-info"
                         role="button"
-                        title="Bilgi kartı: nasıl çalışır, tipik değerler, datasheet"
+                        title={t('Bilgi kartı: nasıl çalışır, tipik değerler, datasheet')}
                         onClick={(e) => {
                           e.stopPropagation();
                           useUI.getState().showInfo(d.type);
@@ -116,9 +119,15 @@ export function Palette() {
         })}
       </div>
       <div className="palette-tips">
-        <div><kbd>R</kbd> döndür · <kbd>F</kbd> ters çevir</div>
-        <div><kbd>Del</kbd> sil · <kbd>Ctrl</kbd>+<kbd>Z</kbd> geri al</div>
-        <div>Anahtar: çift tıkla / <kbd>Space</kbd></div>
+        <div>
+          <kbd>R</kbd> {t('döndür')} · <kbd>F</kbd> {t('ters çevir')}
+        </div>
+        <div>
+          <kbd>Del</kbd> {t('sil')} · <kbd>Ctrl</kbd>+<kbd>Z</kbd> {t('geri al')}
+        </div>
+        <div>
+          {t('Anahtar: çift tıkla /')} <kbd>Space</kbd>
+        </div>
       </div>
     </aside>
   );

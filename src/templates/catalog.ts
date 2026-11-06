@@ -2,6 +2,7 @@
 import { TEMPLATES, type Template } from './index';
 import { TOPICS, type TopicId } from './topics';
 import { PLANNED } from './planned';
+import { entrySubtitle, entryTitle, topicTitle } from '../i18n/content';
 
 export interface CatalogEntry {
   id: string;
@@ -31,8 +32,10 @@ export function searchCatalog(q: string, limit = 12): CatalogEntry[] {
   if (!words.length) return [];
   const scored = CATALOG.map((e) => {
     const topic = TOPICS.find((t) => t.id === e.topic)?.title ?? '';
-    const hayTitle = norm(e.title);
-    const hay = norm([e.title, e.subtitle, topic, ...e.keywords].join(' '));
+    // Türkçe ve (seçiliyse) İngilizce başlıkların ikisinde de ara
+    const titleL = entryTitle(e);
+    const hayTitle = norm(titleL === e.title ? e.title : `${titleL} ${e.title}`);
+    const hay = norm([e.title, e.subtitle, titleL, entrySubtitle(e), topic, topicTitle(e.topic), ...e.keywords].join(' '));
     let score = 0;
     for (const w of words) {
       if (hayTitle.startsWith(w)) score += 6;

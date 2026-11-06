@@ -31,6 +31,15 @@ Parametre adları: direnç R (Ω), kapasitör C (F), bobin L (H), DC kaynak V, A
 "id" alanında netlist'teki eleman adlarını aynen kullan (SPICE'ta zener DZ1 görünse de id "Z1", LED için DLED1 → "LED1", anahtar RS1 → "S1"). Emin değilsen blok ekleme.
 Cevapların kısa olsun (en fazla ~150 kelime), gerekirse madde işaretleri kullan.`;
 
+/** Seçili arayüz diline göre sistem istemi (Tepecan öğrencinin dilinde cevap verir) */
+export function systemPrompt(lang: 'tr' | 'en'): string {
+  if (lang === 'tr') return SYSTEM_PROMPT;
+  return (
+    SYSTEM_PROMPT.replace('Her zaman TÜRKÇE yaz.', 'Her zaman İNGİLİZCE yaz.') +
+    '\n\nIMPORTANT: The student is using the English interface. ALWAYS answer in clear, simple ENGLISH, even though the circuit data and experiment notes below may be in Turkish. Keep the tepecan-fix block format exactly as specified (its "summary" in English).'
+  );
+}
+
 function statLine(name: string, s: { min: number; max: number; avg: number; acrms: number } | null) {
   if (!s) return `${name}: (veri yok)`;
   const ac = s.max - s.min > 1e-3;

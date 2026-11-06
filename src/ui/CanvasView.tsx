@@ -15,6 +15,7 @@ import { ComponentNode } from './nodes/ComponentNode';
 import { WireEdge } from './edges/WireEdge';
 import type { CompType } from '../circuit/types';
 import { LIBRARY } from '../circuit/library';
+import { t } from '../i18n';
 
 const nodeTypes: NodeTypes = { comp: ComponentNode };
 const edgeTypes: EdgeTypes = { wire: WireEdge };
@@ -26,10 +27,10 @@ function CanvasToolbar() {
   const hasSel = useCircuit((s) => !!s.selectedId);
   return (
     <div className="canvas-toolbar">
-      <button className="ctbtn" onClick={() => useCircuit.getState().undo()} disabled={!canUndo} title="Geri al (Ctrl+Z)" aria-label="Geri al">
+      <button className="ctbtn" onClick={() => useCircuit.getState().undo()} disabled={!canUndo} title={t('Geri al (Ctrl+Z)')} aria-label={t('Geri al')}>
         ↶
       </button>
-      <button className="ctbtn" onClick={() => useCircuit.getState().redo()} disabled={!canRedo} title="Yinele (Ctrl+Y)" aria-label="Yinele">
+      <button className="ctbtn" onClick={() => useCircuit.getState().redo()} disabled={!canRedo} title={t('Yinele (Ctrl+Y)')} aria-label={t('Yinele')}>
         ↷
       </button>
       <button
@@ -39,8 +40,8 @@ function CanvasToolbar() {
           if (id) useCircuit.getState().remove([id]);
         }}
         disabled={!hasSel}
-        title="Seçili elemanı sil (Del)"
-        aria-label="Seçili elemanı sil"
+        title={t('Seçili elemanı sil (Del)')}
+        aria-label={t('Seçili elemanı sil')}
       >
         🗑
       </button>
@@ -144,8 +145,10 @@ export function CanvasView() {
       </ReactFlow>
       {nodes.length === 0 && (
         <div className="canvas-empty">
-          <div>Soldaki paletten eleman sürükle</div>
-          <div className="muted">ya da üstteki <b>Deney bul</b> kutusundan hazır bir deney yükle</div>
+          <div>{t('Soldaki paletten eleman sürükle')}</div>
+          <div className="muted">
+            {t('ya da üstteki')} <b>{t('Deney bul')}</b> {t('kutusundan hazır bir deney yükle')}
+          </div>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@
 import { GUEST_KEY, useAuth, type User } from './store';
 import { startProgressSync, stopProgressSync } from './sync';
 import { tepecan } from '../tepecan/mascot';
+import { t } from '../i18n';
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(path, { credentials: 'include', ...init, headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) } });
@@ -18,7 +19,7 @@ function signedIn(user: User, welcome: boolean) {
     /* yok say */
   }
   startProgressSync();
-  if (welcome) tepecan.say({ mood: 'success', title: `Hoş geldin, ${user.name.split(' ')[0]}!`, text: 'İlerlemen artık hesabına kaydediliyor; her cihazdan devam edebilirsin.', ttl: 5000 });
+  if (welcome) tepecan.say({ mood: 'success', title: t('Hoş geldin, {n}!', { n: user.name.split(' ')[0] }), text: t('İlerlemen artık hesabına kaydediliyor; her cihazdan devam edebilirsin.'), ttl: 5000 });
 }
 
 /**
@@ -90,6 +91,13 @@ export async function register(name: string, email: string, password: string) {
 
 export function loginWithGoogle() {
   location.href = '/api/auth/google';
+}
+
+/** Hesabı ve tüm sunucu verilerini kalıcı olarak sil (KVKK silme hakkı) */
+export async function deleteAccount() {
+  await call<{ ok: boolean }>('/api/auth/me', { method: 'DELETE' });
+  stopProgressSync();
+  useAuth.setState({ user: null, guest: false, loginOpen: true });
 }
 
 export async function logout() {

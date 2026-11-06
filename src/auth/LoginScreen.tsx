@@ -4,6 +4,9 @@ import { useAuth } from './store';
 import { login, loginWithGoogle, register } from './api';
 import { POSES } from '../tepecan/mascot';
 import { TEMPLATES } from '../templates';
+import { t } from '../i18n';
+import { LangSwitch } from '../ui/LangSwitch';
+import { openLegal } from '../ui/Legal';
 
 function GoogleIcon() {
   return (
@@ -39,7 +42,7 @@ export function LoginScreen() {
       if (mode === 'login') await login(email, password);
       else await register(name, email, password);
     } catch (er) {
-      setError(er instanceof Error ? er.message : String(er));
+      setError(t(er instanceof Error ? er.message : String(er)));
     } finally {
       setBusy(false);
     }
@@ -52,48 +55,51 @@ export function LoginScreen() {
           <div className="login-brand">
             EE<span>SIM</span>
           </div>
-          <p className="login-tag">Elektrik-elektronik öğrencileri için Tepecan’lı devre laboratuvarı</p>
+          <p className="login-tag">{t('Elektrik-elektronik öğrencileri için Tepecan’lı devre laboratuvarı')}</p>
           <ul className="login-points">
-            <li>⚡ Devreni kur, gerçek zamanlı simüle et</li>
-            <li>📈 Osiloskop, multimetre ve 3D breadboard</li>
-            <li>🧪 {TEMPLATES.length} adım adım deney föyü, 12 konu başlığı</li>
-            <li>🤖 Takıldığında Tepecan’a sor</li>
+            <li>⚡ {t('Devreni kur, gerçek zamanlı simüle et')}</li>
+            <li>📈 {t('Osiloskop, multimetre ve 3D breadboard')}</li>
+            <li>🧪 {t('{n} adım adım deney föyü, 12 konu başlığı', { n: TEMPLATES.length })}</li>
+            <li>🤖 {t('Takıldığında Tepecan’a sor')}</li>
           </ul>
-          <img src={POSES.hello} alt="Tepecan el sallıyor" className="login-mascot" />
+          <img src={POSES.hello} alt="Tepecan" className="login-mascot" />
         </section>
 
         <section className="login-card">
-          <h2>{mode === 'login' ? 'Tekrar hoş geldin!' : 'Hesap oluştur'}</h2>
-          <p className="muted small">{mode === 'login' ? 'XP’in, serin ve deneylerin kaldığı yerden devam etsin.' : 'İlerlemen ve datasheet’lerin her cihazda seninle olsun.'}</p>
+          <div className="login-lang">
+            <LangSwitch />
+          </div>
+          <h2>{mode === 'login' ? t('Tekrar hoş geldin!') : t('Hesap oluştur')}</h2>
+          <p className="muted small">{mode === 'login' ? t('XP’in, serin ve deneylerin kaldığı yerden devam etsin.') : t('İlerlemen ve datasheet’lerin her cihazda seninle olsun.')}</p>
 
           {off && (
             <div className="login-note">
-              <b>Çevrimdışı sürüm.</b> Bu kopyada giriş sunucusu yok (tek dosya ya da statik barındırma). Misafir olarak devam edebilirsin; ilerlemen bu tarayıcıda saklanır.
+              <b>{t('Çevrimdışı sürüm.')}</b> {t('Bu kopyada giriş sunucusu yok (tek dosya ya da statik barındırma). Misafir olarak devam edebilirsin; ilerlemen bu tarayıcıda saklanır.')}
             </div>
           )}
 
-          <button className="btn google-btn" onClick={loginWithGoogle} disabled={off || !google} title={!google && !off ? 'Google ile giriş henüz yapılandırılmadı' : undefined}>
-            <GoogleIcon /> Google ile {mode === 'login' ? 'giriş yap' : 'kayıt ol'}
+          <button className="btn google-btn" onClick={loginWithGoogle} disabled={off || !google} title={!google && !off ? t('Google ile giriş henüz yapılandırılmadı') : undefined}>
+            <GoogleIcon /> {mode === 'login' ? t('Google ile giriş yap') : t('Google ile kayıt ol')}
           </button>
-          {!google && !off && <div className="muted small tcenter">Google ile giriş yakında — şimdilik e-posta ile devam et.</div>}
+          {!google && !off && <div className="muted small tcenter">{t('Google ile giriş yakında — şimdilik e-posta ile devam et.')}</div>}
 
           <div className="login-or">
-            <span>ya da e-posta ile</span>
+            <span>{t('ya da e-posta ile')}</span>
           </div>
 
           <form onSubmit={submit} className="login-form">
             {mode === 'register' && (
               <label>
-                Ad Soyad
+                {t('Ad Soyad')}
                 <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required disabled={off} maxLength={60} />
               </label>
             )}
             <label>
-              E-posta
+              {t('E-posta')}
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required disabled={off} />
             </label>
             <label>
-              Şifre
+              {t('Şifre')}
               <input
                 type="password"
                 value={password}
@@ -103,27 +109,27 @@ export function LoginScreen() {
                 required
                 disabled={off}
               />
-              {mode === 'register' && <small className="muted">En az 8 karakter.</small>}
+              {mode === 'register' && <small className="muted">{t('En az 8 karakter.')}</small>}
             </label>
             {error && <div className="login-error">{error}</div>}
             <button className="btn primary" type="submit" disabled={off || busy}>
-              {busy ? 'Bekle…' : mode === 'login' ? 'Giriş yap' : 'Kayıt ol'}
+              {busy ? t('Bekle…') : mode === 'login' ? t('Giriş yap') : t('Kayıt ol')}
             </button>
           </form>
 
           <div className="login-switch">
             {mode === 'login' ? (
               <>
-                Hesabın yok mu?{' '}
+                {t('Hesabın yok mu?')}{' '}
                 <button className="linkbtn" onClick={() => (setMode('register'), setError(''))} disabled={off}>
-                  Kayıt ol
+                  {t('Kayıt ol')}
                 </button>
               </>
             ) : (
               <>
-                Zaten hesabın var mı?{' '}
+                {t('Zaten hesabın var mı?')}{' '}
                 <button className="linkbtn" onClick={() => (setMode('login'), setError(''))}>
-                  Giriş yap
+                  {t('Giriş yap')}
                 </button>
               </>
             )}
@@ -131,9 +137,20 @@ export function LoginScreen() {
 
           <div className="login-sep" />
           <button className="btn ghost guest-btn" onClick={() => useAuth.getState().continueAsGuest()}>
-            Misafir olarak devam et →
+            {t('Misafir olarak devam et →')}
           </button>
-          <p className="muted small tcenter">Misafir modunda her şey çalışır; ilerlemen yalnızca bu tarayıcıda tutulur.</p>
+          <p className="muted small tcenter">{t('Misafir modunda her şey çalışır; ilerlemen yalnızca bu tarayıcıda tutulur.')}</p>
+          <p className="muted small tcenter login-legal">
+            {mode === 'register' ? t('Kayıt olarak') : t('Devam ederek')}{' '}
+            <button className="linkbtn" onClick={() => openLegal('terms')}>
+              {t('Kullanım Koşulları')}
+            </button>{' '}
+            {t('ve')}{' '}
+            <button className="linkbtn" onClick={() => openLegal('privacy')}>
+              {t('Gizlilik ve KVKK Aydınlatma Metni')}
+            </button>
+            {t('’ni kabul etmiş olursun.')}
+          </p>
         </section>
       </div>
     </div>

@@ -12,6 +12,8 @@ import { openEntry } from './TopBar';
 import { POSES } from '../tepecan/mascot';
 import { addDatasheet, fmtSize, listDatasheets, openDatasheet, removeDatasheet, type Datasheet } from '../datasheets/store';
 import type { CompType } from '../circuit/types';
+import { getLang, t } from '../i18n';
+import { entryTitle } from '../i18n/content';
 
 function BigSymbol({ type }: { type: CompType }) {
   const def = LIB[type];
@@ -78,29 +80,30 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
             <BigSymbol type={type} />
           </div>
           <div className="info-title">
-            <div className="info-cat">{def.category}</div>
-            <h2>{def.label}</h2>
-            <p>{def.description}</p>
+            <div className="info-cat">{t(def.category)}</div>
+            <h2>{t(def.label)}</h2>
+            <p>{t(def.description)}</p>
           </div>
-          <button className="iconbtn close" onClick={onClose} title="Kapat (Esc)">
+          <button className="iconbtn close" onClick={onClose} title={t('Kapat (Esc)')}>
             ✕
           </button>
         </div>
 
         <div className="info-body">
+          {info && getLang() === 'en' && <div className="lang-note">ℹ️ The detailed card below is only available in Turkish for now.</div>}
           {info ? (
             <>
               <section className="info-sec">
-                <h4>Ne işe yarar?</h4>
+                <h4>{t('Ne işe yarar?')}</h4>
                 <p>{info.what}</p>
               </section>
               <section className="info-sec">
-                <h4>Nasıl çalışır?</h4>
+                <h4>{t('Nasıl çalışır?')}</h4>
                 <p>{info.how}</p>
                 {info.formula && <div className="info-formula">{info.formula}</div>}
               </section>
               <section className="info-sec">
-                <h4>Tipik değerler ve kullanım</h4>
+                <h4>{t('Tipik değerler ve kullanım')}</h4>
                 <ul>
                   {info.typical.map((t) => (
                     <li key={t}>{t}</li>
@@ -111,7 +114,7 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
                 <section className="info-sec info-caution">
                   <img src={POSES.angry} alt="" />
                   <div>
-                    <h4>Dikkat!</h4>
+                    <h4>{t('Dikkat!')}</h4>
                     <ul>
                       {info.caution.map((t) => (
                         <li key={t}>{t}</li>
@@ -122,7 +125,7 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
               )}
               {info.specs && (
                 <section className="info-sec">
-                  <h4>Kılıf ve sınır değerler</h4>
+                  <h4>{t('Kılıf ve sınır değerler')}</h4>
                   <table className="info-specs">
                     <tbody>
                       {info.specs.map(([k, v]) => (
@@ -137,12 +140,12 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
               )}
             </>
           ) : (
-            <p className="muted">Bu eleman için ayrıntılı bilgi kartı henüz hazır değil.</p>
+            <p className="muted">{t('Bu eleman için ayrıntılı bilgi kartı henüz hazır değil.')}</p>
           )}
 
           {used.length > 0 && (
             <section className="info-sec">
-              <h4>Bu elemanla yapılan deneyler</h4>
+              <h4>{t('Bu elemanla yapılan deneyler')}</h4>
               <div className="info-exps">
                 {used.map((e) => (
                   <button
@@ -153,7 +156,7 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
                       onClose();
                     }}
                   >
-                    ▶ {e.title}
+                    ▶ {entryTitle(e)}
                   </button>
                 ))}
               </div>
@@ -187,27 +190,27 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
               }}
             >
               <div>
-                <b>Kendi datasheet’ini ekle</b> — PDF’i buraya sürükle ya da{' '}
+                <b>{t('Kendi datasheet’ini ekle')}</b> — {t('PDF’i buraya sürükle ya da')}{' '}
                 <button className="linkbtn" onClick={() => fileRef.current?.click()} disabled={busy}>
-                  dosya seç
+                  {t('dosya seç')}
                 </button>
                 <input ref={fileRef} type="file" accept="application/pdf,.pdf" multiple hidden onChange={(e) => upload(e.target.files)} />
               </div>
               <div className="muted small">
                 {user ? (
-                  <>Hesabına kaydedilir; her cihazdan erişebilirsin.</>
+                  <>{t('Hesabına kaydedilir; her cihazdan erişebilirsin.')}</>
                 ) : (
                   <>
-                    Misafir modunda yalnızca bu tarayıcıda saklanır.{' '}
+                    {t('Misafir modunda yalnızca bu tarayıcıda saklanır.')}{' '}
                     <button className="linkbtn" onClick={openLogin}>
-                      Giriş yap
+                      {t('Giriş yap')}
                     </button>{' '}
-                    ve her cihazdan eriş.
+                    {t('ve her cihazdan eriş.')}
                   </>
                 )}
               </div>
-              {busy && <div className="small">Yükleniyor…</div>}
-              {err && <div className="small err">{err}</div>}
+              {busy && <div className="small">{t('Yükleniyor…')}</div>}
+              {err && <div className="small err">{t(err)}</div>}
             </div>
             {sheets && sheets.length > 0 && (
               <ul className="info-files">
@@ -217,9 +220,9 @@ function InfoBody({ type, onClose }: { type: CompType; onClose: () => void }) {
                       📎 {s.name}
                     </button>
                     <span className="muted small">
-                      {fmtSize(s.size)} · {s.where === 'cloud' ? '☁ hesapta' : '💾 bu cihazda'}
+                      {fmtSize(s.size)} · {s.where === 'cloud' ? `☁ ${t('hesapta')}` : `💾 ${t('bu cihazda')}`}
                     </span>
-                    <button className="iconbtn" title="Sil" onClick={() => removeDatasheet(s).then(refresh)}>
+                    <button className="iconbtn" title={t('Sil')} onClick={() => removeDatasheet(s).then(refresh)}>
                       🗑
                     </button>
                   </li>

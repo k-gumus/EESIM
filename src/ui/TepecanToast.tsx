@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { POSES, useTepecan } from '../tepecan/mascot';
+import { t } from '../i18n';
 
 export function TepecanToast() {
   const current = useTepecan((s) => s.current);
@@ -9,8 +10,8 @@ export function TepecanToast() {
     if (!current) return;
     const ttl = current.ttl ?? (current.actions ? 0 : 8000);
     if (!ttl) return;
-    const t = setTimeout(dismiss, ttl);
-    return () => clearTimeout(t);
+    const timer = setTimeout(dismiss, ttl);
+    return () => clearTimeout(timer);
   }, [current, dismiss]);
 
   if (!current) return null;
@@ -18,11 +19,11 @@ export function TepecanToast() {
     <div className={`tep-toast mood-${current.mood}`} key={current.id}>
       <img src={POSES[current.mood]} alt="" className="tep-toast-img" />
       <div className="tep-toast-bubble">
-        <button className="tep-x" onClick={dismiss} aria-label="Kapat">
+        <button className="tep-x" onClick={dismiss} aria-label={t('Kapat')}>
           ✕
         </button>
-        <div className="tep-toast-title">{current.title}</div>
-        <div className="tep-toast-text">{current.text}</div>
+        <div className="tep-toast-title">{t(current.title)}</div>
+        <div className="tep-toast-text">{t(current.text)}</div>
         {current.actions && (
           <div className="tep-toast-actions">
             {current.actions.map((a) => (
@@ -34,7 +35,7 @@ export function TepecanToast() {
                   dismiss();
                 }}
               >
-                {a.label}
+                {t(a.label)}
               </button>
             ))}
           </div>

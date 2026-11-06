@@ -8,6 +8,9 @@ import { runner } from '../sim/runner';
 import { CATALOG, searchCatalog, type CatalogEntry } from '../templates/catalog';
 import { TOPICS, type TopicId } from '../templates/topics';
 import { openEntry } from './TopBar';
+import { t } from '../i18n';
+const tr = t;
+import { entrySubtitle, entryTitle, tLevel, topicDesc, topicTitle } from '../i18n/content';
 
 /** İlk kez gelenler için önerilen sıra */
 const STARTER = ['led-ohm', 'voltage-divider', 'rc-charge', 'half-wave', 'pullup-pulldown', 'logic-gates', 'opamp-inverting', '555-astable'];
@@ -68,24 +71,24 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
             <div className="bubble">
               {first ? (
                 <>
-                  <b>Merhaba, ben Tepecan!</b> 🤖 EESIM devre laboratuvarına hoş geldin. Devreleri burada kurar, osiloskopta ölçer, 3D breadboard’da görürsün.
-                  Nereden başlayacağını bilmiyorsan <b>★ Başlangıç</b> yolunu izle.
+                  <b>{t('Merhaba, ben Tepecan!')}</b> 🤖 {t('EESIM devre laboratuvarına hoş geldin. Devreleri burada kurar, osiloskopta ölçer, 3D breadboard’da görürsün.')}{' '}
+                  {t('Nereden başlayacağını bilmiyorsan')} <b>★ {t('Başlangıç yolu')}</b>{t('nu izle.')}
                 </>
               ) : (
                 <>
-                  <b>Hangi deneyi yapalım?</b> {readyCount} etkileşimli föy, {CATALOG.length - readyCount} tanesi daha yolda. Konuya göre seç ya da ara.
+                  <b>{t('Hangi deneyi yapalım?')}</b> {t('{n} etkileşimli föy, {m} tanesi daha yolda. Konuya göre seç ya da ara.', { n: readyCount, m: CATALOG.length - readyCount })}
                 </>
               )}
             </div>
             <div className="tpl-level">
-              <span className="lvl">Seviye {level}</span>
+              <span className="lvl">{t('Seviye')} {level}</span>
               <div className="progress">
                 <span style={{ width: `${pct}%` }} />
               </div>
               <span className="muted small">{xp} XP</span>
             </div>
           </div>
-          <button className="iconbtn close" onClick={onClose} title="Kapat">
+          <button className="iconbtn close" onClick={onClose} title={t('Kapat')}>
             ✕
           </button>
         </div>
@@ -94,15 +97,15 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
           <nav className="cat-side">
             <button className={`cat-topic ${sel === 'start' && !q ? 'on' : ''}`} onClick={() => (setSel('start'), setQ(''))}>
               <span className="cat-ico">★</span>
-              <span className="cat-tname">Başlangıç yolu</span>
+              <span className="cat-tname">{t('Başlangıç yolu')}</span>
             </button>
-            <div className="cat-sep">Konular</div>
+            <div className="cat-sep">{t('Konular')}</div>
             {TOPICS.map((t) => {
               const s = stats.get(t.id)!;
               return (
-                <button key={t.id} className={`cat-topic ${sel === t.id && !q ? 'on' : ''}`} onClick={() => (setSel(t.id), setQ(''))} title={t.desc}>
+                <button key={t.id} className={`cat-topic ${sel === t.id && !q ? 'on' : ''}`} onClick={() => (setSel(t.id), setQ(''))} title={topicDesc(t.id)}>
                   <span className="cat-ico">{t.icon}</span>
-                  <span className="cat-tname">{t.title}</span>
+                  <span className="cat-tname">{topicTitle(t.id)}</span>
                   <span className="cat-count">
                     {s.done > 0 && <b>{s.done}/</b>}
                     {s.ready}
@@ -116,9 +119,9 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
             <div className="cat-tools">
               <div className="cat-search">
                 <span>🔍</span>
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tüm katalogda ara: köprü, pull-down, 555, Bode…" autoFocus={!first} />
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr('Tüm katalogda ara: köprü, pull-down, 555, Bode…')} autoFocus={!first} />
                 {q && (
-                  <button className="iconbtn" onClick={() => setQ('')} title="Temizle">
+                  <button className="iconbtn" onClick={() => setQ('')} title={tr('Temizle')}>
                     ✕
                   </button>
                 )}
@@ -126,11 +129,11 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
               <div className="cat-chips">
                 {LEVELS.map((l) => (
                   <button key={l} className={`chip ${lvl === l ? 'on' : ''}`} onClick={() => setLvl(lvl === l ? null : l)}>
-                    <span className={`lvl-${l}`}>{l}</span>
+                    <span className={`lvl-${l}`}>{tLevel(l)}</span>
                   </button>
                 ))}
                 <label className="chip chk">
-                  <input type="checkbox" checked={showPlanned} onChange={(e) => setShowPlanned(e.target.checked)} /> Yakında olanlar
+                  <input type="checkbox" checked={showPlanned} onChange={(e) => setShowPlanned(e.target.checked)} /> {tr('Yakında olanlar')}
                 </label>
               </div>
             </div>
@@ -138,19 +141,19 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
             <div className="cat-head">
               {q.trim() ? (
                 <>
-                  <h3>“{q}” için {list.length} sonuç</h3>
+                  <h3>{tr('“{q}” için {n} sonuç', { q, n: list.length })}</h3>
                 </>
               ) : topic ? (
                 <>
                   <h3>
-                    <span className="cat-ico big">{topic.icon}</span> {topic.title}
+                    <span className="cat-ico big">{topic.icon}</span> {topicTitle(topic.id)}
                   </h3>
-                  <p className="muted small">{topic.desc}</p>
+                  <p className="muted small">{topicDesc(topic.id)}</p>
                 </>
               ) : (
                 <>
-                  <h3>★ Başlangıç yolu</h3>
-                  <p className="muted small">Ohm yasasından 555 zamanlayıcıya: sırayla yaparsan her deney bir öncekinin üzerine kurulur.</p>
+                  <h3>★ {tr('Başlangıç yolu')}</h3>
+                  <p className="muted small">{tr('Ohm yasasından 555 zamanlayıcıya: sırayla yaparsan her deney bir öncekinin üzerine kurulur.')}</p>
                 </>
               )}
             </div>
@@ -167,25 +170,25 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
                     className={`tpl-card ${completed[e.id] ? 'done' : ''} ${t ? '' : 'planned'}`}
                     onClick={() => open(e)}
                     disabled={!t}
-                    title={t ? 'Deneyi aç' : 'Bu deneyin etkileşimli föyü hazırlanıyor'}
+                    title={t ? tr('Deneyi aç') : tr('Bu deneyin etkileşimli föyü hazırlanıyor')}
                   >
                     <div className="tpl-num">{completed[e.id] ? '✓' : sel === 'start' && !q ? i + 1 : t ? '▶' : '…'}</div>
                     {t ? <img src={POSES[t.mood]} alt="" /> : <div className="cat-soon">{tp.icon}</div>}
                     <div className="tpl-info">
                       <div className="tpl-tag">
-                        <span className={`lvl-${e.level}`}>{e.level}</span>
-                        {(q.trim() || sel === 'start') && <> · {tp.title}</>}
+                        <span className={`lvl-${e.level}`}>{tLevel(e.level)}</span>
+                        {(q.trim() || sel === 'start') && <> · {topicTitle(tp.id)}</>}
                         {t ? (
                           <>
                             {' '}
-                            · {t.steps.length} adım · +{t.xp + t.steps.reduce((a, s) => a + (s.xp ?? 10), 0)} XP
+                            · {t.steps.length} {tr('adım')} · +{t.xp + t.steps.reduce((a, s) => a + (s.xp ?? 10), 0)} XP
                           </>
                         ) : (
-                          <span className="soon-badge">Yakında</span>
+                          <span className="soon-badge">{tr('Yakında')}</span>
                         )}
                       </div>
-                      <div className="tpl-title">{e.title}</div>
-                      <div className="tpl-sub">{e.subtitle}</div>
+                      <div className="tpl-title">{entryTitle(e)}</div>
+                      <div className="tpl-sub">{entrySubtitle(e)}</div>
                       {t && (
                         <div className="progress thin">
                           <span style={{ width: `${pc}%` }} />
@@ -195,7 +198,7 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
                   </button>
                 );
               })}
-              {!list.length && <div className="muted cat-empty">Bu filtrelerle deney bulunamadı.</div>}
+              {!list.length && <div className="muted cat-empty">{tr('Bu filtrelerle deney bulunamadı.')}</div>}
             </div>
           </section>
         </div>
@@ -209,7 +212,7 @@ export function TemplatesModal({ onClose, first }: { onClose: () => void; first?
               onClose();
             }}
           >
-            Boş canvas ile başla
+            {tr('Boş canvas ile başla')}
           </button>
         </div>
       </div>

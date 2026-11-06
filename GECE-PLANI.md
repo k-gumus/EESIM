@@ -105,3 +105,7 @@ Kararlar:
   çalışmazsa gemma-4 → glm-4.7-flash → llama-3.3-70b yedek zinciri (düşünme modu kapalı), hepsi düşerse Türkçe mesaj + hak iadesi (PR #4).
   Aynı ekran görüntüsünde S1 açıkken 7,9 nA görünüyordu: açık anahtar 1 TΩ, 1 nA altı akımlar 0 gösteriliyor. 102 test yeşil.
 - 2026-11-05 22:50 — PR #4 birleşince başlayan Cloudflare build’i (#9bd6f49d) “Initializing build environment” adımında 16+ dk takıldı (kod indirilmeden; Cloudflare tarafı). Yeni build tetiklemek için bu kayıtla küçük bir PR açıldı.
+- 2026-11-06 13:00 — Halka açılış hazırlığı (v0.3.0): canlı site kontrol edildi (eeesim.fyi, son sürüm yayında, Tepecan gemma-4 ile ~2 sn’de cevap veriyor, güvenlik başlıkları aktif).
+  Tepecan görsellerindeki “IEEE YEDITEPE UNIVERSITY” göğüs logosu 8 görselden silindi (bölge tespiti + inpaint). Gizlilik/KVKK aydınlatma metni ve kullanım koşulları (#gizlilik, #kosullar),
+  hesabını kendin silme (DELETE /api/auth/me), favicon, paylaşım görseli (og.png), robots.txt, sitemap. Dil seçeneği TR/EN: arayüzün tamamı, tur, katalog başlıkları (109 deney),
+  eleman kütüphanesi, devre uyarıları ve Başlangıç yolundaki 8 föy İngilizce; Tepecan seçilen dilde cevap veriyor. Diğer föyler ve bilgi kartları şimdilik Türkçe. 111 test yeşil.
