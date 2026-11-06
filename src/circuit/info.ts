@@ -113,6 +113,13 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['Kalkış (stall) akımı ≈ V/R — çalışma akımının birkaç katı', 'Hobi motoru: 3–12 V, birkaç yüz mA – birkaç A', 'Sürücü: MOSFET/transistör + serbest geçiş diyodu ya da H-köprüsü'],
     caution: ['Endüktif yük: akımı kesen anahtara/transistöre paralel serbest geçiş (flyback) diyodu şart.', 'Kalkış akımı yüksektir; sürücüyü ve beslemeyi buna göre seç.', 'Fırça/kolektör gürültüsünü azaltmak için uçlarına küçük kondansatör bağlanır.'],
   },
+  relay: {
+    what: 'Küçük bir akımla büyük/yüksek gerilimli yükleri anahtarlayan elektromekanik anahtar. Mikrodenetleyiciyle 220 V lamba, motor, ısıtıcı sürmenin klasik yolu; ayrıca galvanik yalıtım sağlar.',
+    how: 'Bobinden akım geçince oluşan elektromıknatıs yaylı bir kontağı çeker. COM ucu normalde NC’ye bağlıdır; röle çekince NO’ya geçer. Bırakma akımı çekme akımından düşüktür (histerezis).',
+    formula: 'Çekme: I_bobin > I_çekme   ·   Bırakma: I_bobin < ~0,5·I_çekme',
+    typical: ['5 V / 12 V bobin, 60–400 Ω', 'Kontak: 10 A / 250 V AC (SPDT)', 'Sürücü: transistör + serbest geçiş diyodu'],
+    caution: ['Bobin endüktiftir: kesilince yüksek gerilim üretir — paralel serbest geçiş (flyback) diyodu şart, yoksa süren transistör bozulur.', 'MCU pini bobini doğrudan süremez (akım yetmez); transistör/MOSFET kullan.', 'Endüktif yüklerde kontak arkı için snubber/varistör ekle.'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',

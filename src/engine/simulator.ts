@@ -1154,6 +1154,63 @@ class DCMotor extends Device {
   }
 }
 
+/** Elektromekanik röle: bobin R+L; akım çekme eşiğini aşınca COM, NC'den NO'ya geçer (bırakma histerezisiyle). Durum accept'te güncellenir. */
+class Relay extends Device {
+  Rc: number;
+  L: number;
+  Ipull: number;
+  Idrop: number;
+  energized = false;
+  i1 = 0;
+  constructor(el: CompiledElement) {
+    super(el);
+    this.branches = 1;
+    this.Rc = Math.max(1, num(el.params.Rcoil, 200));
+    this.L = Math.max(1e-9, num(el.params.L, 0.5));
+    this.Ipull = Math.max(1e-4, num(el.params.Ipull, 0.04));
+    this.Idrop = 0.5 * this.Ipull;
+  }
+  stamp(c: Ctx) {
+    const [c1, c2, no, com, nc] = this.el.nets;
+    const k = this.b0;
+    addA(c, c1 - 1, k, 1);
+    addA(c, c2 - 1, k, -1);
+    addA(c, k, c1 - 1, 1);
+    addA(c, k, c2 - 1, -1);
+    const Ldt = c.mode === 'tran' ? this.L / c.dt : 0;
+    addA(c, k, k, -(this.Rc + Ldt));
+    c.b[k] += -Ldt * this.i1;
+    const on = 1e3;
+    const off = 1e-12;
+    addG(c, com, no, this.energized ? on : off);
+    addG(c, com, nc, this.energized ? off : on);
+  }
+  currents(x: Float64Array) {
+    const [c1, c2, no, com, nc] = this.el.nets;
+    void c1;
+    void c2;
+    const Ic = x[this.b0];
+    const on = 1e3;
+    const off = 1e-12;
+    const ino = (V(x, no) - V(x, com)) * (this.energized ? on : off);
+    const inc = (V(x, nc) - V(x, com)) * (this.energized ? off : on);
+    return [Ic, -Ic, ino, -(ino + inc), inc];
+  }
+  accept(x: Float64Array, c: Ctx) {
+    super.accept(x, c);
+    const Ic = Math.abs(x[this.b0]);
+    if (!this.energized && Ic > this.Ipull) this.energized = true;
+    else if (this.energized && Ic < this.Idrop) this.energized = false;
+    this.i1 = x[this.b0];
+  }
+  initHistory(x: Float64Array) {
+    this.i1 = x[this.b0];
+  }
+  probe() {
+    return { energized: this.energized ? 1 : 0 };
+  }
+}
+
 // ── Lojik (5 V CMOS benzeri, davranışsal) ──
 const VDD = 5;
 const VTH = 2.5;
@@ -1420,6 +1477,8 @@ function makeDevice(el: CompiledElement): Device | null {
       return new OptoCoupler(el);
     case 'motor':
       return new DCMotor(el);
+    case 'relay':
+      return new Relay(el);
     case 'and':
     case 'or':
     case 'not':

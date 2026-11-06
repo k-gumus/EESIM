@@ -51,7 +51,8 @@ export type CompType =
   | 'jfet'
   | 'tl431'
   | 'opto'
-  | 'motor';
+  | 'motor'
+  | 'relay';
 
 export type ParamValue = number | string | boolean;
 

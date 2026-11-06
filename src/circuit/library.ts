@@ -797,12 +797,30 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'none', onBoard: false },
     description: 'Fırçalı DC motor: sargı direnci + endüktansı ve hıza bağlı zıt-EMK (E = Ke·ω). Dururken yüksek akım çeker, hızlandıkça akım düşer. Tork = Kt·I; ω atalet ve sürtünmeyle belirlenir.',
   },
+  relay: {
+    type: 'relay', label: 'Röle (SPDT)', short: 'K', prefix: 'K', category: 'Anahtar ve Sensörler',
+    w: 100, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'c1', label: 'A1', x: 0, y: 20 },
+      { id: 'c2', label: 'A2', x: 0, y: 60 },
+      { id: 'no', label: 'NO', x: 100, y: 10 },
+      { id: 'com', label: 'COM', x: 100, y: 40 },
+      { id: 'nc', label: 'NC', x: 100, y: 70 },
+    ],
+    params: [
+      { key: 'Rcoil', label: 'Bobin direnci', unit: 'Ω', kind: 'number', default: 200, min: 1 },
+      { key: 'Ipull', label: 'Çekme akımı', unit: 'A', kind: 'number', default: 0.04, min: 1e-4 },
+      { key: 'L', label: 'Bobin endüktansı', unit: 'H', kind: 'number', default: 0.5, advanced: true },
+    ],
+    physical: { body: 'none', onBoard: true },
+    description: 'Elektromekanik röle: bobinden yeterli akım geçince (çekme akımı) elektromıknatıs kontağı çeker, COM ucu NC’den NO’ya geçer. Bobin endüktif olduğundan yanına serbest geçiş (flyback) diyodu şarttır.',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
   'vdc', 'battery', 'vac', 'clock', 'idc', 'vcvs', 'vccs', 'cccs', 'ccvs',
   'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct', 'varistor', 'fuse',
-  'switch', 'button', 'lamp', 'buzzer', 'motor', 'ldr', 'ntc', 'ptc',
+  'switch', 'relay', 'button', 'lamp', 'buzzer', 'motor', 'ldr', 'ntc', 'ptc',
   'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'jfet',
   'opamp', 'timer555', 'reg78', 'tl431', 'opto',
   'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',

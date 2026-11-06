@@ -655,4 +655,12 @@ export const EN: Record<string, string> = {
   'Sürtünme katsayısı': 'Friction coefficient',
   'Fırçalı DC motor: sargı direnci + endüktansı ve hıza bağlı zıt-EMK (E = Ke·ω). Dururken yüksek akım çeker, hızlandıkça akım düşer. Tork = Kt·I; ω atalet ve sürtünmeyle belirlenir.':
     'Brushed DC motor: winding resistance + inductance and a speed-dependent back-EMF (E = Ke·ω). Draws high current at stall and less as it speeds up. Torque = Kt·I; ω is set by inertia and friction.',
+  'Röle (SPDT)': 'Relay (SPDT)',
+  'Bobin direnci': 'Coil resistance',
+  'Çekme akımı': 'Pull-in current',
+  'Bobin endüktansı': 'Coil inductance',
+  'ÇEKİLİ': 'ON',
+  boşta: 'idle',
+  'Elektromekanik röle: bobinden yeterli akım geçince (çekme akımı) elektromıknatıs kontağı çeker, COM ucu NC’den NO’ya geçer. Bobin endüktif olduğundan yanına serbest geçiş (flyback) diyodu şarttır.':
+    'Electromechanical relay: once enough current flows through the coil (pull-in current) the electromagnet pulls the contact, moving COM from NC to NO. The coil is inductive, so a flyback diode next to it is essential.',
 };

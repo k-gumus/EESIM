@@ -132,6 +132,20 @@ export function Symbol({ type, params, live }: SymProps) {
           <path d="M33 40 H47" strokeWidth={2.4} />
         </g>
       );
+    case 'relay':
+      return (
+        <g {...S}>
+          <path d="M0 20 H18 M0 60 H18" />
+          <rect x={18} y={14} width={20} height={52} rx={3} fill="none" />
+          <path d="M24 20 V60 M30 20 V60" strokeWidth={1.2} />
+          <path d="M38 40 H64" strokeDasharray="3 3" strokeWidth={1} opacity={0.5} />
+          <circle cx={66} cy={40} r={2.6} fill="currentColor" />
+          <path d="M100 40 H66 M66 40 L90 66" />
+          <circle cx={90} cy={12} r={2.6} />
+          <circle cx={90} cy={66} r={2.6} fill="currentColor" />
+          <path d="M100 10 H90 M100 70 H90" />
+        </g>
+      );
     case 'motor':
       return (
         <g {...S}>

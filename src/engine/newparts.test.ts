@@ -177,4 +177,35 @@ describe('yeni bileşenler', () => {
     const m = sim.byId.get('M1') as unknown as { w: number };
     expect(m.w).toBeGreaterThan(400); // ≈ 600 rad/s
   });
+
+  it('röle: bobin çekince COM→NO, boşta COM→NC', () => {
+    const mk = (vcoil: number) => doc('relay', [
+      ['vdc', 'VC', 20, 0, 0, { V: vcoil }],
+      ['relay', 'K1', 160, 40, 0, { Rcoil: 200, Ipull: 0.04, L: 0.5 }],
+      ['vdc', 'VS', 360, 0, 0, { V: 5 }],
+      ['resistor', 'RNO', 500, -40, 90, { R: 1e3 }],
+      ['resistor', 'RNC', 580, -40, 90, { R: 1e3 }],
+      ['label', 'VNO', 480, 20, 0, { text: 'VNO' }],
+      ['label', 'VNC', 560, 20, 0, { text: 'VNC' }],
+      ['ground', 'G1', 20, 120],
+      ['ground', 'G2', 360, 120],
+    ], [
+      ['VC.p', 'K1.c1'], ['K1.c2', 'G1.g'], ['VC.n', 'G1.g'],
+      ['VS.p', 'K1.com'], ['VS.n', 'G2.g'],
+      ['K1.no', 'RNO.a'], ['RNO.b', 'G2.g'], ['VNO.p', 'K1.no'],
+      ['K1.nc', 'RNC.a'], ['RNC.b', 'G2.g'], ['VNC.p', 'K1.nc'],
+    ]);
+    const en = (s: ReturnType<typeof build>) => (s.sim.byId.get('K1') as unknown as { energized: boolean }).energized;
+    // boşta: bobinde akım yok → COM, NC'ye bağlı
+    const off = build(mk(0));
+    expect(en(off)).toBe(false);
+    expect(off.vOf('VNC')).toBeGreaterThan(4.9);
+    expect(off.vOf('VNO')).toBeLessThan(0.1);
+    // bobin sürülü (12 V/200 Ω = 60 mA > 40 mA): birkaç ms sonra çeker
+    const on = build(mk(12));
+    for (let i = 0; i < 300; i++) on.sim.step(1e-4); // 30 ms
+    expect(en(on)).toBe(true);
+    expect(on.vOf('VNO')).toBeGreaterThan(4.9);
+    expect(on.vOf('VNC')).toBeLessThan(0.1);
+  });
 });
