@@ -19,6 +19,35 @@ import { LIBRARY } from '../circuit/library';
 const nodeTypes: NodeTypes = { comp: ComponentNode };
 const edgeTypes: EdgeTypes = { wire: WireEdge };
 
+/** Tuval üstü araç çubuğu: Geri al / Yinele / Sil — dokunmatikte (klavyesiz) de erişilebilir olsun */
+function CanvasToolbar() {
+  const canUndo = useCircuit((s) => s.past.length > 0);
+  const canRedo = useCircuit((s) => s.future.length > 0);
+  const hasSel = useCircuit((s) => !!s.selectedId);
+  return (
+    <div className="canvas-toolbar">
+      <button className="ctbtn" onClick={() => useCircuit.getState().undo()} disabled={!canUndo} title="Geri al (Ctrl+Z)" aria-label="Geri al">
+        ↶
+      </button>
+      <button className="ctbtn" onClick={() => useCircuit.getState().redo()} disabled={!canRedo} title="Yinele (Ctrl+Y)" aria-label="Yinele">
+        ↷
+      </button>
+      <button
+        className="ctbtn danger"
+        onClick={() => {
+          const id = useCircuit.getState().selectedId;
+          if (id) useCircuit.getState().remove([id]);
+        }}
+        disabled={!hasSel}
+        title="Seçili elemanı sil (Del)"
+        aria-label="Seçili elemanı sil"
+      >
+        🗑
+      </button>
+    </div>
+  );
+}
+
 export function CanvasView() {
   const nodes = useCircuit((s) => s.nodes);
   const edges = useCircuit((s) => s.edges);
@@ -88,6 +117,7 @@ export function CanvasView() {
 
   return (
     <div className="canvas-wrap" ref={wrap} onDragOver={onDragOver} onDrop={onDrop}>
+      <CanvasToolbar />
       <ReactFlow
         nodes={nodes}
         edges={edges}

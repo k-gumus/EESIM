@@ -42,6 +42,9 @@ function loadViews(): Views {
 /** Telefon düzeni (styles.css'teki 760px sınırıyla aynı) */
 export const isPhone = () => typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches;
 
+/** Palet/sağ panel çekmece olduğu dar ekran (tablet + geniş telefon; styles.css'teki 1100px sınırı) */
+export const isNarrow = () => typeof matchMedia === 'function' && matchMedia('(max-width: 1100px)').matches;
+
 export const useUI = create<UIState>((set, get) => ({
   views: loadViews(),
   tab: 'lab',

@@ -805,7 +805,9 @@ kbd {
 }
 
 /* ─────────── Sağ panel ─────────── */
-.right {
+/* aside.right: React Flow panellerinin de "right" yardımcı sınıfı var (.react-flow__attribution.bottom.right
+   gibi); bu yüzden paneli aside'a daraltıyoruz ki onların konumunu bozmayalım. */
+aside.right {
   display: flex;
   flex-direction: column;
   background: var(--panel);
@@ -1869,17 +1871,55 @@ kbd {
   }
 }
 @media (max-width: 1100px) {
+  /* Tablet ve geniş telefon (bazı uygulama-içi tarayıcılar ~980px bildirir): palet ve sağ panel
+     çekmece olur, tuval tam genişlik kalır. Böylece palet açılıp kapanır ve sağ panel devreyi örtmez. */
   .main,
   .app.no-right .main {
-    grid-template-columns: 170px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
-  .right {
+  .topbar {
+    position: relative;
+    z-index: 97; /* çekmece arka-perdelerinin (95) üstünde kalsın ki 🧩 ve ☰ tıklanabilsin */
+  }
+  .pal-toggle {
+    display: inline-block;
+  }
+  .palette {
+    position: fixed;
+    top: 54px;
+    bottom: 0;
+    left: 0;
+    width: min(290px, 86vw);
+    z-index: 96;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.5);
+  }
+  .app.pal-open .palette {
+    transform: none;
+  }
+  .palette-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .pal-close {
+    display: inline-block;
+  }
+  .pal-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 95;
+  }
+  aside.right {
     position: fixed;
     right: 0;
     top: 54px;
     bottom: 0;
     width: min(352px, 92vw);
-    z-index: 50;
+    z-index: 96;
     box-shadow: -20px 0 40px rgba(0, 0, 0, 0.5);
   }
   .views .toggle-btn {
@@ -3032,6 +3072,72 @@ kbd {
 .tabs .tabs-close {
   display: none;
 }
+
+/* Tuval üstü araç çubuğu: Geri al / Yinele / Sil (klavyesiz dokunmatik için de) */
+.canvas-toolbar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  background: rgba(14, 21, 40, 0.82);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  padding: 4px;
+  backdrop-filter: blur(4px);
+}
+.ctbtn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-content: center;
+  background: var(--panel3);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.ctbtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: #1f2c50;
+}
+.ctbtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ctbtn.danger:hover:not(:disabled) {
+  border-color: var(--err);
+  color: #ffb4b4;
+}
+@media (pointer: coarse) {
+  .ctbtn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}
+
+/* ≤1100px: palet/sağ panel çekmeceye dönünce bu düğme ve perdeler görünür olmalı.
+   Bu blok temel '.pal-toggle … { display: none }' kuralından SONRA gelir ki onu geçersiz kılabilsin
+   (erken ≤1100 bloğu dosyada o temel kuraldan ÖNCE olduğu için display'i orada ayarlamak yetmiyordu). */
+@media (max-width: 1100px) {
+  .pal-toggle,
+  .pal-close {
+    display: inline-block;
+  }
+  .pal-backdrop {
+    display: block;
+  }
+  /* Sağ paneli (Deney/Özellikler/Tepecan) kapatmak için görünür ✕ — tablet bandında da çıksın */
+  .tabs .tabs-close {
+    display: block;
+    flex: none;
+    width: 38px;
+  }
+}
 .cop-chips,
 .cop-input {
   flex: none;
@@ -3170,7 +3276,7 @@ kbd {
     z-index: 95;
   }
 
-  .right {
+  aside.right {
     top: auto;
     left: 0;
     right: 0;
@@ -3221,7 +3327,7 @@ kbd {
 }
 /* Telefonda klavye açıkken (görünen alan kısalır): panel tüm ekranı kaplasın, sohbete yer kalsın */
 @media (max-width: 760px) and (max-height: 560px) {
-  .right {
+  aside.right {
     top: 0;
     height: auto;
     border-radius: 0;
