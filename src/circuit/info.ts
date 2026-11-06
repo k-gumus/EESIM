@@ -99,6 +99,13 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['2,5 V referans (REF’i katoda bağla)', '5 V çıkış: R1 = R2', 'Besleme/geri besleme referansı, aşırı gerilim koruması'],
     caution: ['Katottan en az ~1 mA geçmeli: seri direnci buna göre seç.', 'Hızlı yük değişimlerinde kararlılık için katot–çıkışa küçük bir kondansatör gerekebilir.'],
   },
+  opto: {
+    what: 'Opto-kuplör (optoizolatör): giriş ile çıkışı ışıkla bağlayarak elektriksel olarak yalıtır. Gürültülü/yüksek gerilimli tarafı hassas mantık devresinden ayırmak ya da mikrodenetleyiciyle şebeke/motor sürmek için kullanılır.',
+    how: 'Giriş LED’i akımla orantılı ışık yayar; bu ışık çıkıştaki foto-transistörü iletime geçirir. Arada metal yoktur, yalnızca ışık geçer — yüzlerce/binlerce volt yalıtım sağlanır. I_çıkış ≈ CTR·I_LED.',
+    formula: 'I_C ≈ CTR·I_LED   ·   CTR = I_C/I_LED (tipik %20–%300)',
+    typical: ['PC817, 4N35, TLP521', 'Giriş LED akımı: 5–20 mA (seri dirençle ayarla)', 'Dijital sinyal yalıtımı, SMPS geri beslemesi (TL431 ile), katı-hal anahtarlama'],
+    caution: ['Giriş LED’ine mutlaka seri direnç koy (doğrudan sürme LED’i yakar).', 'CTR yaşlanma ve sıcaklıkla düşer; tasarımda pay bırak.', 'Foto-transistörlü çıkış yavaştır (kHz mertebesi); hızlı veri için özel optokuplör gerekir.'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',

@@ -1056,6 +1056,57 @@ class TL431 extends Device {
   }
 }
 
+/** Opto-kuplör: giriş LED'i, çıkış foto-transistörünü I_ce = CTR·I_LED·sat(V_ce) ile sürer; iki taraf galvanik yalıtımlı. */
+class OptoCoupler extends Device {
+  CTR: number;
+  vt = 2 * VT;
+  Is: number;
+  vcrit: number;
+  vd = 0;
+  Vsat = 0.15;
+  constructor(el: CompiledElement) {
+    super(el);
+    this.nonlinear = true;
+    this.CTR = Math.max(0.01, num(el.params.CTR, 0.5));
+    this.Is = 0.01 / Math.exp(1.2 / this.vt); // IR LED, Vf ≈ 1,2 V
+    this.vcrit = this.vt * Math.log(this.vt / (Math.SQRT2 * this.Is));
+  }
+  private out(Id: number, vce: number) {
+    const th = Math.tanh(vce / this.Vsat - 2); // V_ce ~0,3–0,6 V'ta doyumdan çıkar
+    const sat = 0.5 * (1 + th);
+    return { Ice: this.CTR * Id * sat, dVce: (this.CTR * Id * 0.5 * (1 - th * th)) / this.Vsat, dId: this.CTR * sat };
+  }
+  stamp(c: Ctx) {
+    const [a, k, col, em] = this.el.nets;
+    const x = c.x;
+    const Vk = V(x, k);
+    const vraw = V(x, a) - Vk;
+    const v = pnjlim(vraw, this.vd, this.vt, this.vcrit);
+    if (Math.abs(v - vraw) > 1e-12) c.limited = true;
+    this.vd = v;
+    const [ex, dex] = sexp(v / this.vt);
+    const Id = this.Is * (ex - 1);
+    const gd = (this.Is / this.vt) * dex + c.gmin;
+    stampNL(c, [a, k], [Id + c.gmin * v, -(Id + c.gmin * v)], [[gd, -gd], [-gd, gd]], [Vk + v, Vk]);
+    const Vc = V(x, col);
+    const Ve = V(x, em);
+    const { Ice, dVce, dId } = this.out(Id, Vc - Ve);
+    const dA = dId * gd;
+    stampNL(c, [a, k, col, em], [0, 0, Ice, -Ice], [[0, 0, 0, 0], [0, 0, 0, 0], [dA, -dA, dVce, -dVce], [-dA, dA, -dVce, dVce]], [V(x, a), Vk, Vc, Ve]);
+  }
+  currents(x: Float64Array) {
+    const [a, k, col, em] = this.el.nets;
+    const [ex] = sexp((V(x, a) - V(x, k)) / this.vt);
+    const Id = this.Is * (ex - 1);
+    const { Ice } = this.out(Id, V(x, col) - V(x, em));
+    return [Id, -Id, Ice, -Ice];
+  }
+  probe(x: Float64Array) {
+    const [ex] = sexp((V(x, this.el.nets[0]) - V(x, this.el.nets[1])) / this.vt);
+    return { iled: this.Is * (ex - 1) };
+  }
+}
+
 // ── Lojik (5 V CMOS benzeri, davranışsal) ──
 const VDD = 5;
 const VTH = 2.5;
@@ -1318,6 +1369,8 @@ function makeDevice(el: CompiledElement): Device | null {
       return new Regulator(el);
     case 'tl431':
       return new TL431(el);
+    case 'opto':
+      return new OptoCoupler(el);
     case 'and':
     case 'or':
     case 'not':

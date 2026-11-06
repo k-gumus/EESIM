@@ -771,6 +771,19 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'to92', onBoard: true },
     description: 'Ayarlanabilir şönt gerilim referansı. REF ucu dahili 2,495 V’a ulaşınca katottan anoda akım çeker; dışarıdaki R1–R2 bölücüsüyle istenen çıkış gerilimine (V = 2,495·(1+R1/R2)) regüle eder.',
   },
+  opto: {
+    type: 'opto', label: 'Opto-kuplör', short: 'OK', prefix: 'OK', category: 'Entegre Devreler',
+    w: 80, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'a', label: 'A', x: 0, y: 20 },
+      { id: 'k', label: 'K', x: 0, y: 60 },
+      { id: 'c', label: 'C', x: 80, y: 20 },
+      { id: 'e', label: 'E', x: 80, y: 60 },
+    ],
+    params: [{ key: 'CTR', label: 'Akım aktarım oranı (CTR)', kind: 'number', default: 0.5, min: 0.01, max: 5 }],
+    physical: { body: 'dip8', onBoard: true },
+    description: 'Opto-kuplör (PC817 gibi): giriş LED’i ışıkla çıkış foto-transistörünü sürer; iki taraf galvanik olarak yalıtılmıştır. I_çıkış ≈ CTR·I_LED. Gürültülü/yüksek gerilimli tarafı mantık devresinden ayırır.',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
@@ -778,7 +791,7 @@ export const PALETTE_ORDER: CompType[] = [
   'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct', 'varistor', 'fuse',
   'switch', 'button', 'lamp', 'buzzer', 'ldr', 'ntc', 'ptc',
   'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'jfet',
-  'opamp', 'timer555', 'reg78', 'tl431',
+  'opamp', 'timer555', 'reg78', 'tl431', 'opto',
   'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',
   'multimeter', 'scope', 'ground', 'label',
 ];

@@ -643,4 +643,8 @@ export const EN: Record<string, string> = {
   'Gerilim Referansı (TL431)': 'Voltage Reference (TL431)',
   'Ayarlanabilir şönt gerilim referansı. REF ucu dahili 2,495 V’a ulaşınca katottan anoda akım çeker; dışarıdaki R1–R2 bölücüsüyle istenen çıkış gerilimine (V = 2,495·(1+R1/R2)) regüle eder.':
     'An adjustable shunt voltage reference. When the REF pin reaches the internal 2.495 V it sinks current from cathode to anode; an external R1–R2 divider sets the regulated output (V = 2.495·(1+R1/R2)).',
+  'Opto-kuplör': 'Optocoupler',
+  'Akım aktarım oranı (CTR)': 'Current transfer ratio (CTR)',
+  'Opto-kuplör (PC817 gibi): giriş LED’i ışıkla çıkış foto-transistörünü sürer; iki taraf galvanik olarak yalıtılmıştır. I_çıkış ≈ CTR·I_LED. Gürültülü/yüksek gerilimli tarafı mantık devresinden ayırır.':
+    'Optocoupler (e.g. PC817): the input LED drives the output phototransistor via light; the two sides are galvanically isolated. I_out ≈ CTR·I_LED. Isolates a noisy / high-voltage side from the logic.',
 };

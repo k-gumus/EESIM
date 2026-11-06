@@ -134,4 +134,28 @@ describe('yeni bileşenler', () => {
     expect(v12).toBeLessThan(5.2);
     expect(Math.abs(v15 - v12)).toBeLessThan(0.1); // hat regülasyonu
   });
+
+  it('opto-kuplör: LED sürülünce çıkış iletir (≈ CTR·I_LED), sönükken kesim', () => {
+    const mk = (vin: number) => doc('opto', [
+      ['vdc', 'V1', 20, 0, 0, { V: vin }],
+      ['resistor', 'R1', 140, -40, 90, { R: 330 }],
+      ['vdc', 'V2', 360, 0, 0, { V: 5 }],
+      ['resistor', 'RL', 480, -40, 90, { R: 330 }],
+      ['opto', 'OK1', 240, 60, 0, { CTR: 0.5 }],
+      ['label', 'VC', 540, 20, 0, { text: 'VC' }],
+      ['ground', 'G1', 20, 120],
+      ['ground', 'G2', 360, 120],
+    ], [
+      ['V1.p', 'R1.a'], ['R1.b', 'OK1.a'], ['OK1.k', 'G1.g'], ['V1.n', 'G1.g'],
+      ['V2.p', 'RL.a'], ['RL.b', 'OK1.c'], ['VC.p', 'OK1.c'], ['OK1.e', 'G2.g'], ['V2.n', 'G2.g'],
+    ]);
+    const on = build(mk(5)); // I_LED ≈ (5−1,2)/330 ≈ 11,5 mA → I_C ≈ 5,75 mA
+    const ic = Math.abs(on.sim.currentsOf('OK1')![2]);
+    expect(ic).toBeGreaterThan(0.004);
+    expect(ic).toBeLessThan(0.0065);
+    expect(on.vOf('VC')).toBeLessThan(3.6); // kolektör aşağı çekildi
+    const off = build(mk(0));
+    expect(Math.abs(off.sim.currentsOf('OK1')![2])).toBeLessThan(5e-4);
+    expect(off.vOf('VC')).toBeGreaterThan(4.5); // kesim: kolektör ≈ besleme
+  });
 });

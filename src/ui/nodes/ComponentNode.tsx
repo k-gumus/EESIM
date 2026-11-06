@@ -46,6 +46,7 @@ function valueText(d: CompData): string {
     case 'opamp': return String(p.model ?? '');
     case 'reg78': return `78${String(n('Vout')).padStart(2, '0')}`;
     case 'tl431': return '2,5 V';
+    case 'opto': return `CTR ${String(n('CTR')).replace('.', ',')}`;
     default: return '';
   }
 }
@@ -132,6 +133,9 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         break;
       case 'tl431':
         readout = `REF ${formatSI(live.probe.vref ?? 0, 'V')}`;
+        break;
+      case 'opto':
+        readout = `Iç ${formatCurrent(Math.abs(I[2] ?? 0))}`;
         break;
       case 'timer555':
       case 'dff':

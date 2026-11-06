@@ -132,6 +132,22 @@ export function Symbol({ type, params, live }: SymProps) {
           <path d="M33 40 H47" strokeWidth={2.4} />
         </g>
       );
+    case 'opto':
+      return (
+        <g {...S}>
+          <path d="M0 20 H16 V30 M0 60 H16 V44" />
+          <path d="M10 30 H22 L16 44 Z" fill="currentColor" fillOpacity={0.2} />
+          <path d="M10 44 H22" strokeWidth={2} />
+          <path d="M24 28 l7 -4 M27 24 h4 v4" strokeWidth={1} />
+          <path d="M24 38 l7 -4 M27 34 h4 v4" strokeWidth={1} />
+          <path d="M40 8 V72" strokeDasharray="3 4" strokeWidth={1} opacity={0.55} />
+          <circle cx={60} cy={40} r={16} strokeWidth={1.2} opacity={0.5} />
+          <path d="M80 20 V28 L58 34" />
+          <path d="M80 60 V52 L58 46" />
+          <path d="M58 28 V52" strokeWidth={3} />
+          <path d="M60 46 l-5 3 l7 2" fill="currentColor" stroke="none" />
+        </g>
+      );
     case 'jfet':
       return (
         <g {...S}>

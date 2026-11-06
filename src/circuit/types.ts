@@ -49,7 +49,8 @@ export type CompType =
   | 'varistor'
   | 'fuse'
   | 'jfet'
-  | 'tl431';
+  | 'tl431'
+  | 'opto';
 
 export type ParamValue = number | string | boolean;
 
