@@ -1020,6 +1020,42 @@ class Regulator extends Device {
   }
 }
 
+/** TL431 ayarlanabilir şönt referans (davranışsal): REF − anot > 2,495 V iken katottan anoda yüksek kazançla akım çeker. */
+class TL431 extends Device {
+  Vr = 2.495;
+  Imax = 0.1;
+  a = 400;
+  Gka = 1e-5;
+  constructor(el: CompiledElement) {
+    super(el);
+    this.nonlinear = true;
+  }
+  private sink(Vref: number, Va: number, Vk: number) {
+    const z = this.a * (Vref - Va - this.Vr);
+    const s = z > 40 ? 1 : z < -40 ? 0 : 1 / (1 + Math.exp(-z));
+    const ds = z > 40 || z < -40 ? 0 : s * (1 - s);
+    const dRef = this.Imax * this.a * ds;
+    return { Ika: this.Imax * s + this.Gka * (Vk - Va), dRef, dVk: this.Gka, dVa: -dRef - this.Gka };
+  }
+  stamp(c: Ctx) {
+    const [ref, anode, cathode] = this.el.nets;
+    addG(c, ref, anode, 1e-9); // REF ucu yüksek empedans
+    const Vref = V(c.x, ref);
+    const Va = V(c.x, anode);
+    const Vk = V(c.x, cathode);
+    const { Ika, dRef, dVk, dVa } = this.sink(Vref, Va, Vk);
+    stampNL(c, [ref, anode, cathode], [0, -Ika, Ika], [[0, 0, 0], [-dRef, -dVa, -dVk], [dRef, dVa, dVk]], [Vref, Va, Vk]);
+  }
+  currents(x: Float64Array) {
+    const [ref, anode, cathode] = this.el.nets;
+    const { Ika } = this.sink(V(x, ref), V(x, anode), V(x, cathode));
+    return [0, -Ika, Ika];
+  }
+  probe(x: Float64Array) {
+    return { vref: V(x, this.el.nets[0]) - V(x, this.el.nets[1]) };
+  }
+}
+
 // ── Lojik (5 V CMOS benzeri, davranışsal) ──
 const VDD = 5;
 const VTH = 2.5;
@@ -1280,6 +1316,8 @@ function makeDevice(el: CompiledElement): Device | null {
       return new OpAmp(el);
     case 'reg78':
       return new Regulator(el);
+    case 'tl431':
+      return new TL431(el);
     case 'and':
     case 'or':
     case 'not':

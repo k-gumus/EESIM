@@ -123,6 +123,15 @@ export function Symbol({ type, params, live }: SymProps) {
         </g>
       );
     }
+    case 'tl431':
+      return (
+        <g {...S}>
+          <path d="M40 0 V18 M40 62 V80 M0 40 H26" />
+          <rect x={26} y={18} width={26} height={44} rx={4} fill="none" />
+          <path d="M33 44 H47 L40 54 Z" fill="currentColor" fillOpacity={0.2} />
+          <path d="M33 40 H47" strokeWidth={2.4} />
+        </g>
+      );
     case 'jfet':
       return (
         <g {...S}>

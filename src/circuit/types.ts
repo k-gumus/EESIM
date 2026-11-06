@@ -48,7 +48,8 @@ export type CompType =
   | 'ptc'
   | 'varistor'
   | 'fuse'
-  | 'jfet';
+  | 'jfet'
+  | 'tl431';
 
 export type ParamValue = number | string | boolean;
 

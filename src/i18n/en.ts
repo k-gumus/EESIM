@@ -640,4 +640,7 @@ export const EN: Record<string, string> = {
   'Kısılma gerilimi V_P': 'Pinch-off voltage V_P',
   'Jonksiyon FET (N-kanal, deplesyon): V_GS = 0 iken en çok iletir, negatif V_GS ile kısılır. Yüksek giriş empedanslı yükselteç. I_D = I_DSS·(1 − V_GS/V_P)².':
     'Junction FET (N-channel, depletion): conducts most at V_GS = 0 and pinches off as V_GS goes negative. High input-impedance amplifier. I_D = I_DSS·(1 − V_GS/V_P)².',
+  'Gerilim Referansı (TL431)': 'Voltage Reference (TL431)',
+  'Ayarlanabilir şönt gerilim referansı. REF ucu dahili 2,495 V’a ulaşınca katottan anoda akım çeker; dışarıdaki R1–R2 bölücüsüyle istenen çıkış gerilimine (V = 2,495·(1+R1/R2)) regüle eder.':
+    'An adjustable shunt voltage reference. When the REF pin reaches the internal 2.495 V it sinks current from cathode to anode; an external R1–R2 divider sets the regulated output (V = 2.495·(1+R1/R2)).',
 };

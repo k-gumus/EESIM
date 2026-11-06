@@ -112,4 +112,26 @@ describe('yeni bileşenler', () => {
     expect(Math.abs(id2)).toBeGreaterThan(0.002);
     expect(Math.abs(id2)).toBeLessThan(0.0032);
   });
+
+  it('TL431: şönt regülatör ≈ 5 V; giriş değişse de çıkış sabit', () => {
+    const mk = (Vin: number) => doc('tl431', [
+      ['vdc', 'V1', 100, 0, 0, { V: Vin }],
+      ['resistor', 'RS', 240, -40, 90, { R: 1000 }],
+      ['tl431', 'U1', 220, 60, 0, {}],
+      ['resistor', 'R1', 360, 20, 90, { R: 10e3 }],
+      ['resistor', 'R2', 360, 150, 90, { R: 10e3 }],
+      ['label', 'VO', 300, -20, 0, { text: 'VO' }],
+      ['ground', 'G1', 100, 120],
+      ['ground', 'G2', 380, 250],
+    ], [
+      ['V1.p', 'RS.a'], ['RS.b', 'U1.k'], ['VO.p', 'U1.k'],
+      ['U1.k', 'R1.a'], ['R1.b', 'U1.ref'], ['U1.ref', 'R2.a'], ['R2.b', 'G2.g'],
+      ['U1.a', 'G2.g'], ['V1.n', 'G1.g'],
+    ]);
+    const v12 = build(mk(12)).vOf('VO');
+    const v15 = build(mk(15)).vOf('VO');
+    expect(v12).toBeGreaterThan(4.8); // 2,495·(1+10k/10k) ≈ 4,99 V
+    expect(v12).toBeLessThan(5.2);
+    expect(Math.abs(v15 - v12)).toBeLessThan(0.1); // hat regülasyonu
+  });
 });

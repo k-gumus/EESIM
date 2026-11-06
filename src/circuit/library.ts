@@ -759,6 +759,18 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'to92', onBoard: true },
     description: 'Jonksiyon FET (N-kanal, deplesyon): V_GS = 0 iken en çok iletir, negatif V_GS ile kısılır. Yüksek giriş empedanslı yükselteç. I_D = I_DSS·(1 − V_GS/V_P)².',
   },
+  tl431: {
+    type: 'tl431', label: 'Gerilim Referansı (TL431)', short: 'U', prefix: 'U', category: 'Entegre Devreler',
+    w: 60, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'ref', label: 'REF', x: 0, y: 40 },
+      { id: 'a', label: 'A', x: 40, y: 80 },
+      { id: 'k', label: 'K', x: 40, y: 0 },
+    ],
+    params: [],
+    physical: { body: 'to92', onBoard: true },
+    description: 'Ayarlanabilir şönt gerilim referansı. REF ucu dahili 2,495 V’a ulaşınca katottan anoda akım çeker; dışarıdaki R1–R2 bölücüsüyle istenen çıkış gerilimine (V = 2,495·(1+R1/R2)) regüle eder.',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
@@ -766,7 +778,7 @@ export const PALETTE_ORDER: CompType[] = [
   'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct', 'varistor', 'fuse',
   'switch', 'button', 'lamp', 'buzzer', 'ldr', 'ntc', 'ptc',
   'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'jfet',
-  'opamp', 'timer555', 'reg78',
+  'opamp', 'timer555', 'reg78', 'tl431',
   'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',
   'multimeter', 'scope', 'ground', 'label',
 ];

@@ -45,6 +45,7 @@ function valueText(d: CompData): string {
     case 'buzzer': return formatSI(n('R'), 'Ω');
     case 'opamp': return String(p.model ?? '');
     case 'reg78': return `78${String(n('Vout')).padStart(2, '0')}`;
+    case 'tl431': return '2,5 V';
     default: return '';
   }
 }
@@ -128,6 +129,9 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         break;
       case 'opamp':
         readout = `Vo ${formatSI(live.probe.vo ?? 0, 'V')}${live.probe.sat ? ' · DOYUM' : ''}`;
+        break;
+      case 'tl431':
+        readout = `REF ${formatSI(live.probe.vref ?? 0, 'V')}`;
         break;
       case 'timer555':
       case 'dff':

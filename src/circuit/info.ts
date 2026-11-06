@@ -92,6 +92,13 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['2N5457: I_DSS ≈ 1–5 mA, V_P ≈ −0,5…−6 V', 'J201, BF245', 'Ses ön yükselteci, tampon, gerilim kontrollü direnç (VCR)'],
     caution: ['N-kanal JFET’te V_GS sıfır ya da negatif olmalı; gate’i 0,6 V üstüne çıkarma (jonksiyon iletir).', 'I_DSS ve V_P parça parça çok değişir; tasarımı buna göre yap.'],
   },
+  tl431: {
+    what: 'Ayarlanabilir şönt (paralel) gerilim referansı. İki dirençle 2,5 V’tan besleme gerilimine kadar hassas bir referans/regülatör kurulur. Güç kaynakları, şarj devreleri ve geri besleme hatlarında çok yaygın.',
+    how: 'İçinde 2,495 V’luk bir referans ve bir karşılaştırıcı vardır. REF ucu bu değeri aşınca katot–anot arasından akım çeker; R1–R2 bölücüsü çıkışı örnekler ve denge V_çıkış = 2,495·(1+R1/R2)’de kurulur.',
+    formula: 'V_çıkış = 2,495·(1 + R1/R2)   ·   I_katot(min) ≈ 1 mA',
+    typical: ['2,5 V referans (REF’i katoda bağla)', '5 V çıkış: R1 = R2', 'Besleme/geri besleme referansı, aşırı gerilim koruması'],
+    caution: ['Katottan en az ~1 mA geçmeli: seri direnci buna göre seç.', 'Hızlı yük değişimlerinde kararlılık için katot–çıkışa küçük bir kondansatör gerekebilir.'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',
