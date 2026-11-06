@@ -7,7 +7,8 @@ export const onRequest = async (ctx: Ctx): Promise<Response> => {
   try {
     return await ctx.next();
   } catch (e) {
+    // Ayrıntı yalnızca Worker günlüğüne yazılır; istemciye iç hata metni (SQL, yığın izi) gönderilmez
     console.error(e);
-    return err('Sunucu hatası: ' + (e instanceof Error ? e.message : String(e)), 500);
+    return err('Sunucuda beklenmeyen bir hata oluştu. Lütfen tekrar dene.', 500);
   }
 };

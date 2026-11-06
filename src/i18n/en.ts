@@ -114,6 +114,9 @@ export const EN: Record<string, string> = {
   // ── Sunucu mesajları (/api) ──
   'E-posta ya da şifre hatalı.': 'Wrong e-mail or password.',
   'Bu hesap Google ile açılmış. “Google ile giriş yap”ı kullan.': 'This account was created with Google. Use “Sign in with Google”.',
+  'E-posta ya da şifre hatalı. (Google ile kayıt olduysan “Google ile giriş yap”ı kullan.)': 'Wrong e-mail or password. (If you signed up with Google, use “Sign in with Google”.)',
+  'Bu hesap için çok fazla giriş denemesi yapıldı. Güvenliğin için bir saat sonra tekrar dene.': 'Too many sign-in attempts for this account. For your security, try again in an hour.',
+  'Sunucuda beklenmeyen bir hata oluştu. Lütfen tekrar dene.': 'Something went wrong on the server. Please try again.',
   'Çok fazla giriş denemesi yaptın. Lütfen birkaç dakika sonra tekrar dene.': 'Too many sign-in attempts. Please try again in a few minutes.',
   'Çok fazla kayıt denemesi yaptın. Lütfen biraz sonra tekrar dene.': 'Too many sign-up attempts. Please try again a little later.',
   'Geçersiz istek.': 'Invalid request.',

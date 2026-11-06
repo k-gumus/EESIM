@@ -37,7 +37,7 @@ export const SESSION_COOKIE = 'sid';
 export const SESSION_DAYS = 30;
 
 export const json = (data: unknown, status = 200, headers: HeadersInit = {}) =>
-  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers } });
+  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', ...headers } });
 
 export const err = (message: string, status = 400) => json({ error: message }, status);
 
@@ -92,6 +92,17 @@ export async function verifyPassword(password: string, stored: string): Promise<
   let diff = 0;
   for (let i = 0; i < h.length; i++) diff |= h[i] ^ ref[i];
   return diff === 0;
+}
+
+/**
+ * Kullanıcı bulunamadığında da aynı süre harcansın diye sahte bir PBKDF2 doğrulaması yap.
+ * Böylece giriş yanıtının süresinden bir e-postanın kayıtlı olup olmadığı anlaşılamaz (kullanıcı sayımı).
+ */
+// Sabit (önceden hesaplanmış) özet: istek başına yalnızca bir PBKDF2 çalışsın (Workers CPU sınırı)
+const DUMMY_HASH = 'pbkdf2$100000$enscCqEHFxVRh3MuWBv+Ew==$98BgbBdtavpBjD6HQfCwysYZLaTfH6pBGM4VpilAaIk=';
+export async function dummyVerify(password: string): Promise<false> {
+  await verifyPassword(password, DUMMY_HASH);
+  return false;
 }
 
 export const publicUser = (u: UserRow) => ({ id: u.id, name: u.name, email: u.email, avatar: u.avatar, premium: !!u.premium });
