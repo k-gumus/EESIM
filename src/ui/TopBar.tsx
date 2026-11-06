@@ -266,6 +266,9 @@ function SimTools() {
       <button className={`toggle-btn ${views.three ? 'on' : ''}`} onClick={() => setViews({ three: !views.three })} data-tour="three">
         🧊 <span className="tl">{t('3D Görünüm')}</span>
       </button>
+      <button className="toggle-btn" onClick={() => useUI.getState().setPcb(true)} title={t('PCB ve şema görünümü (pop-up)')}>
+        🔲 <span className="tl">{t('PCB')}</span>
+      </button>
       <button className={`toggle-btn ${views.scope ? 'on' : ''}`} onClick={() => setViews({ scope: !views.scope })} data-tour="scope">
         〰 <span className="tl">{t('Osiloskop')}</span>
       </button>
