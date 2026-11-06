@@ -32,8 +32,10 @@ AI_DAILY_FREE = "20"
 AI_DAILY_PREMIUM = "200"
 # Tepecan'ın modeli. Cloudflare eski modelleri zamanla emekliye ayırır (llama-3.1-8b: 30.05.2026);
 # bu model çalışmazsa functions/api/ask.ts içindeki yedek listeden sıradaki denenir.
-# Güncel liste: https://developers.cloudflare.com/workers-ai/models/
-AI_MODEL = "@cf/google/gemma-4-26b-a4b-it"
+# Güncel liste: https://developers.cloudflare.com/workers-ai/models/  — ID'yi DEĞİŞTİRİRKEN buradan kesin değeri doğrula (uydurma isim = sessizce yedeğe düşer).
+# Qwen 3.8 27B: güçlü çok dilli + talimat takibi + yapılandırılmış JSON. Akıl yürütme modeli olduğu için
+# "düşünme" ask.ts'te kapatılır (öğrenci beklemesin); gerekirse açıp cevap kalitesini artırabiliriz.
+AI_MODEL = "@cf/qwen/qwen3.8-27b"
 # Premium kullanıcılar için daha büyük (ve daha çok "neuron" harcayan) model:
 AI_MODEL_PREMIUM = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 
