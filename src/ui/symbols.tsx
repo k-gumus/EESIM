@@ -154,6 +154,18 @@ export function Symbol({ type, params, live }: SymProps) {
           <text x={40} y={20} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={700} fill="currentColor" stroke="none">M</text>
         </g>
       );
+    case 'seg7':
+      return (
+        <g stroke="currentColor" strokeWidth={7} strokeLinecap="round" fill="none">
+          <line x1={38} y1={18} x2={62} y2={18} />
+          <line x1={66} y1={23} x2={66} y2={47} />
+          <line x1={66} y1={53} x2={66} y2={77} />
+          <line x1={38} y1={82} x2={62} y2={82} />
+          <line x1={34} y1={53} x2={34} y2={77} />
+          <line x1={34} y1={23} x2={34} y2={47} />
+          <line x1={38} y1={50} x2={62} y2={50} />
+        </g>
+      );
     case 'opto':
       return (
         <g {...S}>

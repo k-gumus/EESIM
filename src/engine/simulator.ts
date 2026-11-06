@@ -1433,6 +1433,7 @@ function makeDevice(el: CompiledElement): Device | null {
       return String(p.mode).endsWith('A') ? new Ammeter(el) : new Passive(el);
     case 'scope':
     case 'logicprobe':
+    case 'seg7':
       return new Passive(el);
     case 'lamp':
     case 'ldr':

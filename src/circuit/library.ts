@@ -815,6 +815,23 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'none', onBoard: true },
     description: 'Elektromekanik röle: bobinden yeterli akım geçince (çekme akımı) elektromıknatıs kontağı çeker, COM ucu NC’den NO’ya geçer. Bobin endüktif olduğundan yanına serbest geçiş (flyback) diyodu şarttır.',
   },
+  seg7: {
+    type: 'seg7', label: '7-Segment Display', short: '7SEG', prefix: 'DS', category: 'Dijital',
+    w: 100, h: 100, rotatable: false, electrical: true,
+    pins: [
+      { id: 'a', label: 'a', x: 0, y: 12 },
+      { id: 'b', label: 'b', x: 0, y: 32 },
+      { id: 'c', label: 'c', x: 0, y: 52 },
+      { id: 'd', label: 'd', x: 0, y: 72 },
+      { id: 'e', label: 'e', x: 100, y: 12 },
+      { id: 'f', label: 'f', x: 100, y: 32 },
+      { id: 'g', label: 'g', x: 100, y: 52 },
+      { id: 'com', label: 'COM', x: 100, y: 72 },
+    ],
+    params: [],
+    physical: { body: 'none', onBoard: true },
+    description: 'Ortak katotlu 7-segment gösterge: a–g girişlerine uygulanan yüksek seviye (COM’a göre) ilgili segmenti yakar. BCD→7-segment kod çözücüyle rakam gösterir. (Bu modelde yüksek empedanslı okur, akım çekmez.)',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
@@ -823,7 +840,7 @@ export const PALETTE_ORDER: CompType[] = [
   'switch', 'relay', 'button', 'lamp', 'buzzer', 'motor', 'ldr', 'ntc', 'ptc',
   'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'jfet',
   'opamp', 'timer555', 'reg78', 'tl431', 'opto',
-  'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',
+  'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff', 'seg7',
   'multimeter', 'scope', 'ground', 'label',
 ];
 

@@ -156,6 +156,14 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
   const isScope = data.type === 'scope';
   const isLabel = data.type === 'label';
   const isGround = data.type === 'ground';
+  const isSeg = data.type === 'seg7';
+  const segState = isSeg
+    ? ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((s) => {
+        const vs = netV[pinNet?.[`${id}:${s}`] ?? -1] ?? 0;
+        const vc = netV[pinNet?.[`${id}:com`] ?? -1] ?? 0;
+        return active && vs - vc > 1.5;
+      })
+    : [];
 
   const pinTitle = (pin: string, label: string) => {
     const net = pinNet?.[`${id}:${pin}`];
@@ -200,6 +208,8 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         <MeterBody mode={String(data.params.mode)} reading={meter ? formatMeter(meter.value, meter.unit) : '— — —'} active={active} name={data.name} />
       ) : isScope ? (
         <ScopeBody name={data.name} />
+      ) : isSeg ? (
+        <SevenSegBody segs={segState} name={data.name} />
       ) : (
         <svg width={w} height={h} overflow="visible" className="sym">
           <g transform={transform}>
@@ -216,7 +226,7 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         </svg>
       )}
 
-      {!isMeter && !isScope && !isLabel && !isGround && (
+      {!isMeter && !isScope && !isLabel && !isGround && !isSeg && (
         <>
           <div className={`clabel ${horizontal ? 'h' : 'v'}`} style={horizontal ? { width: Math.max(w, 120), left: w / 2 } : { left: w + 6 }}>
             <span className="cname">{data.name}</span>
@@ -280,6 +290,26 @@ function ScopeBody({ name }: { name: string }) {
         </svg>
       </div>
       <div className="scope-mini-name">{name}</div>
+    </div>
+  );
+}
+
+function SevenSegBody({ segs, name }: { segs: boolean[]; name: string }) {
+  const col = (i: number) => (segs[i] ? '#ff4d4d' : '#3a1620');
+  return (
+    <div className="seg7-body">
+      <svg viewBox="-8 -8 72 114" className="seg7-svg" preserveAspectRatio="xMidYMid meet">
+        <g strokeWidth={9} strokeLinecap="round" fill="none">
+          <line x1={14} y1={8} x2={42} y2={8} stroke={col(0)} />
+          <line x1={48} y1={13} x2={48} y2={45} stroke={col(1)} />
+          <line x1={48} y1={55} x2={48} y2={87} stroke={col(2)} />
+          <line x1={14} y1={92} x2={42} y2={92} stroke={col(3)} />
+          <line x1={8} y1={55} x2={8} y2={87} stroke={col(4)} />
+          <line x1={8} y1={13} x2={8} y2={45} stroke={col(5)} />
+          <line x1={14} y1={50} x2={42} y2={50} stroke={col(6)} />
+        </g>
+      </svg>
+      <div className="seg7-name">{name}</div>
     </div>
   );
 }

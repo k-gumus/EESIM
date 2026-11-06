@@ -52,7 +52,8 @@ export type CompType =
   | 'tl431'
   | 'opto'
   | 'motor'
-  | 'relay';
+  | 'relay'
+  | 'seg7';
 
 export type ParamValue = number | string | boolean;
 

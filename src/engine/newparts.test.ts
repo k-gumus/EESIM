@@ -208,4 +208,15 @@ describe('yeni bileşenler', () => {
     expect(on.vOf('VNO')).toBeGreaterThan(4.9);
     expect(on.vOf('VNC')).toBeLessThan(0.1);
   });
+
+  it('7-segment: Passive — segment girişi sürücüyü okur, hata vermez', () => {
+    const d = doc('seg7', [
+      ['logicin', 'IN1', 20, 40, 0, { on: true }],
+      ['seg7', 'DS1', 180, 20],
+      ['ground', 'G1', 240, 220],
+    ], [['IN1.y', 'DS1.a'], ['DS1.com', 'G1.g']]);
+    const { circ, sim } = build(d);
+    expect(sim.netV(circ.pinNet['DS1:a'])).toBeGreaterThan(4.5); // 'a' segment girişi = 5 V
+    expect(sim.netV(circ.pinNet['DS1:com'])).toBeLessThan(0.1); // ortak uç toprakta
+  });
 });

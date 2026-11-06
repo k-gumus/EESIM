@@ -663,4 +663,7 @@ export const EN: Record<string, string> = {
   boşta: 'idle',
   'Elektromekanik röle: bobinden yeterli akım geçince (çekme akımı) elektromıknatıs kontağı çeker, COM ucu NC’den NO’ya geçer. Bobin endüktif olduğundan yanına serbest geçiş (flyback) diyodu şarttır.':
     'Electromechanical relay: once enough current flows through the coil (pull-in current) the electromagnet pulls the contact, moving COM from NC to NO. The coil is inductive, so a flyback diode next to it is essential.',
+  '7-Segment Display': '7-Segment Display',
+  'Ortak katotlu 7-segment gösterge: a–g girişlerine uygulanan yüksek seviye (COM’a göre) ilgili segmenti yakar. BCD→7-segment kod çözücüyle rakam gösterir. (Bu modelde yüksek empedanslı okur, akım çekmez.)':
+    'Common-cathode 7-segment display: a HIGH level on an a–g input (relative to COM) lights that segment. Shows digits via a BCD→7-segment decoder. (In this model it reads with high impedance and draws no current.)',
 };

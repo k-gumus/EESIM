@@ -120,6 +120,12 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['5 V / 12 V bobin, 60–400 Ω', 'Kontak: 10 A / 250 V AC (SPDT)', 'Sürücü: transistör + serbest geçiş diyodu'],
     caution: ['Bobin endüktiftir: kesilince yüksek gerilim üretir — paralel serbest geçiş (flyback) diyodu şart, yoksa süren transistör bozulur.', 'MCU pini bobini doğrudan süremez (akım yetmez); transistör/MOSFET kullan.', 'Endüktif yüklerde kontak arkı için snubber/varistör ekle.'],
   },
+  seg7: {
+    what: 'Yedi çubuktan (segment) oluşan rakam göstergesi. a–g segmentlerini uygun şekilde yakarak 0–9 rakamlarını (ve bazı harfleri) gösterir. Sayaçlar, saatler, ölçüm aletleri.',
+    how: 'Her segment bir LED’dir. Ortak katotlu tipte tüm katotlar COM ucunda birleşir (toprağa bağlanır); bir segmenti yakmak için anoduna (seri dirençle) yüksek seviye uygulanır. Ortak anotlu tipte mantık terstir.',
+    typical: ['BCD→7-segment kod çözücü (ör. 7447/4511) ile sürülür', 'Her segmente ~10–20 mA; seri direnç şart', 'Çok haneli göstergede tarama (multiplexing)'],
+    caution: ['Ortak katot mu ortak anot mu olduğuna dikkat et: sürüş mantığı terstir.', 'Her segment için ayrı seri direnç kullan; yoksa parlaklık yanan segment sayısına göre değişir.', '(Bu modelde gösterge akım çekmez; gerçekte her segment LED’i akım çeker.)'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',
