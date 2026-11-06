@@ -617,4 +617,17 @@ export const EN: Record<string, string> = {
   'Düğüm Etiketi': 'Net Label',
   'Aynı isimli etiketler kablo olmadan birbirine bağlıdır. Yapay zekâ düğümleri bu isimlerle görür.': 'Labels with the same name are connected without a wire. The AI sees nodes by these names.',
   Etiket: 'Label',
+  // ── PCB / şema pop-up ──
+  'Şema': 'Schematic',
+  PCB: 'PCB',
+  Ratsnest: 'Ratsnest',
+  'Baskı (silk)': 'Silkscreen',
+  'Net renkleri': 'Net colors',
+  'zemin bakırı': 'ground pour',
+  'PCB ve şema görünümü (pop-up)': 'PCB and schematic view (pop-up)',
+  'Devre boş — önce paletten eleman ekle ya da hazır bir deney aç.': 'The circuit is empty — add a component from the palette or open a ready-made experiment first.',
+  'Pad’ler pin konumlarında; ince kesik çizgiler aynı net’teki pad’leri gösterir (ratsnest). GND zemin bakırı olduğundan çizilmez.':
+    'Pads sit at the pin positions; the thin dashed lines link pads on the same net (ratsnest). GND is a ground pour, so it is not drawn.',
+  'Baskıya uygun temiz şema. SVG/PNG olarak indirip çıktı alabilir ya da sunumda kullanabilirsin.':
+    'A clean, print-ready schematic. Download it as SVG/PNG to print or use in a presentation.',
 };

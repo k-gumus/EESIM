@@ -16,11 +16,14 @@ interface UIState {
   catalog: 'first' | 'menu' | null;
   catalogTopic: string | null;
   netlist: boolean;
+  /** PCB / şema pop-up penceresi açık mı */
+  pcb: boolean;
   infoType: CompType | null;
   tour: 'first' | 'return' | null;
   /** Telefonda eleman paletinin çekmece olarak açık olup olmadığı */
   palette: boolean;
   setPalette: (v: boolean) => void;
+  setPcb: (v: boolean) => void;
   setViews: (v: Partial<Views>) => void;
   setTab: (t: RightTab) => void;
   openCatalog: (mode?: 'first' | 'menu', topic?: string | null) => void;
@@ -51,10 +54,12 @@ export const useUI = create<UIState>((set, get) => ({
   catalog: null,
   catalogTopic: null,
   netlist: false,
+  pcb: false,
   infoType: null,
   tour: null,
   palette: false,
   setPalette: (palette) => set({ palette }),
+  setPcb: (pcb) => set({ pcb }),
   setViews: (v) => {
     const views = { ...get().views, ...v };
     set({ views });

@@ -10,6 +10,7 @@ import { LabPanel } from './ui/LabPanel';
 import { CopilotPanel } from './ui/CopilotPanel';
 import { TemplatesModal } from './ui/TemplatesModal';
 import { NetlistModal } from './ui/NetlistModal';
+import { PcbModal } from './ui/PcbModal';
 import { InfoCard } from './ui/InfoCard';
 import { LoginScreen } from './auth/LoginScreen';
 import { initAuth } from './auth/api';
@@ -29,6 +30,7 @@ export default function App() {
   const setTab = useUI((s) => s.setTab);
   const catalog = useUI((s) => s.catalog);
   const netOpen = useUI((s) => s.netlist);
+  const pcbOpen = useUI((s) => s.pcb);
   const palOpen = useUI((s) => s.palette);
   // Dil değişince arayüz baştan çizilir (devre, ilerleme ve ayarlar mağazalarda kalır)
   const lang = useLang((s) => s.lang);
@@ -147,6 +149,7 @@ export default function App() {
         <TepecanToast />
         {catalog && <TemplatesModal first={catalog === 'first'} onClose={() => useUI.getState().closeCatalog()} />}
         {netOpen && <NetlistModal onClose={() => useUI.getState().setNetlist(false)} />}
+        {pcbOpen && <PcbModal onClose={() => useUI.getState().setPcb(false)} />}
         <InfoCard />
         <Tour />
         <LoginScreen />
