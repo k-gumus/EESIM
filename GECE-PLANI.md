@@ -109,3 +109,6 @@ Kararlar:
   Tepecan görsellerindeki “IEEE YEDITEPE UNIVERSITY” göğüs logosu 8 görselden silindi (bölge tespiti + inpaint). Gizlilik/KVKK aydınlatma metni ve kullanım koşulları (#gizlilik, #kosullar),
   hesabını kendin silme (DELETE /api/auth/me), favicon, paylaşım görseli (og.png), robots.txt, sitemap. Dil seçeneği TR/EN: arayüzün tamamı, tur, katalog başlıkları (109 deney),
   eleman kütüphanesi, devre uyarıları ve Başlangıç yolundaki 8 föy İngilizce; Tepecan seçilen dilde cevap veriyor. Diğer föyler ve bilgi kartları şimdilik Türkçe. 111 test yeşil.
+- 2026-11-06 22:20 — Güvenlik sertleştirme (“vibe coder’ların hacklendiği 20 yol” listesi): hesap ön-ele geçirme düzeltildi (Google ile giriş eski şifreyi ve oturumları geçersiz kılar),
+  kullanıcı sayımı (aynı mesaj + sabit özetle eşit süre), hesap başına giriş sınırı, istem enjeksiyonu (sunucu kuralları + istemci system mesajı süzme), kayıt yarış durumu (409),
+  hata ayrıntısı sızıntısı kapatıldı, CSP Report-Only → uygulanıyor (3D, katalog, bilgi kartı, gizlilik ile denendi; ihlal yok). Tablo: docs/GUVENLIK.md. 118 test yeşil.

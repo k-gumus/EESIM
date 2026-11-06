@@ -37,10 +37,16 @@ export const onRequestGet = async (ctx: Ctx) => {
 
   let user = await env.DB.prepare('SELECT * FROM users WHERE google_sub = ?').bind(g.sub).first<UserRow>();
   if (!user) {
-    // Aynı e-postayla şifreli hesap varsa Google'ı ona bağla (Google e-postayı doğruladı)
+    // Aynı e-postayla şifreli hesap varsa Google'ı ona bağla (Google e-postayı doğruladı).
+    // Hesap ön-ele geçirme (pre-hijacking) koruması: e-posta/şifre kaydında e-posta hiç doğrulanmadığından hesabı
+    // başkası önceden açmış olabilir. E-postanın gerçek sahibi Google ile kanıtladığı için şifre geçersiz kılınır
+    // ve hesaptaki diğer tüm oturumlar kapatılır; hesap bundan sonra Google ile açılır.
     user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first<UserRow>();
     if (user) {
-      await env.DB.prepare('UPDATE users SET google_sub = ?, avatar = COALESCE(avatar, ?) WHERE id = ?').bind(g.sub, g.picture ?? null, user.id).run();
+      await env.DB.batch([
+        env.DB.prepare('UPDATE users SET google_sub = ?, avatar = COALESCE(avatar, ?), password_hash = NULL WHERE id = ?').bind(g.sub, g.picture ?? null, user.id),
+        env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(user.id),
+      ]);
     } else {
       const id = crypto.randomUUID();
       await env.DB.prepare('INSERT INTO users (id, email, name, avatar, password_hash, google_sub, premium, created_at) VALUES (?, ?, ?, ?, NULL, ?, 0, ?)')

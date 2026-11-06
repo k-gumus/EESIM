@@ -34,9 +34,15 @@ export const onRequestPost = async (ctx: Ctx) => {
     premium: 0,
     created_at: Date.now(),
   };
-  await env.DB.prepare('INSERT INTO users (id, email, name, avatar, password_hash, google_sub, premium, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    .bind(user.id, user.email, user.name, user.avatar, user.password_hash, user.google_sub, user.premium, user.created_at)
-    .run();
+  try {
+    await env.DB.prepare('INSERT INTO users (id, email, name, avatar, password_hash, google_sub, premium, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(user.id, user.email, user.name, user.avatar, user.password_hash, user.google_sub, user.premium, user.created_at)
+      .run();
+  } catch (e) {
+    // Yarış durumu: aynı e-postayla eşzamanlı iki kayıt → ikincisi UNIQUE kısıtına takılır
+    if (/unique/i.test(String(e))) return err('Bu e-posta zaten kayıtlı. Giriş yapmayı dene.', 409);
+    throw e;
+  }
   const setCookie = await createSession(env, request, user.id);
   return json({ user: publicUser(user), created: true }, 201, { 'set-cookie': setCookie });
 };
