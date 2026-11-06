@@ -132,3 +132,31 @@ export function sameOrigin(req: Request): boolean {
   if (!o) return true; // aynı köken GET/form gönderimlerinde Origin olmayabilir
   return o === new URL(req.url).origin;
 }
+
+/** İstek yapanın IP'sinin kısa SHA-256 özeti (hız sınırı anahtarı; ham IP saklanmaz) */
+export async function clientKey(req: Request): Promise<string> {
+  return (await sha256(req.headers.get('cf-connecting-ip') ?? 'yerel')).slice(0, 24);
+}
+
+/**
+ * Basit sabit-pencere hız sınırı (D1 ile). `windowSec` içinde `max` isteğe izin verir.
+ * Bir hata olursa isteğe İZİN VERİR (fail-open) — sınır mekanizması asla gerçek kullanıcıyı kilitlemesin.
+ * @returns true = izin ver, false = sınır aşıldı (429 dön)
+ */
+export async function rateLimit(env: Env, key: string, max: number, windowSec: number): Promise<boolean> {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const row = await env.DB.prepare(
+      `INSERT INTO rate_limits (k, count, reset_at) VALUES (?, 1, ?)
+       ON CONFLICT(k) DO UPDATE SET
+         count = CASE WHEN rate_limits.reset_at < ? THEN 1 ELSE rate_limits.count + 1 END,
+         reset_at = CASE WHEN rate_limits.reset_at < ? THEN ? ELSE rate_limits.reset_at END
+       RETURNING count`,
+    )
+      .bind(key, now + windowSec, now, now, now + windowSec)
+      .first<{ count: number }>();
+    return (row?.count ?? 1) <= max;
+  } catch {
+    return true; // fail-open
+  }
+}

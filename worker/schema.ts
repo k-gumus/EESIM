@@ -7,6 +7,7 @@ let ready: Promise<void> | null = null;
 
 export function schemaStatements(sql: string): string[] {
   return sql
+    .replace(/\r/g, '') // CRLF (Windows) satır sonlarını temizle: yoksa "--.*$" yorumları silemez ve yorumdaki ";" ifadeyi böler
     .split('\n')
     .map((l) => l.replace(/--.*$/, ''))
     .join('\n')

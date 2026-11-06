@@ -1,0 +1,19 @@
+# Cloudflare, bu dosyadaki başlıkları statik varlıklara (dist/) uygular.
+# https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# NOT: Content-Security-Policy şimdilik "Report-Only" modda — yani hiçbir şeyi
+# ENGELLEMEZ, yalnızca ihlalleri tarayıcı konsoluna bildirir. Siteyi (özellikle
+# WebLLM/HuggingFace indirmesi ve Ollama bağlantısı) bir süre izleyip konsolda
+# ihlal görmediğinizden emin olunca, satırı "Content-Security-Policy" olarak
+# değiştirip gerçekten uygulayabilirsiniz. Ollama'yı localhost dışında bir
+# adresten kullanıyorsanız o adresi connect-src'ye eklemeniz gerekir.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), usb=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://huggingface.co https://*.hf.co https://cdn-lfs.huggingface.co https://raw.githubusercontent.com http://localhost:11434; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+# API yanıtları zaten kod tarafında "no-store" gönderiyor; burada statik varlıklar hedeflenir.

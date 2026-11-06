@@ -73,4 +73,20 @@ export default {
     } as unknown as Ctx;
     return middleware(ectx);
   },
+
+  // Zamanlanmış temizlik (wrangler.toml → [triggers] crons). Kendiliğinden büyüyen tabloları buda:
+  // süresi dolmuş oturumlar, 7 günden eski kota satırları, süresi geçmiş hız sınırı kayıtları.
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      (async () => {
+        if (!env.DB) return;
+        const now = Date.now();
+        await env.DB.batch([
+          env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now),
+          env.DB.prepare("DELETE FROM ai_usage WHERE day < date('now','-7 day')"),
+          env.DB.prepare('DELETE FROM rate_limits WHERE reset_at < ?').bind(Math.floor(now / 1000)),
+        ]);
+      })(),
+    );
+  },
 } satisfies ExportedHandler<Env>;

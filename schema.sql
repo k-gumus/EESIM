@@ -47,3 +47,10 @@ CREATE TABLE IF NOT EXISTS ai_usage (
   count   INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, day)
 );
+
+-- Kaba kuvvet koruması: sabit pencere hız sayacı (ör. "login:<ip-hash>")
+CREATE TABLE IF NOT EXISTS rate_limits (
+  k        TEXT PRIMARY KEY,       -- "<eylem>:<ip-hash>"
+  count    INTEGER NOT NULL DEFAULT 0,
+  reset_at INTEGER NOT NULL        -- unix saniye; bu andan sonra sayaç sıfırlanır
+);

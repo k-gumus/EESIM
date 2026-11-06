@@ -24,6 +24,11 @@ export default defineConfig(({ mode }) => {
       outDir: single ? 'dist-single' : 'dist',
       assetsInlineLimit: single ? 100_000_000 : 4096,
       chunkSizeWarningLimit: 4000,
+      // Tek dosya modunda her şey tek parçada olmalı; normal derlemede React/React Flow'u
+      // ayrı "vendor" parçasına al: nadiren değişir, tarayıcı sürümler arası önbellekte tutar.
+      rollupOptions: single
+        ? undefined
+        : { output: { manualChunks: { vendor: ['react', 'react-dom', '@xyflow/react', 'zustand'] } } },
     },
     test: { environment: 'node', include: ['src/**/*.test.ts', 'worker/**/*.test.ts'] },
   };
