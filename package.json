@@ -1,7 +1,7 @@
 {
   "name": "eesim",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "EESIM — Tepecan ile web tabanlı, 3D destekli, yapay zekâ destekli devre laboratuvarı",
   "type": "module",
   "scripts": {

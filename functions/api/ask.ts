@@ -67,11 +67,19 @@ export const onRequestPost = async (ctx: Ctx) => {
   const used = row?.count ?? 1;
   if (used > limit) {
     await env.DB.prepare('UPDATE ai_usage SET count = count - 1 WHERE user_id = ? AND day = ?').bind(who, day).run();
+    const en = request.headers.get('x-eesim-lang') === 'en';
+    const free = env.AI_DAILY_FREE ?? 20;
     const msg = user
       ? premium
-        ? `Bugünlük ${limit} soru hakkını kullandın. Yarın görüşürüz!`
-        : `Bugünlük ${limit} ücretsiz soru hakkın doldu. Yarın yenilenir — ya da Ollama/WebLLM ile kendi bilgisayarında sınırsız sor.`
-      : `Misafirler günde ${limit} soru sorabilir. Giriş yaparak hakkını ${env.AI_DAILY_FREE ?? 20}’ye çıkar.`;
+        ? en
+          ? `You have used all ${limit} questions for today. See you tomorrow!`
+          : `Bugünlük ${limit} soru hakkını kullandın. Yarın görüşürüz!`
+        : en
+          ? `Your ${limit} free questions for today are used up. They reset tomorrow — or ask without limits on your own computer with Ollama/WebLLM.`
+          : `Bugünlük ${limit} ücretsiz soru hakkın doldu. Yarın yenilenir — ya da Ollama/WebLLM ile kendi bilgisayarında sınırsız sor.`
+      : en
+        ? `Guests can ask ${limit} questions a day. Sign in to raise your limit to ${free}.`
+        : `Misafirler günde ${limit} soru sorabilir. Giriş yaparak hakkını ${free}’ye çıkar.`;
     return new Response(JSON.stringify({ error: msg, limit, remaining: 0 }), {
       status: 429,
       headers: { 'content-type': 'application/json; charset=utf-8', 'x-quota-limit': String(limit), 'x-quota-remaining': '0' },

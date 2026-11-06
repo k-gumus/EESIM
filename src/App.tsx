@@ -18,6 +18,8 @@ import { Tour, rememberLastTemplate } from './tour/Tour';
 import { TepecanToast } from './ui/TepecanToast';
 import { useCircuit } from './store/circuitStore';
 import { TEMPLATES } from './templates';
+import { LegalModal } from './ui/Legal';
+import { t, useLang } from './i18n';
 
 const Assembly3D = lazy(() => import('./three/Assembly3D').then((m) => ({ default: m.Assembly3D })));
 
@@ -28,6 +30,8 @@ export default function App() {
   const catalog = useUI((s) => s.catalog);
   const netOpen = useUI((s) => s.netlist);
   const palOpen = useUI((s) => s.palette);
+  // Dil değişince arayüz baştan çizilir (devre, ilerleme ve ayarlar mağazalarda kalır)
+  const lang = useLang((s) => s.lang);
   const selectedId = useCircuit((s) => s.selectedId);
   const hasScope = useCircuit((s) => s.nodes.some((n) => n.data.type === 'scope'));
   const [split, setSplit] = useState(0.5);
@@ -89,7 +93,7 @@ export default function App() {
 
   return (
     <ReactFlowProvider>
-      <div className={`app ${views.right ? '' : 'no-right'} ${palOpen ? 'pal-open' : ''}`}>
+      <div key={lang} className={`app ${views.right ? '' : 'no-right'} ${palOpen ? 'pal-open' : ''}`}>
         <TopBar />
         <div className="main">
           <Palette />
@@ -103,7 +107,7 @@ export default function App() {
                 <>
                   <div className="splitter" onPointerDown={() => (dragRef.current = true)} />
                   <div className="pane" style={{ flexBasis: `${(1 - split) * 100}%` }}>
-                    <Suspense fallback={<div className="three-loading">3D sahne yükleniyor…</div>}>
+                    <Suspense fallback={<div className="three-loading">{t('3D sahne yükleniyor…')}</div>}>
                       <Assembly3D />
                     </Suspense>
                   </div>
@@ -120,15 +124,15 @@ export default function App() {
             <aside className="right">
               <nav className="tabs">
                 <button className={tab === 'lab' ? 'on' : ''} onClick={() => setTab('lab')}>
-                  🧪 Deney
+                  🧪 {t('Deney')}
                 </button>
                 <button className={tab === 'props' ? 'on' : ''} onClick={() => setTab('props')}>
-                  ⚙ Özellikler
+                  ⚙ {t('Özellikler')}
                 </button>
                 <button className={tab === 'ai' ? 'on' : ''} onClick={() => setTab('ai')}>
-                  🤖 Tepecan'a Sor
+                  🤖 {t('Tepecan’a Sor')}
                 </button>
-                <button className="tabs-close" onClick={() => useUI.getState().setViews({ right: false })} title="Paneli kapat">
+                <button className="tabs-close" onClick={() => useUI.getState().setViews({ right: false })} title={t('Paneli kapat')}>
                   ✕
                 </button>
               </nav>
@@ -146,6 +150,7 @@ export default function App() {
         <InfoCard />
         <Tour />
         <LoginScreen />
+        <LegalModal />
       </div>
     </ReactFlowProvider>
   );

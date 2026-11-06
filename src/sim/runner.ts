@@ -9,6 +9,7 @@ import { SimError, Simulator } from '../engine/simulator';
 import { useCircuit } from '../store/circuitStore';
 import { tepecan } from '../tepecan/mascot';
 import { formatSI } from '../circuit/format';
+import { t } from '../i18n';
 
 export interface Stats {
   min: number;
@@ -337,7 +338,7 @@ class SimRunner {
     const applyFix = e.fix
       ? () => {
           useCircuit.getState().applyFix(e.fix!);
-          tepecan.say({ mood: 'success', title: 'Düzelttim!', text: e.fix!.summary + '. Şimdi tekrar başlatabilirsin.', ttl: 5000 });
+          tepecan.say({ mood: 'success', title: t('Düzelttim!'), text: e.fix!.summary + '. ' + t('Şimdi tekrar başlatabilirsin.'), ttl: 5000 });
         }
       : undefined;
     tepecan.say({
@@ -581,8 +582,8 @@ class SimRunner {
             this.burntWarned.add(el.id);
             tepecan.say({
               mood: 'angry',
-              title: `${el.name} yandı! 💥`,
-              text: `${el.name} üzerinden ${formatSI(i, 'A')} akıyor; maksimum ${formatSI(imax, 'A')}. Gerçek laboratuvarda LED'i yakardın. Seri direnci büyüt!`,
+              title: t('{n} yandı! 💥', { n: el.name }),
+              text: t('{n} üzerinden {i} akıyor; maksimum {m}. Gerçek laboratuvarda LED’i yakardın. Seri direnci büyüt!', { n: el.name, i: formatSI(i, 'A'), m: formatSI(imax, 'A') }),
               key: 'burn-' + el.id,
             });
           }
@@ -604,8 +605,8 @@ class SimRunner {
           this.powerWarned.add(el.id);
           tepecan.say({
             mood: 'surprised',
-            title: `${el.name} ısınıyor 🔥`,
-            text: `${el.name} ortalama ${formatSI(pavg, 'W')} harcıyor ama ${String(el.params.Pmax).replace('.', ',')} W'lık bir direnç. Daha yüksek güçlü direnç seç ya da akımı azalt.`,
+            title: t('{n} ısınıyor 🔥', { n: el.name }),
+            text: t('{n} ortalama {p} harcıyor ama {m} W’lık bir direnç. Daha yüksek güçlü direnç seç ya da akımı azalt.', { n: el.name, p: formatSI(pavg, 'W'), m: String(el.params.Pmax).replace('.', ',') }),
             key: 'pow-' + el.id,
           });
         }

@@ -3,6 +3,7 @@ import type { Edge, Node } from '@xyflow/react';
 import { compileCircuit } from '../circuit/compile';
 import { docToGraph } from '../circuit/doc';
 import { formatSI } from '../circuit/format';
+import { t } from '../i18n';
 import type { CompData, CompiledCircuit, Issue } from '../circuit/types';
 import { runner } from '../sim/runner';
 import { templateById } from '../templates';
@@ -67,8 +68,8 @@ export function analyzeCircuit(nodes: Node<CompData>[], edges: Edge[], templateI
           level: 'error',
           code: 'diode-reversed',
           comp: n.data.name,
-          message: `${n.data.name} ters takılmış görünüyor: anot ve katot, deney föyündeki bağlantının tersine bağlı. Bu yüzden çıkışın polaritesi/şekli beklenenden farklı.`,
-          fix: { summary: `${n.data.name}'i ters çevir`, actions: [{ op: 'flip', id: n.data.name }] },
+          message: t('{n} ters takılmış görünüyor: anot ve katot, deney föyündeki bağlantının tersine bağlı. Bu yüzden çıkışın polaritesi/şekli beklenenden farklı.', { n: n.data.name }),
+          fix: { summary: t('{n}’i ters çevir', { n: n.data.name }), actions: [{ op: 'flip', id: n.data.name }] },
         });
       }
     }
@@ -85,7 +86,7 @@ export function analyzeCircuit(nodes: Node<CompData>[], edges: Edge[], templateI
           level: hasAC ? 'warning' : 'info',
           code: 'diode-off',
           comp: el.name,
-          message: `${el.name} hiç iletime geçmiyor (maks. akım ${formatSI(cur.max, 'A')}). Ters kutuplanmış ya da yolu açık olabilir.`,
+          message: t('{n} hiç iletime geçmiyor (maks. akım {i}). Ters kutuplanmış ya da yolu açık olabilir.', { n: el.name, i: formatSI(cur.max, 'A') }),
         });
       }
       if (el.type === 'led' && cur.max > (Number(el.params.Imax) || 0.03)) {
@@ -94,22 +95,22 @@ export function analyzeCircuit(nodes: Node<CompData>[], edges: Edge[], templateI
           level: 'error',
           code: 'led-overcurrent',
           comp: el.name,
-          message: `${el.name} üzerinden ${formatSI(cur.max, 'A')} akıyor; LED'in maksimum akımı ${formatSI(Number(el.params.Imax) || 0.03, 'A')}.`,
-          fix: vs ? { summary: `${vs.name}'i 1 kΩ yap`, actions: [{ op: 'set', id: vs.name, param: 'R', value: 1000 }] } : undefined,
+          message: t('{n} üzerinden {i} akıyor; LED’in maksimum akımı {m}.', { n: el.name, i: formatSI(cur.max, 'A'), m: formatSI(Number(el.params.Imax) || 0.03, 'A') }),
+          fix: vs ? { summary: t('{n}’i 1 kΩ yap', { n: vs.name }), actions: [{ op: 'set', id: vs.name, param: 'R', value: 1000 }] } : undefined,
         });
       }
       if ((el.type === 'npn' || el.type === 'pnp') && probe.region === 2) {
-        issues.push({ level: 'info', code: 'bjt-sat', comp: el.name, message: `${el.name} doyumda (V_CE ≈ ${formatSI(probe.vce ?? 0, 'V')}). Yükselteç için aktif bölge gerekir.` });
+        issues.push({ level: 'info', code: 'bjt-sat', comp: el.name, message: t('{n} doyumda (V_CE ≈ {v}). Yükselteç için aktif bölge gerekir.', { n: el.name, v: formatSI(probe.vce ?? 0, 'V') }) });
       }
       if ((el.type === 'npn' || el.type === 'pnp') && probe.region === 0) {
-        issues.push({ level: 'info', code: 'bjt-cut', comp: el.name, message: `${el.name} kesimde (V_BE ≈ ${formatSI(probe.vbe ?? 0, 'V')}).` });
+        issues.push({ level: 'info', code: 'bjt-cut', comp: el.name, message: t('{n} kesimde (V_BE ≈ {v}).', { n: el.name, v: formatSI(probe.vbe ?? 0, 'V') }) });
       }
     }
     for (const n of nodes) {
       if (n.data.type !== 'scope') continue;
       const nets = ['ch1', 'ch2'].map((p) => circ.pinNet[`${n.id}:${p}`]);
       const used = nets.filter((x) => x !== undefined && Object.values(circ.pinNet).filter((y) => y === x).length > 1);
-      if (!used.length) issues.push({ level: 'info', code: 'scope-unconnected', comp: n.data.name, message: `${n.data.name} kanallarından hiçbiri bağlı değil.` });
+      if (!used.length) issues.push({ level: 'info', code: 'scope-unconnected', comp: n.data.name, message: t('{n} kanallarından hiçbiri bağlı değil.', { n: n.data.name }) });
     }
   }
 

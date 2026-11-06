@@ -14,13 +14,15 @@ import { searchCatalog, type CatalogEntry } from '../templates/catalog';
 import { topicById } from '../templates/topics';
 import { templateById } from '../templates';
 import { UserMenu } from './UserMenu';
+import { t } from '../i18n';
+import { entryTitle, tLevel, topicTitle } from '../i18n/content';
 
 const slug = (s: string) => s.toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşöçı]+/g, '-').replace(/^-|-$/g, '') || 'devre';
 
 export function openEntry(e: CatalogEntry) {
   if (!e.template) {
     useUI.getState().openCatalog('menu', e.topic);
-    tepecan.say({ mood: 'info', title: 'Bu deney yakında!', text: `“${e.title}” katalogda listeleniyor; etkileşimli föyü henüz hazır değil.`, ttl: 4500 });
+    tepecan.say({ mood: 'info', title: t('Bu deney yakında!'), text: t('“{x}” katalogda listeleniyor; etkileşimli föyü henüz hazır değil.', { x: entryTitle(e) }), ttl: 4500 });
     return;
   }
   runner.stop();
@@ -55,9 +57,9 @@ function FileMenu() {
         if (!Array.isArray(doc.components) || !Array.isArray(doc.wires)) throw new Error('format');
         runner.stop();
         useCircuit.getState().loadDoc(doc, null);
-        tepecan.say({ mood: 'success', title: 'Devre yüklendi', text: `“${doc.title ?? f.name}” açıldı.`, ttl: 3000 });
+        tepecan.say({ mood: 'success', title: t('Devre yüklendi'), text: t('“{x}” açıldı.', { x: doc.title ?? f.name }), ttl: 3000 });
       } catch {
-        tepecan.say({ mood: 'error', title: 'Dosya okunamadı', text: 'Bu bir EESIM devre dosyası (.json) gibi görünmüyor.', ttl: 5000 });
+        tepecan.say({ mood: 'error', title: t('Dosya okunamadı'), text: t('Bu bir EESIM devre dosyası (.json) gibi görünmüyor.'), ttl: 5000 });
       }
     });
   };
@@ -69,7 +71,7 @@ function FileMenu() {
         fn();
       }}
     >
-      <span>{label}</span>
+      <span>{t(label)}</span>
       {kbd && <kbd>{kbd}</kbd>}
     </button>
   );
@@ -95,7 +97,7 @@ function FileMenu() {
   return (
     <div className="menu" ref={ref}>
       <button className={`btn ghost ${open ? 'on' : ''}`} onClick={() => setOpen(!open)} data-tour="file">
-        📁<span className="fm-label"> Dosya</span> <span className="caret">▾</span>
+        📁<span className="fm-label"> {t('Dosya')}</span> <span className="caret">▾</span>
       </button>
       {open && (
         <div className="menu-pop">
@@ -149,7 +151,7 @@ function ExperimentSearch() {
       <input
         ref={inputRef}
         value={q}
-        placeholder="Deney bul… (doğrultucu, op-amp, 555, RC…)"
+        placeholder={t('Deney bul… (doğrultucu, op-amp, 555, RC…)')}
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => setFocus(true)}
         onBlur={() => setTimeout(() => setFocus(false), 150)}
@@ -168,23 +170,23 @@ function ExperimentSearch() {
         <div className="exp-results">
           {q.trim() === '' ? (
             <button className="exp-res all" onMouseDown={() => useUI.getState().openCatalog('menu')}>
-              📚 Tüm deneyleri konu başlıklarına göre gör
+              📚 {t('Tüm deneyleri konu başlıklarına göre gör')}
             </button>
           ) : results.length ? (
             results.map((r, i) => (
               <button key={r.id} className={`exp-res ${i === sel ? 'sel' : ''}`} onMouseDown={() => choose(r)} onMouseEnter={() => setSel(i)}>
                 <span className="exp-res-topic">{topicById(r.topic)?.icon}</span>
                 <span className="exp-res-main">
-                  <b>{r.title}</b>
+                  <b>{entryTitle(r)}</b>
                   <small>
-                    {topicById(r.topic)?.title} · {r.level}
-                    {!r.template && ' · yakında'}
+                    {topicTitle(r.topic)} · {tLevel(r.level)}
+                    {!r.template && ` · ${t('yakında')}`}
                   </small>
                 </span>
               </button>
             ))
           ) : (
-            <div className="exp-res empty">“{q}” için deney bulunamadı.</div>
+            <div className="exp-res empty">{t('“{q}” için deney bulunamadı.', { q })}</div>
           )}
         </div>
       )}
@@ -200,17 +202,17 @@ function ExperimentChip() {
   if (!tpl) {
     return (
       <div className="exp-chip free" title={title}>
-        <span className="muted small">Serbest çalışma</span>
+        <span className="muted small">{t('Serbest çalışma')}</span>
         <b>{title}</b>
       </div>
     );
   }
   return (
-    <button className="exp-chip" onClick={() => useUI.getState().setTab('lab')} title="Deney föyünü aç" data-tour="chip">
+    <button className="exp-chip" onClick={() => useUI.getState().setTab('lab')} title={t('Deney föyünü aç')} data-tour="chip">
       <span className="muted small">
-        {topicById(tpl.topic)?.icon} {topicById(tpl.topic)?.title}
+        {topicById(tpl.topic)?.icon} {topicTitle(tpl.topic)}
       </span>
-      <b>{tpl.title}</b>
+      <b>{entryTitle(tpl)}</b>
       <span className="exp-chip-prog">
         <i style={{ width: `${(done / tpl.steps.length) * 100}%` }} />
       </span>
@@ -220,7 +222,7 @@ function ExperimentChip() {
 
 function SimTools() {
   const status = useSim((s) => s.status);
-  const t = useSim((s) => s.t);
+  const simT = useSim((s) => s.t);
   const speed = useSim((s) => s.speed);
   const lagging = useSim((s) => s.lagging);
   const showValues = useSim((s) => s.showValues);
@@ -230,45 +232,45 @@ function SimTools() {
   const active = status === 'running' || status === 'paused';
   return (
     <div className="simtools" data-tour="simtools">
-      <span className="simtools-label">Simülasyon</span>
+      <span className="simtools-label">{t('Simülasyon')}</span>
       {running ? (
         <button className="btn run on" onClick={() => runner.pause()} data-tour="run">
-          ❚❚ Duraklat
+          ❚❚ {t('Duraklat')}
         </button>
       ) : (
         <button className="btn run" onClick={() => (status === 'paused' ? runner.resume() : runner.start())} data-tour="run">
-          ▶ {status === 'paused' ? 'Devam' : 'Başlat'}
+          ▶ {status === 'paused' ? t('Devam') : t('Başlat')}
         </button>
       )}
-      <button className="btn icon" disabled={!active && status !== 'error'} onClick={() => runner.stop()} title="Durdur" data-sim="stop">
+      <button className="btn icon" disabled={!active && status !== 'error'} onClick={() => runner.stop()} title={t('Durdur')} data-sim="stop">
         ■
       </button>
-      <button className="btn icon" disabled={!active} onClick={() => runner.restart()} title="Baştan başlat (t = 0)" data-sim="restart">
+      <button className="btn icon" disabled={!active} onClick={() => runner.restart()} title={t('Baştan başlat (t = 0)')} data-sim="restart">
         ↺
       </button>
-      <select value={speed} onChange={(e) => useSim.setState({ speed: Number(e.target.value) })} title="Simülasyon hızı (ağır çekim)">
+      <select value={speed} onChange={(e) => useSim.setState({ speed: Number(e.target.value) })} title={t('Simülasyon hızı (ağır çekim)')}>
         {[0.1, 0.25, 0.5, 1, 2, 4].map((s) => (
           <option key={s} value={s}>
             {String(s).replace('.', ',')}×
           </option>
         ))}
       </select>
-      <span className={`sim-status ${status}`} title={lagging ? 'Bilgisayar istenen hızda hesaplayamıyor; simülasyon yavaşladı' : undefined}>
+      <span className={`sim-status ${status}`} title={lagging ? t('Bilgisayar istenen hızda hesaplayamıyor; simülasyon yavaşladı') : undefined}>
         <i />
         <span className="ss-text">
-          {status === 'running' ? `${formatSI(t, 's')}` : status === 'paused' ? 'Duraklatıldı' : status === 'error' ? 'Hata' : 'Hazır'}
-          {lagging && running && <em> · yavaş</em>}
+          {status === 'running' ? `${formatSI(simT, 's')}` : status === 'paused' ? t('Duraklatıldı') : status === 'error' ? t('Hata') : t('Hazır')}
+          {lagging && running && <em> · {t('yavaş')}</em>}
         </span>
       </span>
       <span className="simtools-sep" />
       <button className={`toggle-btn ${views.three ? 'on' : ''}`} onClick={() => setViews({ three: !views.three })} data-tour="three">
-        🧊 <span className="tl">3D Görünüm</span>
+        🧊 <span className="tl">{t('3D Görünüm')}</span>
       </button>
       <button className={`toggle-btn ${views.scope ? 'on' : ''}`} onClick={() => setViews({ scope: !views.scope })} data-tour="scope">
-        〰 <span className="tl">Osiloskop</span>
+        〰 <span className="tl">{t('Osiloskop')}</span>
       </button>
-      <button className={`toggle-btn ${showValues ? 'on' : ''}`} onClick={() => useSim.setState({ showValues: !showValues })} title="Canvas üzerinde canlı akım/gerilim değerleri">
-        ⓘ <span className="tl">Değer Okuma</span>
+      <button className={`toggle-btn ${showValues ? 'on' : ''}`} onClick={() => useSim.setState({ showValues: !showValues })} title={t('Canvas üzerinde canlı akım/gerilim değerleri')}>
+        ⓘ <span className="tl">{t('Değer Okuma')}</span>
       </button>
     </div>
   );
@@ -290,7 +292,7 @@ export function TopBar() {
           EE<span>SIM</span>
         </div>
       </div>
-      <button className={`btn icon pal-toggle ${palette ? 'on' : ''}`} onClick={() => useUI.getState().setPalette(!palette)} title="Elemanlar">
+      <button className={`btn icon pal-toggle ${palette ? 'on' : ''}`} onClick={() => useUI.getState().setPalette(!palette)} title={t('Elemanlar')}>
         🧩
       </button>
       <FileMenu />
@@ -298,10 +300,10 @@ export function TopBar() {
       <ExperimentChip />
       <div className="topbar-spacer" />
       <SimTools />
-      <div className="xp" title={`${xp} XP · ${streak} günlük seri`}>
+      <div className="xp" title={t('{xp} XP · {n} günlük seri', { xp, n: streak })}>
         <span className="streak">🔥 {streak}</span>
         <div className="xp-lvl">
-          <span>Sv. {level}</span>
+          <span>{t('Sv.')} {level}</span>
           <div className="progress thin">
             <span style={{ width: `${pct}%` }} />
           </div>
@@ -309,7 +311,7 @@ export function TopBar() {
         <span className="xp-n">⚡{xp}</span>
       </div>
       <UserMenu />
-      <button className={`btn icon right-toggle ${views.right ? 'on' : ''}`} onClick={() => setViews({ right: !views.right })} title="Deney föyü / Tepecan panelini aç-kapat">
+      <button className={`btn icon right-toggle ${views.right ? 'on' : ''}`} onClick={() => setViews({ right: !views.right })} title={t('Deney föyü / Tepecan panelini aç-kapat')}>
         ☰
       </button>
     </header>

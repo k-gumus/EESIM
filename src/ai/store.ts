@@ -5,7 +5,9 @@ import type { Mood } from '../tepecan/mascot';
 import { tepecan } from '../tepecan/mascot';
 import { useAuth } from '../auth/store';
 import { chatStream, stripThink, type AIConfig, type ChatMsg } from './providers';
-import { buildContext, extractFix, SYSTEM_PROMPT } from './prompt';
+import { buildContext, extractFix, systemPrompt } from './prompt';
+import { getLang, t } from '../i18n';
+import { localizeTemplate } from '../i18n/content';
 import { analyzeCircuit } from '../debug/rules';
 import { useCircuit } from '../store/circuitStore';
 import { templateById } from '../templates';
@@ -100,17 +102,17 @@ export const useAI = create<AIState>((set, get) => {
 
     checkCircuit: async () => {
       const { nodes, edges, templateId } = useCircuit.getState();
-      push({ role: 'user', text: 'Devremi kontrol et' });
+      push({ role: 'user', text: t('Devremi kontrol et') });
       const issues = analyzeCircuit(nodes, edges, templateId).filter((i) => i.level !== 'info' || i.code.startsWith('bjt'));
       if (!nodes.length) {
-        push({ role: 'tepecan', mood: 'info', text: 'Canvas boş görünüyor. Paletten eleman ekle ya da bir deney şablonu yükle!', offline: true });
+        push({ role: 'tepecan', mood: 'info', text: t('Canvas boş görünüyor. Paletten eleman ekle ya da bir deney şablonu yükle!'), offline: true });
         return;
       }
       if (effectiveProvider(get().cfg) === 'off' || !issues.some((i) => i.level !== 'info')) {
         const fixable = issues.find((i) => i.fix);
         const lines = issues.length
           ? issues.map((i) => `${i.level === 'error' ? '⛔' : i.level === 'warning' ? '⚠️' : 'ℹ️'} ${i.message}`).join('\n')
-          : 'Her şey yolunda görünüyor! ✅ Toprak var, kısa devre yok, bağlantılar tamam. Simülasyonu çalıştırıp osiloskopta sonuçları inceleyebilirsin.';
+          : t('Her şey yolunda görünüyor! ✅ Toprak var, kısa devre yok, bağlantılar tamam. Simülasyonu çalıştırıp osiloskopta sonuçları inceleyebilirsin.');
         push({
           role: 'tepecan',
           mood: moodFor(issues),
@@ -130,17 +132,19 @@ export const useAI = create<AIState>((set, get) => {
       if (!isInternal) push({ role: 'user', text });
       if (cfg.provider === 'off') {
         const cloudOff = get().cfg.provider === 'cloud';
-        const tpl = templateById(useCircuit.getState().templateId);
+        const raw = templateById(useCircuit.getState().templateId);
+        const tpl = raw ? localizeTemplate(raw) : undefined;
         push({
           role: 'tepecan',
           mood: 'info',
           offline: true,
           text:
-            (tpl ? `**${tpl.title} — kısa teori**\n${tpl.theory}\n\n` : '') +
+            (tpl ? `**${tpl.title} — ${t('kısa teori')}**\n${tpl.theory}\n\n` : '') +
             (cloudOff
-              ? 'Bu kopyada **Tepecan Bulut** sunucusu yok (tek dosya ya da statik barındırma). ⚙️ simgesinden **Ollama** (bilgisayarındaki yerel model) ya da **WebLLM** (doğrudan tarayıcıda) seçebilirsin.'
-              : 'Serbest soru-cevap için bir dil modeli bağlamam gerekiyor. ⚙️ simgesinden **Tepecan Bulut**, **Ollama** (yerel model) ya da **WebLLM** (tarayıcıda) seç.') +
-            ' Bu arada **Devremi kontrol et** her zaman çalışır!',
+              ? t('Bu kopyada **Tepecan Bulut** sunucusu yok (tek dosya ya da statik barındırma). ⚙️ simgesinden **Ollama** (bilgisayarındaki yerel model) ya da **WebLLM** (doğrudan tarayıcıda) seçebilirsin.')
+              : t('Serbest soru-cevap için bir dil modeli bağlamam gerekiyor. ⚙️ simgesinden **Tepecan Bulut**, **Ollama** (yerel model) ya da **WebLLM** (tarayıcıda) seç.')) +
+            ' ' +
+            t('Bu arada **Devremi kontrol et** her zaman çalışır!'),
         });
         return;
       }
@@ -152,7 +156,7 @@ export const useAI = create<AIState>((set, get) => {
         .slice(-8)
         .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
       const messages: ChatMsg[] = [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt(getLang()) },
         ...history.slice(0, -1),
         { role: 'user', content: `${context}\n\n---\nÖğrencinin sorusu: ${text}` },
       ];
@@ -167,11 +171,11 @@ export const useAI = create<AIState>((set, get) => {
           patch(id, { text: stripThink(acc).replace(/```tepecan-fix[\s\S]*$/, '').trim() || '…' });
         }
         const { clean, fix } = extractFix(stripThink(acc));
-        patch(id, { text: clean || '(boş yanıt)', fix, fixState: fix ? 'pending' : undefined, streaming: false, mood: fix ? 'surprised' : 'info' });
+        patch(id, { text: clean || t('(boş yanıt)'), fix, fixState: fix ? 'pending' : undefined, streaming: false, mood: fix ? 'surprised' : 'info' });
       } catch (e) {
         // Tepecan Bulut kendi Türkçe mesajını verir; Ollama/WebLLM hataları ham gelir
         const msg = (e as Error).message;
-        patch(id, { text: cfg.provider === 'cloud' ? `⚠️ ${msg}` : `Bağlantı sorunu: ${msg}`, mood: 'error', streaming: false, offline: true });
+        patch(id, { text: cfg.provider === 'cloud' ? `⚠️ ${t(msg)}` : `${t('Bağlantı sorunu:')} ${msg}`, mood: 'error', streaming: false, offline: true });
       } finally {
         set({ busy: false, progress: null });
       }
@@ -183,7 +187,7 @@ export const useAI = create<AIState>((set, get) => {
       const res = useCircuit.getState().applyFix(m.fix);
       patch(msgId, { fixState: res.ok ? 'applied' : 'failed' });
       push({ role: 'tepecan', mood: res.ok ? 'success' : 'error', text: res.log.join('\n'), offline: true });
-      if (res.ok) tepecan.say({ mood: 'success', title: 'Düzelttim! 🛠️', text: m.fix.summary, ttl: 4000 });
+      if (res.ok) tepecan.say({ mood: 'success', title: t('Düzelttim! 🛠️'), text: m.fix.summary, ttl: 4000 });
     },
   };
 });

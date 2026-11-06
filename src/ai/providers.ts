@@ -1,3 +1,4 @@
+import { getLang } from '../i18n';
 // Yapay zekâ sağlayıcıları: Tepecan Bulut (Cloudflare Workers AI), Ollama (yerel ağ) ve WebLLM (tarayıcı içinde, WebGPU)
 
 export interface ChatMsg {
@@ -151,7 +152,7 @@ async function* cloudStream(messages: ChatMsg[], signal: AbortSignal): AsyncGene
     r = await fetch('/api/ask', {
       method: 'POST',
       credentials: 'include',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-eesim-lang': getLang() },
       body: JSON.stringify({ messages }),
       signal,
     });

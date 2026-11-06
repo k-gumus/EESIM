@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { compileCircuit } from '../circuit/compile';
 import { buildSpiceNetlist } from '../circuit/spice';
 import { useCircuit } from '../store/circuitStore';
+import { t } from '../i18n';
 
 function download(name: string, text: string, type = 'text/plain') {
   const a = document.createElement('a');
@@ -33,7 +34,7 @@ export function NetlistModal({ onClose }: { onClose: () => void }) {
               SPICE netlist
             </button>
             <button className={tab === 'json' ? 'on' : ''} onClick={() => setTab('json')}>
-              JSON şablon
+              {t('JSON şablon')}
             </button>
           </div>
           <div style={{ flex: 1 }} />
@@ -45,10 +46,10 @@ export function NetlistModal({ onClose }: { onClose: () => void }) {
               setTimeout(() => setCopied(false), 1500);
             }}
           >
-            {copied ? '✓ Kopyalandı' : 'Kopyala'}
+            {copied ? `✓ ${t('Kopyalandı')}` : t('Kopyala')}
           </button>
           <button className="btn sm" onClick={() => download(tab === 'spice' ? `${slug}.cir` : `${slug}.json`, text, tab === 'json' ? 'application/json' : 'text/plain')}>
-            İndir
+            {t('İndir')}
           </button>
           <button className="iconbtn" onClick={onClose}>
             ✕
@@ -57,8 +58,8 @@ export function NetlistModal({ onClose }: { onClose: () => void }) {
         <pre className="netlist-pre">{text}</pre>
         <div className="muted small" style={{ padding: '0 16px 14px' }}>
           {tab === 'spice'
-            ? 'Bu netlist ngspice ve LTspice ile doğrudan çalıştırılabilir. Tepecan da devreni bu metinden okur.'
-            : 'JSON şablon biçimi: hazır deney paketleri bu formatta saklanır. Kaydedip daha sonra “Aç” ile yükleyebilirsin.'}
+            ? t('Bu netlist ngspice ve LTspice ile doğrudan çalıştırılabilir. Tepecan da devreni bu metinden okur.')
+            : t('JSON şablon biçimi: hazır deney paketleri bu formatta saklanır. Kaydedip daha sonra “Aç” ile yükleyebilirsin.')}
         </div>
       </div>
     </div>

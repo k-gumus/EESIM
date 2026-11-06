@@ -6,7 +6,8 @@ import { useProgress } from '../gamify/progress';
 import { POSES, tepecan } from '../tepecan/mascot';
 import { Markdown } from './Markdown';
 import { useAI } from '../ai/store';
-import { topicById } from '../templates/topics';
+import { t } from '../i18n';
+import { localizeTemplate, sheetAvailable, tLevel, topicTitle } from '../i18n/content';
 
 function evalCheck(c: StepCheck): boolean {
   const st = useCircuit.getState();
@@ -50,7 +51,8 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
   const loadDoc = useCircuit((s) => s.loadDoc);
   const tick = useSim((s) => s.tick);
   const status = useSim((s) => s.status);
-  const tpl = templateById(templateId);
+  const raw = templateById(templateId);
+  const tpl = raw ? localizeTemplate(raw) : undefined;
   const done = useProgress((s) => (tpl ? s.done[tpl.id] ?? [] : []));
   const completed = useProgress((s) => (tpl ? !!s.completed[tpl.id] : false));
   const markStep = useProgress((s) => s.markStep);
@@ -73,9 +75,9 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
     const remaining = tpl.steps.filter((s) => s.id !== step.id && !done.includes(s.id));
     if (!remaining.length) {
       completeTemplate(tpl.id, tpl.xp);
-      tepecan.say({ mood: 'success', title: `Deney tamamlandı! +${tpl.xp + xp} XP 🎉`, text: `“${tpl.title}” föyünü bitirdin. Bir sonraki deneye hazır mısın?`, ttl: 7000, actions: [{ label: 'Deneylere dön', primary: true, run: onOpenTemplates }] });
+      tepecan.say({ mood: 'success', title: t('Deney tamamlandı! +{xp} XP 🎉', { xp: tpl.xp + xp }), text: t('“{x}” föyünü bitirdin. Bir sonraki deneye hazır mısın?', { x: tpl.title }), ttl: 7000, actions: [{ label: t('Deneylere dön'), primary: true, run: onOpenTemplates }] });
     } else {
-      tepecan.say({ mood: 'success', title: `+${xp} XP`, text: step.success ?? 'Süper, devam!', ttl: step.success ? 6000 : 2200 });
+      tepecan.say({ mood: 'success', title: `+${xp} XP`, text: step.success ?? t('Süper, devam!'), ttl: step.success ? 6000 : 2200 });
     }
   };
 
@@ -90,10 +92,10 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
     return (
       <div className="lab lab-empty">
         <img src={POSES.point} alt="" className="lab-hero" />
-        <h3>Serbest çalışma modu</h3>
-        <p className="muted">Bir deney seçersen adım adım görevler, quizler ve XP seni bekliyor.</p>
+        <h3>{t('Serbest çalışma modu')}</h3>
+        <p className="muted">{t('Bir deney seçersen adım adım görevler, quizler ve XP seni bekliyor.')}</p>
         <button className="btn primary" onClick={onOpenTemplates}>
-          Deneylere göz at
+          {t('Deneylere göz at')}
         </button>
       </div>
     );
@@ -106,20 +108,21 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
         <img src={POSES[tpl.mood]} alt="" className="lab-mini" />
         <div>
           <div className="lab-level">
-            {tpl.level} · {topicById(tpl.topic)?.title}
+            {tLevel(tpl.level)} · {topicTitle(tpl.topic)}
           </div>
           <div className="lab-title">{tpl.title}</div>
           <div className="progress">
             <span style={{ width: `${pct}%` }} />
           </div>
           <div className="muted small">
-            {done.length}/{tpl.steps.length} adım {completed && '· ✓ tamamlandı'}
+            {done.length}/{tpl.steps.length} {t('adım')} {completed && `· ✓ ${t('tamamlandı')}`}
           </div>
         </div>
       </div>
+      {!sheetAvailable(tpl.id) && <div className="lang-note">ℹ️ This experiment sheet is only available in Turkish for now. The 8 experiments in the ★ Starter path are fully in English.</div>}
 
       <button className="linkbtn" onClick={() => setShowTheory(!showTheory)}>
-        {showTheory ? '▴ Teoriyi gizle' : '▾ Kısa teori'}
+        {showTheory ? `▴ ${t('Teoriyi gizle')}` : `▾ ${t('Kısa teori')}`}
       </button>
       {showTheory && <div className="theory">{tpl.theory}</div>}
 
@@ -143,19 +146,19 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
                       chosen={quiz[s.id]}
                       onChoose={(k) => {
                         setQuiz({ ...quiz, [s.id]: k });
-                        if (s.check.kind === 'quiz' && k !== s.check.answer) tepecan.say({ mood: 'error', title: 'Tam değil…', text: 'Bir daha düşün! Osiloskop ölçümleri ipucu verir.', ttl: 2500 });
+                        if (s.check.kind === 'quiz' && k !== s.check.answer) tepecan.say({ mood: 'error', title: t('Tam değil…'), text: t('Bir daha düşün! Osiloskop ölçümleri ipucu verir.'), ttl: 2500 });
                       }}
                       onNext={() => finish(s)}
                     />
                   )}
                   {s.check.kind === 'manual' && (
                     <button className="btn primary sm" onClick={() => finish(s)}>
-                      {s.check.label ?? 'Tamamladım'}
+                      {s.check.label ?? t('Tamamladım')}
                     </button>
                   )}
                   {s.check.kind !== 'quiz' && s.check.kind !== 'manual' && (
                     <div className="step-wait">
-                      <span className="pulse" /> Tepecan bu adımı otomatik kontrol ediyor…
+                      <span className="pulse" /> {t('Tepecan bu adımı otomatik kontrol ediyor…')}
                     </div>
                   )}
                   {s.hint && <div className="muted small">💡 {s.hint}</div>}
@@ -175,7 +178,7 @@ export function LabPanel({ onOpenTemplates }: { onOpenTemplates: () => void }) {
             runner.stop();
           }}
         >
-          ↺ Deneyi baştan al
+          ↺ {t('Deneyi baştan al')}
         </button>
       </div>
     </div>
@@ -217,7 +220,7 @@ function Quiz({ check, chosen, onChoose, onNext }: { check: Extract<StepCheck, {
         <div className="quiz-ok">
           <div>✅ {check.explain}</div>
           <button className="btn primary sm" onClick={onNext}>
-            Devam →
+            {t('Devam →')}
           </button>
         </div>
       )}

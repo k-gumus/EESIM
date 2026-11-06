@@ -3,6 +3,7 @@ import { useCircuit } from '../store/circuitStore';
 import { runner, useSim } from '../sim/runner';
 import { formatSI } from '../circuit/format';
 import { FACES } from '../tepecan/mascot';
+import { t } from '../i18n';
 
 const seq125 = (from: number, to: number) => {
   const out: number[] = [];
@@ -62,7 +63,7 @@ export function Oscilloscope() {
     });
   }, [scope, compiled]);
 
-  const netLabel = (net: number) => (net < 0 ? 'bağlı değil' : net === 0 ? 'GND' : compiled?.netNames[net] ?? '?');
+  const netLabel = (net: number) => (net < 0 ? t('bağlı değil') : net === 0 ? 'GND' : compiled?.netNames[net] ?? '?');
 
   useEffect(() => {
     let raf = 0;
@@ -262,8 +263,11 @@ export function Oscilloscope() {
       <div className="osc osc-empty">
         <img src={FACES.info} alt="" />
         <div>
-          <b>Devrede osiloskop yok.</b>
-          <div className="muted">Paletteki <b>Ölçü Aletleri → Osiloskop</b>'u ekle, CH1/CH2 uçlarını görmek istediğin düğümlere bağla.</div>
+          <b>{t('Devrede osiloskop yok.')}</b>
+          <div className="muted">
+            {t('Paletteki')} <b>{t('Ölçü Aletleri → Osiloskop')}</b>
+            {t('’u ekle, CH1/CH2 uçlarını görmek istediğin düğümlere bağla.')}
+          </div>
         </div>
       </div>
     );
@@ -278,10 +282,12 @@ export function Oscilloscope() {
         <div className="osc-overlay tl">
           <span style={{ color: CH_COLORS[0] }}>CH1 {formatSI(vdiv[0], 'V')}/</span>
           <span style={{ color: CH_COLORS[1] }}>CH2 {formatSI(vdiv[1], 'V')}/</span>
-          <span>{formatSI(timeDiv, 's')}/böl.</span>
+          <span>
+            {formatSI(timeDiv, 's')}/{t('böl.')}
+          </span>
         </div>
         <div className="osc-overlay tr">
-          {status === 'running' ? (frozen ? 'STOP' : 'RUN') : status === 'paused' ? 'DURAKLATILDI' : 'BEKLİYOR'}
+          {status === 'running' ? (frozen ? 'STOP' : 'RUN') : status === 'paused' ? t('DURAKLATILDI') : t('BEKLİYOR')}
         </div>
       </div>
       <div className="osc-side">
@@ -293,15 +299,15 @@ export function Oscilloscope() {
               </option>
             ))}
           </select>
-          <button className={`btn sm ${xy ? 'on' : ''}`} onClick={() => updateParams(scope.id, { xy: !xy })} title="XY modu: CH1 yatay, CH2 dikey (karakteristik eğriler, Lissajous)">
+          <button className={`btn sm ${xy ? 'on' : ''}`} onClick={() => updateParams(scope.id, { xy: !xy })} title={t('XY modu: CH1 yatay, CH2 dikey (karakteristik eğriler, Lissajous)')}>
             XY
           </button>
           <button className={`btn sm ${frozen ? 'on' : ''}`} onClick={() => setFrozen(!frozen)}>
-            {frozen ? '▶ Devam' : '❚❚ Dondur'}
+            {frozen ? `▶ ${t('Devam')}` : `❚❚ ${t('Dondur')}`}
           </button>
         </div>
         <label className="osc-row">
-          <span>Zaman/böl.</span>
+          <span>{t('Zaman/böl.')}</span>
           <select value={timeDiv} onChange={(e) => set('timeDiv', Number(e.target.value))}>
             {TIME_DIVS.map((t) => (
               <option key={t} value={t}>
@@ -320,7 +326,7 @@ export function Oscilloscope() {
               <select value={vdiv[c]} onChange={(e) => set(c ? 'ch2Div' : 'ch1Div', Number(e.target.value))}>
                 {VOLT_DIVS.map((v) => (
                   <option key={v} value={v}>
-                    {formatSI(v, 'V')}/böl.
+                    {formatSI(v, 'V')}/{t('böl.')}
                   </option>
                 ))}
               </select>
@@ -331,20 +337,20 @@ export function Oscilloscope() {
                 step={0.2}
                 value={pos[c]}
                 onChange={(e) => updateParams(scope.id, { [c ? 'ch2Pos' : 'ch1Pos']: Number(e.target.value) }, false)}
-                title="Dikey konum"
+                title={t('Dikey konum')}
               />
             </div>
             {meas[c] ? (
               <div className="osc-meas">
-                <span>Maks <b>{formatSI(meas[c]!.max, 'V')}</b></span>
+                <span>{t('Maks')} <b>{formatSI(meas[c]!.max, 'V')}</b></span>
                 <span>Min <b>{formatSI(meas[c]!.min, 'V')}</b></span>
                 <span>Vpp <b>{formatSI(meas[c]!.max - meas[c]!.min, 'V')}</b></span>
-                <span>Ort <b>{formatSI(meas[c]!.avg, 'V')}</b></span>
+                <span>{t('Ort')} <b>{formatSI(meas[c]!.avg, 'V')}</b></span>
                 <span>RMS <b>{formatSI(meas[c]!.rms, 'V')}</b></span>
                 <span>f <b>{meas[c]!.freq ? formatSI(meas[c]!.freq, 'Hz') : '—'}</b></span>
               </div>
             ) : (
-              <div className="osc-meas muted small">Ölçüm için simülasyonu başlat</div>
+              <div className="osc-meas muted small">{t('Ölçüm için simülasyonu başlat')}</div>
             )}
           </div>
         ))}
