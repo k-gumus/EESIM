@@ -38,6 +38,10 @@ function valueText(d: CompData): string {
     case 'lamp': return `${formatSI(n('Vnom'), 'V')} ${formatSI(n('Pnom'), 'W')}`;
     case 'ldr': return `${formatSI(n('lux'), 'lx')}`;
     case 'ntc': return `${n('temp')} °C`;
+    case 'ptc': return `${n('temp')} °C`;
+    case 'varistor': return `${String(n('Vn')).replace('.', ',')} V`;
+    case 'fuse': return `${String(n('Irated')).replace('.', ',')} A`;
+    case 'buzzer': return formatSI(n('R'), 'Ω');
     case 'opamp': return String(p.model ?? '');
     case 'reg78': return `78${String(n('Vout')).padStart(2, '0')}`;
     default: return '';
@@ -105,8 +109,16 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
       case 'lamp':
       case 'ldr':
       case 'ntc':
+      case 'ptc':
+      case 'varistor':
       case 'button':
         readout = formatCurrent(Math.abs(I[0] ?? 0));
+        break;
+      case 'buzzer':
+        readout = (Math.abs(I[0] ?? 0) > 1e-3 ? '🔊 ' : '') + formatCurrent(Math.abs(I[0] ?? 0));
+        break;
+      case 'fuse':
+        readout = live.probe.blown ? `💥 ${t('ATTI')}` : formatCurrent(Math.abs(I[0] ?? 0));
         break;
       case 'battery':
       case 'clock':

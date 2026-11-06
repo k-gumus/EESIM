@@ -58,6 +58,33 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['Dijital girişe bağlarken 10 kΩ pull-down (VCC’den butona) ya da pull-up (butondan GND’ye)', 'Taktil buton: 6×6 mm, 12 V / 50 mA'],
     caution: ['Buton bırakıldığında giriş boşta (floating) kalmamalı: pull-up veya pull-down direnci şart. “Buton, Pull-Down ve Pull-Up Direnci” deneyine bak.', 'Kontak zıplaması (bounce) yazılımda ya da RC filtreyle giderilir.'],
   },
+  buzzer: {
+    what: 'Elektrik sinyalini sese çevirir: alarm, bip, zil ve geri bildirim için. Mikrodenetleyici çıkışına genelde bir transistörle sürülür.',
+    how: 'Manyetik buzzer/hoparlörde bobin akımı diyaframı titreştirir; piezo buzzerde kristal gerilimle şekil değiştirir. Bu simülasyonda bir yük (direnç) gibi modellenir — üzerinden akım geçtiğinde ses verir.',
+    typical: ['Manyetik buzzer: 8–32 Ω', 'Küçük hoparlör: 4–8 Ω', 'Piezo buzzer: yüksek empedans (~1–10 nF)', 'Sürücü: 555 ya da MCU PWM + transistör'],
+    caution: ['Bobinli (manyetik) buzzer endüktiftir: yanına serbest geçiş (flyback) diyodu koy.', 'MCU pini doğrudan süremez; akımı transistör/MOSFET ile ver.'],
+  },
+  ptc: {
+    what: 'Sıcaklık arttıkça direnci ARTAN termistör. Aşırı akım/sıcaklık koruması, yumuşak başlatma (inrush) ve kendiliğinden sıfırlanan sigorta (polyswitch) olarak kullanılır.',
+    how: 'Isındıkça (kendi akımıyla ya da ortamla) direnci yükselir ve akımı kendiliğinden kısar; soğuyunca geri döner. NTC’nin tam tersidir.',
+    formula: 'R(T) = R25·e^(α·(T−25))',
+    typical: ['Resettable sigorta (PPTC): 0,1–3 A tutma akımı', 'Inrush sınırlama: birkaç Ω – onlarca Ω', 'Motor/trafo sıcaklık koruması'],
+    caution: ['NTC ısınınca direnci DÜŞER, PTC’de ARTAR — karıştırma.', 'Kendi gücüyle ısınıp “tetiklenmesi” termal gecikme nedeniyle zaman alır.'],
+  },
+  varistor: {
+    what: 'Gerilime bağlı direnç (MOV): normalde yalıtkan, ama gerilim eşik değeri V_n’yi aşınca aniden iletime geçip fazlalığı yutar. Ani aşırı gerilim (yıldırım, anahtarlama darbesi) koruması.',
+    how: 'Çinko oksit tanecikleri düşük gerilimde yalıtır, yüksek gerilimde çığ gibi iletir. Çift yönlüdür (AC’de de çalışır) ve darbe enerjisini ısıya çevirir.',
+    formula: 'I ≈ k·Vᵅ  (α ≈ 25–50)   ·   V_kenetleme ≥ V_1mA',
+    typical: ['Şebeke (230 V) girişi: 275 V AC sınıfı MOV', 'Sinyal/mantık hattı: birkaç V – onlarca V', 'Röle/motor kontağına paralel ark bastırma'],
+    caution: ['Her darbede biraz yıpranır; büyük/çok sayıda darbede kısa devre olup yanabilir — seri sigortayla kullan.', 'Kenetleme gerilimini çalışma geriliminin üstünde seç, yoksa sürekli ısınır.'],
+  },
+  fuse: {
+    what: 'Aşırı akımda eriyip devreyi kalıcı olarak açan koruma elemanı. Kısa devre ve aşırı yük hasarını (yangın, kablo erimesi) önler.',
+    how: 'İnce tel, anma akımının üstünde I²R ısısıyla erir ve açık devre olur. Bir kez atınca değiştirilir (bu modelde: atınca açık kalır).',
+    formula: 'Atma: anma akımı aşıldığında (I²t enerjisiyle)',
+    typical: ['Hızlı (F): elektronik devreler', 'Gecikmeli (T): motor/trafo inrush’u', 'Cam tüp 5×20 mm: 100 mA – 10 A', 'Oto (bıçak) sigortası: 1–40 A'],
+    caution: ['Her zaman besleme/faz hattına, yükten önce bağla.', 'Anma akımını normal akımın biraz üstünde seç: çok küçükse boşuna atar, çok büyükse korumaz.', 'Attıktan sonra sebebini (kısa devre) bulmadan değiştirme.'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',

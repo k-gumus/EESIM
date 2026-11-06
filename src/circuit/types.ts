@@ -42,7 +42,12 @@ export type CompType =
   | 'logicin'
   | 'logicprobe'
   | 'dff'
-  | 'timer555';
+  | 'timer555'
+  // v0.3 ek bileşenler
+  | 'buzzer'
+  | 'ptc'
+  | 'varistor'
+  | 'fuse';
 
 export type ParamValue = number | string | boolean;
 

@@ -710,12 +710,45 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'dip14', onBoard: true },
     description: 'Saatin yükselen kenarında D girişini Q’ya kopyalar ve bir sonraki kenara kadar tutar (1 bitlik bellek).',
   },
+  // ───────────── v0.3: yeni bileşenler ─────────────
+  buzzer: {
+    type: 'buzzer', label: 'Buzzer / Hoparlör', short: 'BZ', prefix: 'BZ', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [{ key: 'R', label: 'Ses direnci', unit: 'Ω', kind: 'number', default: 100, min: 1 }],
+    physical: { body: 'none', onBoard: true },
+    description: 'Ses çıkaran yük (hoparlör/buzzer). Üzerinden akım geçtikçe ses verir; devrede direnç gibi görünür.',
+  },
+  ptc: {
+    type: 'ptc', label: 'PTC Termistör', short: 'PTC', prefix: 'PTC', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [
+      { key: 'temp', label: 'Sıcaklık', unit: '°C', kind: 'slider', default: 25, min: -20, max: 150, step: 1 },
+      { key: 'R25', label: '25 °C direnci', unit: 'Ω', kind: 'number', default: 100, advanced: true },
+      { key: 'alpha', label: 'Sıcaklık katsayısı α', unit: '1/°C', kind: 'number', default: 0.04, advanced: true },
+    ],
+    physical: { body: 'thermistor', onBoard: true },
+    description: 'Sıcaklık arttıkça direnci artan termistör: R = R25·e^(α·(T−25)). Yumuşak başlatma (inrush) ve kendiliğinden sıfırlanan sigorta.',
+  },
+  varistor: {
+    type: 'varistor', label: 'Varistör (MOV)', short: 'MOV', prefix: 'RV', category: 'Pasif Elemanlar',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [{ key: 'Vn', label: 'Kenetleme gerilimi', unit: 'V', kind: 'number', default: 30, min: 1 }],
+    physical: { body: 'disc-cap', onBoard: true },
+    description: 'Metal oksit varistör: gerilim V_n’yi aşınca iletime geçip fazlalığı kırpar (çift yönlü). Ani aşırı gerilim koruması.',
+  },
+  fuse: {
+    type: 'fuse', label: 'Sigorta', short: 'F', prefix: 'F', category: 'Pasif Elemanlar',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [{ key: 'Irated', label: 'Anma akımı', unit: 'A', kind: 'number', default: 0.5, min: 1e-3 }],
+    physical: { body: 'glass-diode', onBoard: true },
+    description: 'Akım anma değerini aşınca atar (açık devre olur) ve öyle kalır. Aşırı akım/kısa devre koruması.',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
   'vdc', 'battery', 'vac', 'clock', 'idc', 'vcvs', 'vccs', 'cccs', 'ccvs',
-  'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct',
-  'switch', 'button', 'lamp', 'ldr', 'ntc',
+  'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct', 'varistor', 'fuse',
+  'switch', 'button', 'lamp', 'buzzer', 'ldr', 'ntc', 'ptc',
   'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos',
   'opamp', 'timer555', 'reg78',
   'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',

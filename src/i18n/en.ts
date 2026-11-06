@@ -617,4 +617,22 @@ export const EN: Record<string, string> = {
   'Düğüm Etiketi': 'Net Label',
   'Aynı isimli etiketler kablo olmadan birbirine bağlıdır. Yapay zekâ düğümleri bu isimlerle görür.': 'Labels with the same name are connected without a wire. The AI sees nodes by these names.',
   Etiket: 'Label',
+  // ── v0.3 yeni bileşenler ──
+  'Buzzer / Hoparlör': 'Buzzer / Speaker',
+  'PTC Termistör': 'PTC Thermistor',
+  'Varistör (MOV)': 'Varistor (MOV)',
+  Sigorta: 'Fuse',
+  'Ses direnci': 'Impedance',
+  'Sıcaklık katsayısı α': 'Temperature coefficient α',
+  'Kenetleme gerilimi': 'Clamp voltage',
+  'Anma akımı': 'Rated current',
+  ATTI: 'BLOWN',
+  'Ses çıkaran yük (hoparlör/buzzer). Üzerinden akım geçtikçe ses verir; devrede direnç gibi görünür.':
+    'A load that makes sound (speaker/buzzer). It sounds as current flows; modeled as a resistor.',
+  'Sıcaklık arttıkça direnci artan termistör: R = R25·e^(α·(T−25)). Yumuşak başlatma (inrush) ve kendiliğinden sıfırlanan sigorta.':
+    'A thermistor whose resistance rises with temperature: R = R25·e^(α·(T−25)). Used for soft-start (inrush) and resettable fuses.',
+  'Metal oksit varistör: gerilim V_n’yi aşınca iletime geçip fazlalığı kırpar (çift yönlü). Ani aşırı gerilim koruması.':
+    'Metal-oxide varistor: conducts and clips the excess once the voltage exceeds V_n (bidirectional). Surge/overvoltage protection.',
+  'Akım anma değerini aşınca atar (açık devre olur) ve öyle kalır. Aşırı akım/kısa devre koruması.':
+    'Blows (goes open) once the current exceeds its rating and stays open. Overcurrent / short-circuit protection.',
 };

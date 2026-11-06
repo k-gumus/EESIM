@@ -18,6 +18,40 @@ export function Symbol({ type, params, live }: SymProps) {
           <path d="M0 20 H14 L18 11 L26 29 L34 11 L42 29 L50 11 L58 29 L62 20 H80" />
         </g>
       );
+    case 'varistor':
+      return (
+        <g {...S}>
+          <path d="M0 20 H14 L18 11 L26 29 L34 11 L42 29 L50 11 L58 29 L62 20 H80" />
+          <path d="M16 33 L64 7" strokeWidth={1.6} />
+        </g>
+      );
+    case 'ptc':
+      return (
+        <g {...S}>
+          <path d="M0 20 H16 M64 20 H80" />
+          <rect x={16} y={10} width={48} height={20} rx={2} fill="none" />
+          <path d="M22 30 L58 10" strokeWidth={1.6} />
+          <path d="M24 15 h6 M27 12 v6" strokeWidth={1.4} />
+        </g>
+      );
+    case 'fuse':
+      return (
+        <g {...S}>
+          <path d="M0 20 H22 M58 20 H80" />
+          <rect x={22} y={12} width={36} height={16} rx={3} fill="none" />
+          <path d="M26 20 H54" strokeWidth={1.6} />
+        </g>
+      );
+    case 'buzzer':
+      return (
+        <g {...S}>
+          <path d="M0 20 H25 M55 20 H80" />
+          <circle cx={40} cy={20} r={14} fill="currentColor" fillOpacity={0.12} />
+          <path d="M40 7 V33" strokeWidth={1.4} />
+          <path d="M60 11 a12 12 0 0 1 0 18" strokeWidth={1.4} />
+          <path d="M64 7 a17 17 0 0 1 0 26" strokeWidth={1.1} opacity={0.7} />
+        </g>
+      );
     case 'capacitor':
       return (
         <g {...S}>

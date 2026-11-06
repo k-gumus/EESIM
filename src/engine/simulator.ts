@@ -618,6 +618,10 @@ export function resistanceOf(el: CompiledElement): number {
       const T = num(p.temp, 25) + 273.15;
       return num(p.R25, 10e3) * Math.exp(num(p.B, 3950) * (1 / T - 1 / 298.15));
     }
+    case 'ptc':
+      return Math.max(1e-3, num(p.R25, 100) * Math.exp(num(p.alpha, 0.04) * (num(p.temp, 25) - 25)));
+    case 'buzzer':
+      return Math.max(1, num(p.R, 100));
     default:
       return num(p.R, 1000);
   }
@@ -627,6 +631,73 @@ class ResistorLike extends Resistor {
   constructor(el: CompiledElement) {
     super(el);
     this.g = 1 / Math.max(1e-6, resistanceOf(el));
+  }
+}
+
+/** Varistör (MOV): çift yönlü; V_n'yi aşınca sertçe iletir. İki zıt zener gibi simetrik üstel model. */
+class Varistor extends Device {
+  vs: number;
+  Is: number;
+  Gleak = 1e-9;
+  v = 0;
+  constructor(el: CompiledElement) {
+    super(el);
+    this.nonlinear = true;
+    const Vn = Math.max(0.5, num(el.params.Vn, 30));
+    this.vs = Vn / 10; // ölçek
+    this.Is = 1e-3 * Math.exp(-10); // v = V_n'de ≈ 1 mA (V_1mA noktası); yük altında biraz üstünde kenetler
+  }
+  iv(v: number): [number, number] {
+    const [ep, dep] = sexp(v / this.vs);
+    const [en, den] = sexp(-v / this.vs);
+    const i = this.Is * (ep - en) + this.Gleak * v;
+    const g = (this.Is / this.vs) * (dep + den) + this.Gleak;
+    return [i, g];
+  }
+  stamp(c: Ctx) {
+    const [a, b] = this.el.nets;
+    const vb = V(c.x, b);
+    const vraw = V(c.x, a) - vb;
+    const v = limStep(vraw, this.v, this.vs * 2);
+    if (Math.abs(v - vraw) > 1e-12) c.limited = true;
+    this.v = v;
+    const [I, g] = this.iv(v);
+    stampNL(c, [a, b], [I, -I], [[g, -g], [-g, g]], [vb + v, vb]);
+  }
+  currents(x: Float64Array) {
+    const [i] = this.iv(V(x, this.el.nets[0]) - V(x, this.el.nets[1]));
+    return [i, -i];
+  }
+  probe(x: Float64Array) {
+    return { vd: V(x, this.el.nets[0]) - V(x, this.el.nets[1]) };
+  }
+}
+
+/** Sigorta: akım anma değerini aşınca atar ve açık kalır (durum accept'te, adımlar arasında güncellenir). */
+class Fuse extends Device {
+  Irated: number;
+  Ron = 0.01;
+  blown = false;
+  constructor(el: CompiledElement) {
+    super(el);
+    this.Irated = Math.max(1e-3, num(el.params.Irated, 0.5));
+  }
+  private cond() {
+    return this.blown ? 1e-12 : 1 / this.Ron;
+  }
+  stamp(c: Ctx) {
+    addG(c, this.el.nets[0], this.el.nets[1], this.cond());
+  }
+  currents(x: Float64Array) {
+    const i = (V(x, this.el.nets[0]) - V(x, this.el.nets[1])) * this.cond();
+    return [i, -i];
+  }
+  accept(x: Float64Array, c: Ctx) {
+    super.accept(x, c);
+    if (!this.blown && Math.abs(this.cur[0]) > this.Irated) this.blown = true;
+  }
+  probe() {
+    return { blown: this.blown ? 1 : 0 };
   }
 }
 
@@ -1161,7 +1232,13 @@ function makeDevice(el: CompiledElement): Device | null {
     case 'lamp':
     case 'ldr':
     case 'ntc':
+    case 'ptc':
+    case 'buzzer':
       return new ResistorLike(el);
+    case 'varistor':
+      return new Varistor(el);
+    case 'fuse':
+      return new Fuse(el);
     case 'button':
       return new Button(el);
     case 'pot':
