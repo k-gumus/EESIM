@@ -158,4 +158,23 @@ describe('yeni bileşenler', () => {
     expect(Math.abs(off.sim.currentsOf('OK1')![2])).toBeLessThan(5e-4);
     expect(off.vOf('VC')).toBeGreaterThan(4.5); // kesim: kolektör ≈ besleme
   });
+
+  it('DC motor: kalkışta yüksek akım (≈ V/R), hızlandıkça akım düşer', () => {
+    const d = doc('motor', [
+      ['vdc', 'V1', 100, 0, 0, { V: 12 }],
+      ['motor', 'M1', 240, 40, 0, { R: 1.5, Ke: 0.015, L: 0.5e-3, J: 2e-5, B: 5e-5 }],
+      ['ground', 'G1', 100, 120],
+      ['ground', 'G2', 360, 120],
+    ], [['V1.p', 'M1.a'], ['M1.b', 'G2.g'], ['V1.n', 'G1.g']]);
+    const { sim } = build(d);
+    const stall = Math.abs(sim.currentsOf('M1')![0]);
+    expect(stall).toBeGreaterThan(7); // ≈ 12/1,5 = 8 A (ω = 0)
+    expect(stall).toBeLessThan(9);
+    for (let i = 0; i < 4000; i++) sim.step(1e-4); // 0,4 s → hızlanma
+    const run = Math.abs(sim.currentsOf('M1')![0]);
+    expect(run).toBeGreaterThan(1);
+    expect(run).toBeLessThan(3); // ≈ 2 A
+    const m = sim.byId.get('M1') as unknown as { w: number };
+    expect(m.w).toBeGreaterThan(400); // ≈ 600 rad/s
+  });
 });

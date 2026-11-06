@@ -784,12 +784,25 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'dip8', onBoard: true },
     description: 'Opto-kuplör (PC817 gibi): giriş LED’i ışıkla çıkış foto-transistörünü sürer; iki taraf galvanik olarak yalıtılmıştır. I_çıkış ≈ CTR·I_LED. Gürültülü/yüksek gerilimli tarafı mantık devresinden ayırır.',
   },
+  motor: {
+    type: 'motor', label: 'DC Motor', short: 'M', prefix: 'M', category: 'Anahtar ve Sensörler',
+    w: 80, h: 40, pins: two('a', 'b'), rotatable: true, electrical: true,
+    params: [
+      { key: 'R', label: 'Sargı direnci', unit: 'Ω', kind: 'number', default: 1.5, min: 1e-3 },
+      { key: 'Ke', label: 'Zıt-EMK/tork sabiti', unit: 'V·s/rad', kind: 'number', default: 0.015, min: 1e-6 },
+      { key: 'L', label: 'Sargı endüktansı', unit: 'H', kind: 'number', default: 0.5e-3, advanced: true },
+      { key: 'J', label: 'Atalet momenti', unit: 'kg·m²', kind: 'number', default: 2e-5, advanced: true },
+      { key: 'B', label: 'Sürtünme katsayısı', unit: 'N·m·s', kind: 'number', default: 5e-5, advanced: true },
+    ],
+    physical: { body: 'none', onBoard: false },
+    description: 'Fırçalı DC motor: sargı direnci + endüktansı ve hıza bağlı zıt-EMK (E = Ke·ω). Dururken yüksek akım çeker, hızlandıkça akım düşer. Tork = Kt·I; ω atalet ve sürtünmeyle belirlenir.',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
   'vdc', 'battery', 'vac', 'clock', 'idc', 'vcvs', 'vccs', 'cccs', 'ccvs',
   'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct', 'varistor', 'fuse',
-  'switch', 'button', 'lamp', 'buzzer', 'ldr', 'ntc', 'ptc',
+  'switch', 'button', 'lamp', 'buzzer', 'motor', 'ldr', 'ntc', 'ptc',
   'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'jfet',
   'opamp', 'timer555', 'reg78', 'tl431', 'opto',
   'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',

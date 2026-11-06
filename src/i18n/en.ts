@@ -647,4 +647,12 @@ export const EN: Record<string, string> = {
   'Akım aktarım oranı (CTR)': 'Current transfer ratio (CTR)',
   'Opto-kuplör (PC817 gibi): giriş LED’i ışıkla çıkış foto-transistörünü sürer; iki taraf galvanik olarak yalıtılmıştır. I_çıkış ≈ CTR·I_LED. Gürültülü/yüksek gerilimli tarafı mantık devresinden ayırır.':
     'Optocoupler (e.g. PC817): the input LED drives the output phototransistor via light; the two sides are galvanically isolated. I_out ≈ CTR·I_LED. Isolates a noisy / high-voltage side from the logic.',
+  'DC Motor': 'DC Motor',
+  'Sargı direnci': 'Winding resistance',
+  'Zıt-EMK/tork sabiti': 'Back-EMF / torque constant',
+  'Sargı endüktansı': 'Winding inductance',
+  'Atalet momenti': 'Moment of inertia',
+  'Sürtünme katsayısı': 'Friction coefficient',
+  'Fırçalı DC motor: sargı direnci + endüktansı ve hıza bağlı zıt-EMK (E = Ke·ω). Dururken yüksek akım çeker, hızlandıkça akım düşer. Tork = Kt·I; ω atalet ve sürtünmeyle belirlenir.':
+    'Brushed DC motor: winding resistance + inductance and a speed-dependent back-EMF (E = Ke·ω). Draws high current at stall and less as it speeds up. Torque = Kt·I; ω is set by inertia and friction.',
 };

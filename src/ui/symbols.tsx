@@ -132,6 +132,14 @@ export function Symbol({ type, params, live }: SymProps) {
           <path d="M33 40 H47" strokeWidth={2.4} />
         </g>
       );
+    case 'motor':
+      return (
+        <g {...S}>
+          <path d="M0 20 H18 M62 20 H80" />
+          <circle cx={40} cy={20} r={18} />
+          <text x={40} y={20} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={700} fill="currentColor" stroke="none">M</text>
+        </g>
+      );
     case 'opto':
       return (
         <g {...S}>

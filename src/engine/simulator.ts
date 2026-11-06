@@ -1107,6 +1107,53 @@ class OptoCoupler extends Device {
   }
 }
 
+/** Fırçalı DC motor: sargı R+L ile seri, hıza bağlı zıt-EMK (E = Ke·ω). ω atalet/sürtünmeyle her adımda güncellenir (Kt = Ke, SI). */
+class DCMotor extends Device {
+  R: number;
+  L: number;
+  Ke: number;
+  J: number;
+  B: number;
+  w = 0;
+  i1 = 0;
+  constructor(el: CompiledElement) {
+    super(el);
+    this.branches = 1;
+    this.R = Math.max(1e-3, num(el.params.R, 1.5));
+    this.L = Math.max(1e-9, num(el.params.L, 0.5e-3));
+    this.Ke = num(el.params.Ke, 0.015);
+    this.J = Math.max(1e-9, num(el.params.J, 2e-5));
+    this.B = Math.max(1e-12, num(el.params.B, 5e-5));
+  }
+  stamp(c: Ctx) {
+    const [a, b] = this.el.nets;
+    const k = this.b0;
+    addA(c, a - 1, k, 1);
+    addA(c, b - 1, k, -1);
+    addA(c, k, a - 1, 1);
+    addA(c, k, b - 1, -1);
+    const Ldt = c.mode === 'tran' ? this.L / c.dt : 0;
+    addA(c, k, k, -(this.R + Ldt));
+    c.b[k] += this.Ke * this.w - Ldt * this.i1;
+  }
+  currents(x: Float64Array) {
+    const i = x[this.b0];
+    return [i, -i];
+  }
+  accept(x: Float64Array, c: Ctx) {
+    super.accept(x, c);
+    const i = x[this.b0];
+    if (c.mode === 'tran') this.w += (c.dt * (this.Ke * i - this.B * this.w)) / this.J;
+    this.i1 = i;
+  }
+  initHistory(x: Float64Array) {
+    this.i1 = x[this.b0];
+  }
+  probe() {
+    return { w: this.w, rpm: (this.w * 60) / (2 * Math.PI) };
+  }
+}
+
 // ── Lojik (5 V CMOS benzeri, davranışsal) ──
 const VDD = 5;
 const VTH = 2.5;
@@ -1371,6 +1418,8 @@ function makeDevice(el: CompiledElement): Device | null {
       return new TL431(el);
     case 'opto':
       return new OptoCoupler(el);
+    case 'motor':
+      return new DCMotor(el);
     case 'and':
     case 'or':
     case 'not':

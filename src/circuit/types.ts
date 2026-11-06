@@ -50,7 +50,8 @@ export type CompType =
   | 'fuse'
   | 'jfet'
   | 'tl431'
-  | 'opto';
+  | 'opto'
+  | 'motor';
 
 export type ParamValue = number | string | boolean;
 

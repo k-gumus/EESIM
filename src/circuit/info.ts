@@ -106,6 +106,13 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['PC817, 4N35, TLP521', 'Giriş LED akımı: 5–20 mA (seri dirençle ayarla)', 'Dijital sinyal yalıtımı, SMPS geri beslemesi (TL431 ile), katı-hal anahtarlama'],
     caution: ['Giriş LED’ine mutlaka seri direnç koy (doğrudan sürme LED’i yakar).', 'CTR yaşlanma ve sıcaklıkla düşer; tasarımda pay bırak.', 'Foto-transistörlü çıkış yavaştır (kHz mertebesi); hızlı veri için özel optokuplör gerekir.'],
   },
+  motor: {
+    what: 'Elektrik enerjisini dönme hareketine çevirir: fan, pompa, robot tekerleği, oyuncak. Hız genelde PWM ile, yön ise H-köprüsüyle kontrol edilir.',
+    how: 'Sargıdan geçen akım manyetik alanda tork üretir (T = Kt·I). Motor döndükçe zıt bir gerilim (zıt-EMK, E = Ke·ω) oluşur; bu yüzden hızlandıkça çektiği akım azalır. Dururken (kalkışta) akımı yalnızca sargı direnci sınırlar, bu yüzden en yüksektir.',
+    formula: 'V = I·R + L·dI/dt + Ke·ω   ·   T = Kt·I   ·   J·dω/dt = T − B·ω',
+    typical: ['Kalkış (stall) akımı ≈ V/R — çalışma akımının birkaç katı', 'Hobi motoru: 3–12 V, birkaç yüz mA – birkaç A', 'Sürücü: MOSFET/transistör + serbest geçiş diyodu ya da H-köprüsü'],
+    caution: ['Endüktif yük: akımı kesen anahtara/transistöre paralel serbest geçiş (flyback) diyodu şart.', 'Kalkış akımı yüksektir; sürücüyü ve beslemeyi buna göre seç.', 'Fırça/kolektör gürültüsünü azaltmak için uçlarına küçük kondansatör bağlanır.'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',

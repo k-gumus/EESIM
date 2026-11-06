@@ -47,6 +47,7 @@ function valueText(d: CompData): string {
     case 'reg78': return `78${String(n('Vout')).padStart(2, '0')}`;
     case 'tl431': return '2,5 V';
     case 'opto': return `CTR ${String(n('CTR')).replace('.', ',')}`;
+    case 'motor': return formatSI(n('R'), 'Ω');
     default: return '';
   }
 }
@@ -136,6 +137,9 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         break;
       case 'opto':
         readout = `Iç ${formatCurrent(Math.abs(I[2] ?? 0))}`;
+        break;
+      case 'motor':
+        readout = `${Math.round(live.probe.rpm ?? 0)} rpm · ${formatCurrent(Math.abs(I[0] ?? 0))}`;
         break;
       case 'timer555':
       case 'dff':
