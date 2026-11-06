@@ -47,7 +47,8 @@ export type CompType =
   | 'buzzer'
   | 'ptc'
   | 'varistor'
-  | 'fuse';
+  | 'fuse'
+  | 'jfet';
 
 export type ParamValue = number | string | boolean;
 

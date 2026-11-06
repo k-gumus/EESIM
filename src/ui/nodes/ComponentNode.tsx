@@ -23,6 +23,7 @@ function valueText(d: CompData): string {
     case 'led': return t(LED_COLORS[String(p.color)]?.label ?? '').split(' ')[0];
     case 'npn': case 'pnp': return `β=${n('beta')}`;
     case 'nmos': case 'pmos': return `Vth=${String(n('Vth')).replace('.', ',')} V`;
+    case 'jfet': return `${formatSI(n('Idss'), 'A')}`;
     case 'vdc': return formatSI(n('V'), 'V');
     case 'vac': return `${formatSI(n('amp'), 'V')}p · ${formatSI(n('freq'), 'Hz')}`;
     case 'idc': return formatSI(n('I'), 'A');
@@ -104,6 +105,7 @@ function ComponentNodeImpl({ id, data, selected }: NodeProps<Node<CompData>>) {
         break;
       case 'nmos':
       case 'pmos':
+      case 'jfet':
         readout = `Id ${formatCurrent(Math.abs(I[1] ?? 0))} · ${REGION_MOS[live.probe.region ?? 0]}`;
         break;
       case 'lamp':

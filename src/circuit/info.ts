@@ -85,6 +85,13 @@ export const COMP_INFO: Partial<Record<CompType, CompInfo>> = {
     typical: ['Hızlı (F): elektronik devreler', 'Gecikmeli (T): motor/trafo inrush’u', 'Cam tüp 5×20 mm: 100 mA – 10 A', 'Oto (bıçak) sigortası: 1–40 A'],
     caution: ['Her zaman besleme/faz hattına, yükten önce bağla.', 'Anma akımını normal akımın biraz üstünde seç: çok küçükse boşuna atar, çok büyükse korumaz.', 'Attıktan sonra sebebini (kısa devre) bulmadan değiştirme.'],
   },
+  jfet: {
+    what: 'Jonksiyon alan etkili transistör (N-kanal): gerilimle kontrol edilen, çok yüksek giriş empedanslı yükselteç/anahtar. Düşük gürültülü ön yükselteçlerde ve gerilim kontrollü dirençte kullanılır.',
+    how: 'Ters kutuplu gate–kanal jonksiyonu kanalı daraltır. V_GS = 0 iken kanal en geniş ve I_D en büyüktür (I_DSS); V_GS negatifleştikçe kanal kısılır, V_P’de tamamen kapanır. Gate akımı neredeyse sıfırdır.',
+    formula: 'I_D = I_DSS·(1 − V_GS/V_P)²   (doyumda)',
+    typical: ['2N5457: I_DSS ≈ 1–5 mA, V_P ≈ −0,5…−6 V', 'J201, BF245', 'Ses ön yükselteci, tampon, gerilim kontrollü direnç (VCR)'],
+    caution: ['N-kanal JFET’te V_GS sıfır ya da negatif olmalı; gate’i 0,6 V üstüne çıkarma (jonksiyon iletir).', 'I_DSS ve V_P parça parça çok değişir; tasarımı buna göre yap.'],
+  },
   xfmr: {
     what: 'AC gerilimi yükseltir ya da düşürür ve iki devreyi elektriksel olarak yalıtır. Şebeke adaptörlerinin girişindeki elemandır.',
     how: 'Primer sargıdaki değişken akım çekirdekte değişken akı oluşturur; bu akı sekonderde sarım sayısıyla orantılı gerilim indükler. DC’de çalışmaz.',

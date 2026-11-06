@@ -87,4 +87,29 @@ describe('yeni bileşenler', () => {
     expect((blow.sim.byId.get('F1') as unknown as { blown: boolean }).blown).toBe(true);
     expect(blow.vOf('VL')).toBeLessThan(0.1); // atınca yüke gerilim gelmez
   });
+
+  it('JFET: V_GS=0 → I_D ≈ I_DSS; V_GS=−2 → ≈ I_DSS/4', () => {
+    const d0 = doc('jfet0', [
+      ['vdc', 'VDD', 100, 0, 0, { V: 10 }],
+      ['resistor', 'RD', 240, -40, 90, { R: 330 }],
+      ['jfet', 'J1', 220, 60, 0, { Idss: 10e-3, Vp: -4 }],
+      ['ground', 'G1', 100, 120],
+      ['ground', 'G2', 300, 200],
+    ], [['VDD.p', 'RD.a'], ['RD.b', 'J1.d'], ['J1.s', 'G2.g'], ['J1.g', 'G2.g'], ['VDD.n', 'G1.g']]);
+    const id0 = build(d0).sim.currentsOf('J1')![1];
+    expect(Math.abs(id0)).toBeGreaterThan(0.008);
+    expect(Math.abs(id0)).toBeLessThan(0.012);
+
+    const d2 = doc('jfet2', [
+      ['vdc', 'VDD', 100, 0, 0, { V: 10 }],
+      ['resistor', 'RD', 240, -40, 90, { R: 330 }],
+      ['jfet', 'J1', 220, 60, 0, { Idss: 10e-3, Vp: -4 }],
+      ['vdc', 'VG', 20, 200, 0, { V: -2 }],
+      ['ground', 'G1', 100, 120],
+      ['ground', 'G2', 300, 200],
+    ], [['VDD.p', 'RD.a'], ['RD.b', 'J1.d'], ['J1.s', 'G2.g'], ['VG.p', 'J1.g'], ['VG.n', 'G2.g'], ['VDD.n', 'G1.g']]);
+    const id2 = build(d2).sim.currentsOf('J1')![1];
+    expect(Math.abs(id2)).toBeGreaterThan(0.002);
+    expect(Math.abs(id2)).toBeLessThan(0.0032);
+  });
 });

@@ -635,4 +635,9 @@ export const EN: Record<string, string> = {
     'Metal-oxide varistor: conducts and clips the excess once the voltage exceeds V_n (bidirectional). Surge/overvoltage protection.',
   'Akım anma değerini aşınca atar (açık devre olur) ve öyle kalır. Aşırı akım/kısa devre koruması.':
     'Blows (goes open) once the current exceeds its rating and stays open. Overcurrent / short-circuit protection.',
+  'JFET (N-kanal)': 'JFET (N-channel)',
+  'Doyma akımı I_DSS': 'Saturation current I_DSS',
+  'Kısılma gerilimi V_P': 'Pinch-off voltage V_P',
+  'Jonksiyon FET (N-kanal, deplesyon): V_GS = 0 iken en çok iletir, negatif V_GS ile kısılır. Yüksek giriş empedanslı yükselteç. I_D = I_DSS·(1 − V_GS/V_P)².':
+    'Junction FET (N-channel, depletion): conducts most at V_GS = 0 and pinches off as V_GS goes negative. High input-impedance amplifier. I_D = I_DSS·(1 − V_GS/V_P)².',
 };

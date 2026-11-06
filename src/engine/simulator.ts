@@ -592,6 +592,18 @@ class MOSFET extends Device {
   }
 }
 
+/** JFET (N-kanal, deplesyon): kare yasası MOSFET ile aynı formda — vth = V_P (işaretli, negatif), K = 2·I_DSS/V_P². Kapı akımı ihmal. */
+class JFET extends MOSFET {
+  constructor(el: CompiledElement) {
+    super(el, false);
+    const Vp = num(el.params.Vp, -4) || -4;
+    const Idss = Math.max(1e-9, num(el.params.Idss, 10e-3));
+    this.vth = Vp;
+    this.K = (2 * Idss) / (Vp * Vp);
+    this.lambda = Math.max(0, num(el.params.lambda, 0));
+  }
+}
+
 class Passive extends Device {
   stamp() {}
   currents() {
@@ -1224,6 +1236,8 @@ function makeDevice(el: CompiledElement): Device | null {
       return new MOSFET(el, false);
     case 'pmos':
       return new MOSFET(el, true);
+    case 'jfet':
+      return new JFET(el);
     case 'multimeter':
       return String(p.mode).endsWith('A') ? new Ammeter(el) : new Passive(el);
     case 'scope':

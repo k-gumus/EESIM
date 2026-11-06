@@ -123,6 +123,16 @@ export function Symbol({ type, params, live }: SymProps) {
         </g>
       );
     }
+    case 'jfet':
+      return (
+        <g {...S}>
+          <path d="M0 40 H14" />
+          <path d="M14 34 L24 40 L14 46 Z" fill="currentColor" stroke="none" />
+          <path d="M24 16 V64" strokeWidth={3} />
+          <path d="M24 22 H40 V0" />
+          <path d="M24 58 H40 V80" />
+        </g>
+      );
     case 'nmos':
     case 'pmos': {
       const p = type === 'pmos';

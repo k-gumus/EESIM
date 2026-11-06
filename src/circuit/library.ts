@@ -743,13 +743,29 @@ export const LIBRARY: Record<CompType, CompDef> = {
     physical: { body: 'glass-diode', onBoard: true },
     description: 'Akım anma değerini aşınca atar (açık devre olur) ve öyle kalır. Aşırı akım/kısa devre koruması.',
   },
+  jfet: {
+    type: 'jfet', label: 'JFET (N-kanal)', short: 'J', prefix: 'J', category: 'Yarı İletkenler',
+    w: 60, h: 80, rotatable: true, electrical: true,
+    pins: [
+      { id: 'g', label: 'G', x: 0, y: 40 },
+      { id: 'd', label: 'D', x: 40, y: 0 },
+      { id: 's', label: 'S', x: 40, y: 80 },
+    ],
+    params: [
+      { key: 'Idss', label: 'Doyma akımı I_DSS', unit: 'A', kind: 'number', default: 10e-3, min: 1e-6 },
+      { key: 'Vp', label: 'Kısılma gerilimi V_P', unit: 'V', kind: 'number', default: -4, max: -0.1 },
+      { key: 'lambda', label: 'Kanal boyu modülasyonu λ', unit: '1/V', kind: 'number', default: 0, advanced: true },
+    ],
+    physical: { body: 'to92', onBoard: true },
+    description: 'Jonksiyon FET (N-kanal, deplesyon): V_GS = 0 iken en çok iletir, negatif V_GS ile kısılır. Yüksek giriş empedanslı yükselteç. I_D = I_DSS·(1 − V_GS/V_P)².',
+  },
 };
 
 export const PALETTE_ORDER: CompType[] = [
   'vdc', 'battery', 'vac', 'clock', 'idc', 'vcvs', 'vccs', 'cccs', 'ccvs',
   'resistor', 'pot', 'capacitor', 'inductor', 'xfmr', 'xfmr_ct', 'varistor', 'fuse',
   'switch', 'button', 'lamp', 'buzzer', 'ldr', 'ntc', 'ptc',
-  'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos',
+  'diode', 'zener', 'led', 'npn', 'pnp', 'nmos', 'pmos', 'jfet',
   'opamp', 'timer555', 'reg78',
   'logicin', 'logicprobe', 'and', 'or', 'not', 'nand', 'nor', 'xor', 'dff',
   'multimeter', 'scope', 'ground', 'label',
