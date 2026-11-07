@@ -1,4 +1,4 @@
-// PCB pop-up: iki sekme — "Şema" (temiz şematik) ve "PCB" (footprint'ler + ratsnest).
+// PCB pop-up: iki sekme — "Şema" (temiz şematik) ve "PCB" (gerber / 2 katman: footprint + 45° izler + GND düzlemi).
 // 3D görünümün yanında ayrı bir özellik; devreyi salt-görüntü olarak çizer, indirir.
 import { useMemo, useRef, useState, type Ref } from 'react';
 import type { Edge, Node } from '@xyflow/react';
@@ -6,7 +6,7 @@ import { LIBRARY, rotatePin, rotatedSize } from '../circuit/library';
 import type { CompData } from '../circuit/types';
 import { useCircuit } from '../store/circuitStore';
 import { Symbol } from './symbols';
-import { buildPcb, GND_COLOR, type Footprint } from '../pcb/layout';
+import { buildPcb, type Footprint } from '../pcb/layout';
 import { t } from '../i18n';
 
 type Tab = 'schem' | 'pcb';
@@ -135,22 +135,41 @@ function SchematicView({ nodes, edges, title, svgRef }: { nodes: CNode[]; edges:
   );
 }
 
-// ───────────────────────── PCB sekmesi ─────────────────────────
+// ───────────────────────── PCB sekmesi (gerber / 2 katman) ─────────────────────────
+const F_CU = '#cf4a3a'; // üst bakır — sinyal izleri
+const B_CU = '#2bb3a3'; // alt bakır — GND zemin düzlemi
+const SILK = '#e6d75a'; // serigrafi (sarı)
+const BOARD = '#0a0a0c'; // kart zemini (koyu)
+
+/** İki pad arasını 45° yönlendirilmiş izle bağla (düz → 45° köşe) */
+function route45(x1: number, y1: number, x2: number, y2: number): string {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const adx = Math.abs(dx);
+  const ady = Math.abs(dy);
+  if (adx < 0.5 || ady < 0.5) return `M ${x1} ${y1} L ${x2} ${y2}`;
+  if (adx > ady) {
+    const mx = x1 + Math.sign(dx) * (adx - ady);
+    return `M ${x1} ${y1} L ${mx} ${y1} L ${x2} ${y2}`;
+  }
+  const my = y1 + Math.sign(dy) * (ady - adx);
+  return `M ${x1} ${y1} L ${x1} ${my} L ${x2} ${y2}`;
+}
+
 function Pad({ p }: { p: Footprint['pads'][number] }) {
-  const stroke = p.gnd ? GND_COLOR : '#8a6410';
-  const sw = p.gnd ? 2 : 1;
+  const ring = p.gnd ? B_CU : F_CU; // GND → alt bakır (teal), sinyal → üst bakır (kırmızı)
   if (p.shape === 'rect') {
     return (
       <g>
-        <rect x={p.x - 6} y={p.y - 6} width={12} height={12} rx={2} fill="#d9a441" stroke={stroke} strokeWidth={sw} />
-        <circle cx={p.x} cy={p.y} r={2.4} fill="#1a1205" />
+        <rect x={p.x - 7} y={p.y - 7} width={14} height={14} rx={2} fill="#caa23a" stroke={ring} strokeWidth={1.8} />
+        <circle cx={p.x} cy={p.y} r={2.6} fill={BOARD} />
       </g>
     );
   }
   return (
     <g>
-      <circle cx={p.x} cy={p.y} r={6} fill="#d9a441" stroke={stroke} strokeWidth={sw} />
-      <circle cx={p.x} cy={p.y} r={2.4} fill="#1a1205" />
+      <circle cx={p.x} cy={p.y} r={7.5} fill="#caa23a" stroke={ring} strokeWidth={1.8} />
+      <circle cx={p.x} cy={p.y} r={2.6} fill={BOARD} />
     </g>
   );
 }
@@ -159,20 +178,19 @@ function BoardView({
   nodes,
   edges,
   svgRef,
-  showRats,
+  showTraces,
   showSilk,
-  netColor,
+  showPlane,
 }: {
   nodes: CNode[];
   edges: Edge[];
   svgRef: Ref<SVGSVGElement>;
-  showRats: boolean;
+  showTraces: boolean;
   showSilk: boolean;
-  netColor: boolean;
+  showPlane: boolean;
 }) {
   const pcb = useMemo(() => buildPcb(nodes, edges), [nodes, edges]);
   const { viewBox: vb } = pcb;
-  // ızgara çizgileri (2.5 mm ~ 50 px görsel)
   const grid: number[] = [];
   for (let gx = Math.ceil(vb.x / 40) * 40; gx < vb.x + vb.w; gx += 40) grid.push(gx);
   const gridY: number[] = [];
@@ -180,9 +198,13 @@ function BoardView({
 
   return (
     <svg ref={svgRef} className="pcb-svg board" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} xmlns="http://www.w3.org/2000/svg">
-      <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} rx={10} fill="#0b5e3b" />
-      <rect x={vb.x + 8} y={vb.y + 8} width={vb.w - 16} height={vb.h - 16} rx={8} fill="none" stroke="#0a7a4a" strokeWidth={2} />
-      <g stroke="#0a7a4a" strokeWidth={0.5} opacity={0.5}>
+      <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} rx={8} fill={BOARD} />
+      {/* B.Cu: GND zemin düzlemi (alt bakır) */}
+      {showPlane && (
+        <rect x={vb.x + 10} y={vb.y + 10} width={vb.w - 20} height={vb.h - 20} rx={6} fill={B_CU} fillOpacity={0.12} stroke={B_CU} strokeOpacity={0.5} strokeWidth={1} />
+      )}
+      {/* ince ızgara */}
+      <g stroke="#1b1b22" strokeWidth={0.5}>
         {grid.map((gx) => (
           <line key={`gx${gx}`} x1={gx} y1={vb.y} x2={gx} y2={vb.y + vb.h} />
         ))}
@@ -190,16 +212,19 @@ function BoardView({
           <line key={`gy${gy}`} x1={vb.x} y1={gy} x2={vb.x + vb.w} y2={gy} />
         ))}
       </g>
+      {/* Edge.Cuts (kart kenarı) */}
+      <rect x={vb.x + 4} y={vb.y + 4} width={vb.w - 8} height={vb.h - 8} rx={7} fill="none" stroke="#9a8f1c" strokeOpacity={0.6} strokeWidth={1} />
 
-      {showRats && (
-        <g strokeWidth={1.2} strokeDasharray="4 3" opacity={0.95}>
+      {/* F.Cu: sinyal izleri (45° yönlendirilmiş, üst bakır) */}
+      {showTraces && (
+        <g stroke={F_CU} strokeWidth={5} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.95}>
           {pcb.rats.map((r, i) => (
-            <line key={i} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke={netColor ? r.color : '#9fb0c8'} />
+            <path key={i} d={route45(r.x1, r.y1, r.x2, r.y2)} />
           ))}
         </g>
       )}
 
-      {/* footprint gövdeleri (silkscreen) */}
+      {/* serigrafi (silkscreen) */}
       {showSilk &&
         pcb.footprints.map((f) => (
           <g key={`b${f.id}`}>
@@ -209,23 +234,24 @@ function BoardView({
               width={Math.max(10, f.w - 4)}
               height={Math.max(10, f.h - 4)}
               rx={4}
-              fill={f.onBoard ? 'rgba(255,255,255,0.04)' : 'rgba(80,200,255,0.06)'}
-              stroke={f.onBoard ? '#e9eef5' : '#67e8f9'}
-              strokeWidth={1.2}
+              fill="none"
+              stroke={f.onBoard ? SILK : '#67e8f9'}
+              strokeOpacity={0.9}
+              strokeWidth={1}
               strokeDasharray={f.onBoard ? undefined : '5 3'}
             />
-            <text x={f.x + f.w / 2} y={f.y - 3} textAnchor="middle" fontSize={11} fontWeight={700} fill="#e9eef5">
+            <text x={f.x + f.w / 2} y={f.y - 3} textAnchor="middle" fontSize={11} fontWeight={700} fill={SILK}>
               {f.name}
             </text>
             {f.value && (
-              <text x={f.x + f.w / 2} y={f.y + f.h + 12} textAnchor="middle" fontSize={9} fill="#b9c6d6">
+              <text x={f.x + f.w / 2} y={f.y + f.h + 12} textAnchor="middle" fontSize={9} fill="#b8ad55">
                 {f.value}
               </text>
             )}
           </g>
         ))}
 
-      {/* pad'ler */}
+      {/* pad'ler (delikli; GND pad'leri alt düzleme iner) */}
       {pcb.footprints.map((f) => (
         <g key={`p${f.id}`}>
           {f.pads.map((p) => (
@@ -272,11 +298,10 @@ export function PcbModal({ onClose }: { onClose: () => void }) {
   const edges = useCircuit((s) => s.edges);
   const title = useCircuit((s) => s.title);
   const [tab, setTab] = useState<Tab>('schem');
-  const [showRats, setShowRats] = useState(true);
+  const [showTraces, setShowTraces] = useState(true);
   const [showSilk, setShowSilk] = useState(true);
-  const [netColor, setNetColor] = useState(true);
+  const [showPlane, setShowPlane] = useState(true);
   const svgRef = useRef<SVGSVGElement>(null);
-  const pcb = useMemo(() => (tab === 'pcb' ? buildPcb(nodes, edges) : null), [tab, nodes, edges]);
 
   const slug = title.toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşöçı]+/g, '-').replace(/^-|-$/g, '') || 'devre';
   const empty = nodes.filter((n) => n.data.type !== 'ground' && n.data.type !== 'label').length === 0;
@@ -295,14 +320,14 @@ export function PcbModal({ onClose }: { onClose: () => void }) {
           </div>
           {tab === 'pcb' && (
             <div className="pcb-toggles">
-              <label className={showRats ? 'on' : ''}>
-                <input type="checkbox" checked={showRats} onChange={(e) => setShowRats(e.target.checked)} /> {t('Ratsnest')}
+              <label className={showTraces ? 'on' : ''}>
+                <input type="checkbox" checked={showTraces} onChange={(e) => setShowTraces(e.target.checked)} /> {t('İzler')}
               </label>
               <label className={showSilk ? 'on' : ''}>
                 <input type="checkbox" checked={showSilk} onChange={(e) => setShowSilk(e.target.checked)} /> {t('Baskı (silk)')}
               </label>
-              <label className={netColor ? 'on' : ''}>
-                <input type="checkbox" checked={netColor} onChange={(e) => setNetColor(e.target.checked)} /> {t('Net renkleri')}
+              <label className={showPlane ? 'on' : ''}>
+                <input type="checkbox" checked={showPlane} onChange={(e) => setShowPlane(e.target.checked)} /> {t('Zemin düzlemi')}
               </label>
             </div>
           )}
@@ -324,7 +349,7 @@ export function PcbModal({ onClose }: { onClose: () => void }) {
           ) : tab === 'schem' ? (
             <SchematicView nodes={nodes} edges={edges} title={title} svgRef={svgRef} />
           ) : (
-            <BoardView nodes={nodes} edges={edges} svgRef={svgRef} showRats={showRats} showSilk={showSilk} netColor={netColor} />
+            <BoardView nodes={nodes} edges={edges} svgRef={svgRef} showTraces={showTraces} showSilk={showSilk} showPlane={showPlane} />
           )}
         </div>
 
@@ -332,18 +357,13 @@ export function PcbModal({ onClose }: { onClose: () => void }) {
           {tab === 'pcb' ? (
             <>
               <span className="pcb-legend-item">
-                <span className="sw" style={{ background: GND_COLOR }} /> GND ({t('zemin bakırı')})
+                <span className="sw" style={{ background: F_CU }} /> F.Cu ({t('sinyal')})
               </span>
-              {pcb?.nets
-                .filter((n) => n.pads >= 2)
-                .slice(0, 10)
-                .map((n) => (
-                  <span key={n.net} className="pcb-legend-item">
-                    <span className="sw" style={{ background: n.color }} /> {n.name}
-                  </span>
-                ))}
+              <span className="pcb-legend-item">
+                <span className="sw" style={{ background: B_CU }} /> B.Cu ({t('GND düzlemi')})
+              </span>
               <span className="muted small" style={{ marginLeft: 'auto' }}>
-                {t('Pad’ler pin konumlarında; ince kesik çizgiler aynı net’teki pad’leri gösterir (ratsnest). GND zemin bakırı olduğundan çizilmez.')}
+                {t('F.Cu (kırmızı): sinyal izleri 45° yönlendirildi. B.Cu (teal): GND zemin düzlemi — delikli pad’ler her iki katmana da iner.')}
               </span>
             </>
           ) : (

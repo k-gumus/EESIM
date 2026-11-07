@@ -624,6 +624,12 @@ export const EN: Record<string, string> = {
   'Baskı (silk)': 'Silkscreen',
   'Net renkleri': 'Net colors',
   'zemin bakırı': 'ground pour',
+  'İzler': 'Traces',
+  'Zemin düzlemi': 'Ground plane',
+  sinyal: 'signal',
+  'GND düzlemi': 'ground plane',
+  'F.Cu (kırmızı): sinyal izleri 45° yönlendirildi. B.Cu (teal): GND zemin düzlemi — delikli pad’ler her iki katmana da iner.':
+    'F.Cu (red): signal traces routed at 45°. B.Cu (teal): GND ground plane — through-hole pads reach both layers.',
   'PCB ve şema görünümü (pop-up)': 'PCB and schematic view (pop-up)',
   'Devre boş — önce paletten eleman ekle ya da hazır bir deney aç.': 'The circuit is empty — add a component from the palette or open a ready-made experiment first.',
   'Pad’ler pin konumlarında; ince kesik çizgiler aynı net’teki pad’leri gösterir (ratsnest). GND zemin bakırı olduğundan çizilmez.':
